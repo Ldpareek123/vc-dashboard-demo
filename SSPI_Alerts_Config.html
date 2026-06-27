@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Alerts & Report Automation — V4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1F3864,#C65911);padding:16px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid #C65911}
+.header h1{font-size:22px;font-weight:700;color:#fff}
+.header p{font-size:12px;color:#94a3b8;margin-top:2px}
+.badge{background:#C65911;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px}
+.btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:.2s}
+.btn-primary{background:#2E75B6;color:#fff}.btn-primary:hover{background:#1F3864}
+.btn-success{background:#375623;color:#fff}
+.btn-warn{background:#C65911;color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+.main{max-width:1100px;margin:24px auto;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:800px){.main{grid-template-columns:1fr}}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.card h2{font-size:15px;font-weight:700;color:#C65911;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #334155}
+.card.full{grid-column:1/-1}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;color:#94a3b8;margin-bottom:4px;text-transform:uppercase}
+.form-group input,.form-group select{width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:6px;font-size:13px}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #334155;font-size:13px}
+.toggle-row:last-child{border:none}
+.toggle{width:40px;height:22px;background:#334155;border-radius:11px;cursor:pointer;position:relative;transition:.3s;flex-shrink:0}
+.toggle.on{background:#375623}
+.toggle::after{content:'';width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:.3s}
+.toggle.on::after{left:20px}
+.alert-type{display:flex;align-items:flex-start;gap:10px;padding:10px;background:#0f172a;border-radius:8px;margin-bottom:8px;border-left:3px solid var(--lc)}
+.alert-type .at-icon{font-size:18px;margin-top:2px}
+.alert-type h4{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:2px}
+.alert-type p{font-size:11px;color:#64748b}
+.schedule-row{display:flex;align-items:center;gap:10px;padding:10px;background:#0f172a;border-radius:8px;margin-bottom:8px}
+.schedule-row .sr-info{flex:1}
+.schedule-row h4{font-size:12px;font-weight:700;color:#e2e8f0}
+.schedule-row p{font-size:11px;color:#64748b}
+.gas-snippet{background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;font-family:monospace;font-size:11px;color:#86efac;overflow-x:auto;white-space:pre;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>🔔 Alerts & Report Automation <span class="badge">V4</span></h1>
+    <p>Configure Telegram alerts, WhatsApp notifications, and automated daily/weekly reports</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-warn btn-sm" onclick="saveConfig()">💾 Save Config</button>
+    <button class="btn btn-primary btn-sm" onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'">← Dashboard</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Telegram Config -->
+  <div class="card">
+    <h2>📱 Telegram Bot Alerts</h2>
+    <div class="form-group"><label>Bot Token (from @BotFather)</label>
+      <input type="password" id="tg-token" placeholder="5xxxxxxxx:AAxxxxxx..." value="">
+    </div>
+    <div class="form-group"><label>Chat ID / Group ID</label>
+      <input type="text" id="tg-chat" placeholder="-100123456789">
+    </div>
+    <div class="form-group"><label>Test Message</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="tg-test-msg" placeholder="Test alert from SSPI V4" value="🏭 SSPI V4 — Alert system connected!" style="flex:1">
+        <button class="btn btn-warn btn-sm" onclick="testTelegram()">Send Test</button>
+      </div>
+    </div>
+    <h3 style="font-size:12px;color:#94a3b8;margin:12px 0 8px">Alert Types</h3>
+    <div id="tg-alert-types">
+      ${[
+        ['📦','Low Stock Alert','When RM falls below reorder level','#f87171'],
+        ['💰','Overdue Debtor Alert','Debtors 30+ days overdue','#fbbf24'],
+        ['✅','Job Card Completed','When production job is finished','#22c55e'],
+        ['⚠️','Machine Breakdown','When PM task goes overdue','#f87171'],
+        ['💸','Large PO Alert','When PO > ₹50,000 is created','#fbbf24'],
+        ['👥','Absent > 10%','When attendance drops below 90%','#f87171'],
+      ].map(([icon,title,desc,clr])=>`
+        <div class="alert-type" style="--lc:${clr}">
+          <div class="at-icon">${icon}</div>
+          <div style="flex:1"><h4>${title}</h4><p>${desc}</p></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- WhatsApp Config -->
+  <div class="card">
+    <h2>💬 WhatsApp Alerts</h2>
+    <div class="form-group"><label>WhatsApp Number (for wa.me links)</label>
+      <input type="tel" id="wa-number" placeholder="+919460012345">
+    </div>
+    <div class="form-group"><label>Business API Token (optional)</label>
+      <input type="password" id="wa-token" placeholder="Leave blank for wa.me link method">
+    </div>
+    <p style="font-size:11px;color:#64748b;margin-bottom:14px">Without API: sends pre-filled WhatsApp messages when alerts trigger. With API token: sends automated background messages.</p>
+    <div style="background:#0f172a;border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;color:#22c55e;font-weight:700;margin-bottom:4px">⚡ Quick Alert Buttons</div>
+      <p style="font-size:11px;color:#64748b">These appear in bots when critical events occur — worker taps to send instant WhatsApp alert to manager.</p>
+    </div>
+    <h3 style="font-size:12px;color:#94a3b8;margin:12px 0 8px">Recipient Numbers</h3>
+    <div class="form-group"><label>Owner / CEO</label>
+      <input type="tel" id="wa-owner" placeholder="+91xxxxxxxxxx">
+    </div>
+    <div class="form-group"><label>Purchase Manager</label>
+      <input type="tel" id="wa-purchase" placeholder="+91xxxxxxxxxx">
+    </div>
+    <div class="form-group"><label>Production Manager</label>
+      <input type="tel" id="wa-prod" placeholder="+91xxxxxxxxxx">
+    </div>
+    <button class="btn btn-success btn-sm" onclick="testWhatsApp()">Test WhatsApp Link</button>
+  </div>
+
+  <!-- Email Reports -->
+  <div class="card">
+    <h2>📧 Automated Email Reports</h2>
+    <div class="form-group"><label>Report Email Address</label>
+      <input type="email" id="report-email" placeholder="owner@sspi.com" value="ldpareek4@gmail.com">
+    </div>
+    <h3 style="font-size:12px;color:#94a3b8;margin:12px 0 8px">Report Schedule</h3>
+    ${[
+      ['Daily Summary','Every day at 8:00 PM — Job Cards, GRN, Attendance, Debtors'],
+      ['Weekly P&L','Every Monday at 7:00 AM — Revenue, Cost, Net for last week'],
+      ['Monthly Scorecard','1st of every month at 8:00 AM — Full business KPI report'],
+      ['Stock Alert Report','When any item < reorder level — immediate email'],
+      ['Payroll Summary','After each payroll run — month-end salary summary'],
+    ].map(([title,desc])=>`
+      <div class="toggle-row">
+        <div><div style="font-size:13px;font-weight:600">${title}</div><div style="font-size:11px;color:#64748b;margin-top:2px">${desc}</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>`).join('')}
+  </div>
+
+  <!-- GAS Code to paste -->
+  <div class="card">
+    <h2>📋 GAS Code Snippets</h2>
+    <p style="font-size:12px;color:#94a3b8;margin-bottom:12px">Copy these snippets and paste into SSPI_Code.gs, then call <code style="background:#0f172a;padding:1px 4px;border-radius:3px;color:#22c55e">setupAllTriggers()</code> to activate.</p>
+    <div class="gas-snippet">// ── TELEGRAM ALERT FUNCTION ──────────────────────────
+function sendTelegramAlert(msg) {
+  const token = PropertiesService.getScriptProperties()
+                  .getProperty('TG_TOKEN');
+  const chatId = PropertiesService.getScriptProperties()
+                  .getProperty('TG_CHAT_ID');
+  if (!token || !chatId) return;
+  UrlFetchApp.fetch(
+    \`https://api.telegram.org/bot\${token}/sendMessage\`,
+    { method:'post', contentType:'application/json',
+      payload: JSON.stringify({ chat_id:chatId, text:msg, parse_mode:'HTML' }) }
+  );
+}
+
+// ── DAILY SUMMARY TRIGGER ─────────────────────────────
+function sendDailySummary() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const jcCount = ss.getSheetByName('jobCards').getLastRow() - 1;
+  const msg = '🏭 SSPI Daily Summary\\n' +
+    \`📦 Job Cards today: \${jcCount}\\n\` +
+    \`💰 Pending approvals: check inbox\`;
+  GmailApp.sendEmail(
+    'ldpareek4@gmail.com', 'SSPI Daily Summary - ' + new Date().toDateString(), msg
+  );
+  sendTelegramAlert(msg);
+}
+
+// ── LOW STOCK CHECK ───────────────────────────────────
+function checkLowStock() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const rmSheet = ss.getSheetByName('rmMaster');
+  const data = rmSheet.getDataRange().getValues();
+  data.slice(1).forEach(row => {
+    const [name, stock, reorder] = [row[0], row[2], row[3]];
+    if (Number(stock) < Number(reorder)) {
+      sendTelegramAlert('⚠️ LOW STOCK: ' + name +
+        ' — Current: ' + stock + ' | Reorder: ' + reorder);
+    }
+  });
+}
+</pre></div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,1091 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Debtors Control Bot | VirtualCoordinator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+:root{--navy:#1e3a5f;--orange:#f97316;--red:#dc2626;--green:#16a34a;--blue:#0ea5e9;--yellow:#ca8a04;--purple:#7c3aed;--muted:#64748b;--border:#e2e8f0;--white:#ffffff}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#1e3a5f,#0f2440);color:#fff;padding:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.header-top{display:flex;align-items:center;gap:14px;padding:10px 20px}
+.logo{width:44px;height:44px;background:linear-gradient(135deg,#dc2626,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;flex-shrink:0}
+.hinfo h1{font-size:16px;font-weight:700;color:#fff}
+.hinfo p{font-size:10px;color:#94a3b8}
+.hbadges{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.hbadge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#e2e8f0;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
+.hbadge.red{background:rgba(220,38,38,.2);border-color:rgba(220,38,38,.4);color:#fca5a5}
+.hbadge.green{background:rgba(22,163,74,.2);border-color:rgba(22,163,74,.4);color:#86efac}
+.hbadge.orange{background:rgba(249,115,22,.2);border-color:rgba(249,115,22,.4);color:#fdba74}
+
+/* TABS */
+.tabs{display:flex;gap:3px;padding:8px 20px;background:#162d4e;overflow-x:auto}
+.tab{background:transparent;border:1px solid rgba(255,255,255,.15);color:#94a3b8;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all .2s}
+.tab:hover,.tab.active{background:#f97316;border-color:#f97316;color:#fff}
+.tab.red:hover,.tab.red.active{background:#dc2626;border-color:#dc2626}
+.tab.green:hover,.tab.green.active{background:#16a34a;border-color:#16a34a}
+
+/* CONTENT */
+.content{padding:16px 20px;max-width:1500px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+
+/* KPI CARDS */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.red::before{background:#dc2626}.kpi.orange::before{background:#f97316}
+.kpi.green::before{background:#16a34a}.kpi.blue::before{background:#0ea5e9}
+.kpi.yellow::before{background:#ca8a04}.kpi.purple::before{background:#7c3aed}
+.kpi-icon{font-size:22px;margin-bottom:6px}
+.kpi-val{font-size:22px;font-weight:800;color:#1e293b}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+
+/* CARDS / PANELS */
+.panel{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap}
+.panel-head h3{font-size:14px;font-weight:700;color:#1e293b}
+.panel-body{padding:16px}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse}
+th{background:#f8fafc;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:9px 12px;font-size:12px;color:#1e293b;border-bottom:1px solid #f1f5f9}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+.clickable-row{cursor:pointer}
+.clickable-row:hover td{background:#fff7ed}
+
+/* PILLS / TAGS */
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700}
+.pill-red{background:#fee2e2;color:#dc2626}
+.pill-orange{background:#ffedd5;color:#ea580c}
+.pill-green{background:#dcfce7;color:#16a34a}
+.pill-blue{background:#e0f2fe;color:#0284c7}
+.pill-yellow{background:#fef9c3;color:#a16207}
+.pill-purple{background:#f3e8ff;color:#7c3aed}
+.pill-grey{background:#f1f5f9;color:#64748b}
+
+/* AGING BARS */
+.aging-bar{height:10px;border-radius:5px;margin-top:4px}
+.aging-bar.current{background:#16a34a}
+.aging-bar.warn{background:#f97316}
+.aging-bar.overdue{background:#dc2626}
+.aging-bar.critical{background:#7c3aed}
+
+/* APPROVAL CHAIN */
+.approval-chain{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;margin-bottom:14px}
+.apv-step{background:#fff;border:1px solid #fed7aa;border-radius:6px;padding:5px 10px;text-align:center}
+.apv-role{font-size:9px;color:var(--muted)}
+.apv-action{font-size:11px;font-weight:700;color:#ea580c}
+.apv-arrow{color:#f97316;font-size:16px}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.fg label{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:#1e293b;background:#fff}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--orange)}
+.fg.full{grid-column:1/-1}
+
+/* BUTTONS */
+.btn{padding:7px 18px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.btn-primary{background:#f97316;color:#fff}.btn-primary:hover{background:#ea580c}
+.btn-danger{background:#dc2626;color:#fff}.btn-danger:hover{background:#b91c1c}
+.btn-success{background:#16a34a;color:#fff}.btn-success:hover{background:#15803d}
+.btn-outline{background:#fff;border:1px solid var(--border);color:#1e293b}.btn-outline:hover{border-color:#f97316;color:#f97316}
+.btn-sm{padding:4px 12px;font-size:11px}
+
+/* SEARCH */
+.search-bar{border:1px solid var(--border);border-radius:7px;padding:7px 12px;font-size:12px;color:#1e293b;background:#fff;width:220px}
+.search-bar:focus{outline:none;border-color:var(--orange)}
+
+/* ALERT BOX */
+.alert-box{border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px;font-size:12px}
+.alert-box.red{background:#fee2e2;border:1px solid #fecaca;color:#991b1b}
+.alert-box.orange{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
+.alert-box.green{background:#dcfce7;border:1px solid #bbf7d0;color:#166534}
+.alert-icon{font-size:16px;flex-shrink:0}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:22px;width:90%;max-width:680px;max-height:90vh;overflow-y:auto;position:relative}
+.modal h3{font-size:15px;font-weight:700;color:#1e3a5f;margin-bottom:14px}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
+.modal-close:hover{color:#dc2626}
+
+/* PIN GATE */
+.pin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;align-items:center;justify-content:center}
+.pin-overlay.open{display:flex}
+.pin-box{background:#fff;border:2px solid #f97316;border-radius:14px;padding:28px;width:340px;text-align:center}
+.pin-box h3{color:#1e3a5f;font-size:16px;margin-bottom:6px}
+.pin-box p{font-size:12px;color:var(--muted);margin-bottom:14px}
+.pin-box input{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;text-align:center;letter-spacing:3px;margin-bottom:10px}
+.pin-err{color:#dc2626;font-size:11px;margin-top:6px;display:none}
+
+/* FOLLOW-UP TIMELINE */
+.timeline{position:relative;padding-left:20px}
+.timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:#e2e8f0}
+.tl-item{position:relative;margin-bottom:14px}
+.tl-dot{position:absolute;left:-17px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px #e2e8f0}
+.tl-dot.call{background:#0ea5e9}.tl-dot.email{background:#7c3aed}
+.tl-dot.visit{background:#16a34a}.tl-dot.promise{background:#f97316}
+.tl-dot.legal{background:#dc2626}
+.tl-content{background:#f8fafc;border-radius:7px;padding:8px 12px;font-size:11px}
+.tl-date{font-size:10px;color:var(--muted)}
+.tl-text{color:#1e293b;margin-top:2px}
+.tl-result{font-size:10px;margin-top:3px}
+
+/* COLLECTION FORECAST */
+.forecast-band{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.forecast-band:last-child{border-bottom:none}
+.fc-week{font-size:12px;font-weight:600;width:80px;flex-shrink:0}
+.fc-bar-wrap{flex:1;background:#f1f5f9;border-radius:4px;height:18px;overflow:hidden}
+.fc-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:10px;font-weight:700;color:#fff}
+.fc-amt{font-size:12px;font-weight:700;width:70px;text-align:right;flex-shrink:0}
+
+/* RESPONSIVE */
+@media(max-width:768px){.kpi-row{grid-template-columns:repeat(2,1fr)}.hbadges{display:none}}
+
+/* LINKS BAR */
+.links-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.link-btn{background:#fff;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:7px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .2s}
+.link-btn:hover{border-color:#f97316;color:#f97316}
+</style>
+</head>
+<body>
+
+<!-- PIN GATE -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div style="font-size:36px;margin-bottom:8px">🏦</div>
+    <h3>Debtors Control — Accounts</h3>
+    <p>Shree Shyam Packaging Industries<br>Finance / Accounts access only</p>
+    <input type="password" id="pinInput" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')verifyPin()">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:1" onclick="verifyPin()">🔓 Unlock</button>
+      <button class="btn btn-outline" onclick="goBack()">✕ Cancel</button>
+    </div>
+    <p class="pin-err" id="pinErr">❌ Invalid PIN. Try again.</p>
+    <div style="margin-top:12px;font-size:10px;color:#94a3b8">VC@2026 · OWNER@2026 · CEO@2026 · ADMIN@2026</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">₹</div>
+    <div class="hinfo">
+      <h1>💳 Debtors Control Bot</h1>
+      <p>Shree Shyam Packaging Industries, Bhiwadi · VirtualCoordinator · Accounts & Finance</p>
+    </div>
+    <div class="hbadges">
+      <span class="hbadge red">₹28.8L Outstanding</span>
+      <span class="hbadge red">₹12.4L Overdue &gt;60d</span>
+      <span class="hbadge orange">21 Open Invoices</span>
+      <span class="hbadge green">8 Customers</span>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+    <button class="tab" onclick="showTab('ledger')">📒 Customer Ledger</button>
+    <button class="tab" onclick="showTab('invoices')">🧾 Invoice Register</button>
+    <button class="tab red" onclick="showTab('aging')">⏰ Aging Analysis</button>
+    <button class="tab" onclick="showTab('receipt')">💰 Receipt Entry</button>
+    <button class="tab" onclick="showTab('followup')">📞 Follow-up Log</button>
+    <button class="tab red" onclick="showTab('escalation')">⚠️ Escalation</button>
+    <button class="tab green" onclick="showTab('forecast')">📈 Collection Forecast</button>
+    <button class="tab" onclick="showTab('creditlimit')">🛡️ Credit Limits</button>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- LINKS -->
+<div class="links-bar">
+  <a class="link-btn" 
+  <a class="link-btn" href="Bills_Data_Entry_Bot.html" onclick="openBot(this.href);return false;">🧾 Bills Bot</a>
+  <a class="link-btn" href="Accounting_Voucher_Bot.html" onclick="openBot(this.href);return false;">📒 Voucher Bot</a>
+  <a class="link-btn" href="GST_Recon_DataEntry_Bot.html" onclick="openBot(this.href);return false;">🧮 GST Recon Bot</a>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="section active" id="tab-dashboard">
+
+  <div class="alert-box red">
+    <span class="alert-icon">🚨</span>
+    <div><strong>3 invoices are OVERDUE beyond 60 days — ₹12.4L at risk.</strong> Immediate escalation required. MD/Owner approval needed for legal action on Eicher Trucks & JBM Group accounts.</div>
+  </div>
+  <div class="alert-box orange">
+    <span class="alert-icon">⚠️</span>
+    <div><strong>6 invoices crossing 31–60 days — ₹7.8L.</strong> Accounts team to send formal reminders today. Escalate to Sales Head if no response in 3 days.</div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi red" onclick="showTab('aging')"><div class="kpi-icon">🔴</div><div class="kpi-val">₹12.4L</div><div class="kpi-lbl">Overdue &gt;60 Days</div><div class="kpi-sub">3 invoices · Legal risk</div></div>
+    <div class="kpi orange" onclick="showTab('aging')"><div class="kpi-icon">🟠</div><div class="kpi-val">₹7.8L</div><div class="kpi-lbl">Warning 31–60 Days</div><div class="kpi-sub">6 invoices · Send reminder</div></div>
+    <div class="kpi green" onclick="showTab('invoices')"><div class="kpi-icon">🟢</div><div class="kpi-val">₹8.2L</div><div class="kpi-lbl">Current 0–30 Days</div><div class="kpi-sub">12 invoices · On track</div></div>
+    <div class="kpi blue" onclick="showTab('invoices')"><div class="kpi-icon">📄</div><div class="kpi-val">₹28.8L</div><div class="kpi-lbl">Total Outstanding</div><div class="kpi-sub">21 open invoices</div></div>
+    <div class="kpi green" onclick="showTab('receipt')"><div class="kpi-icon">✅</div><div class="kpi-val">₹42.1L</div><div class="kpi-lbl">Collected This Month</div><div class="kpi-sub">June 2026 receipts</div></div>
+    <div class="kpi yellow" onclick="showTab('forecast')"><div class="kpi-icon">📅</div><div class="kpi-val">₹11.2L</div><div class="kpi-lbl">Expected This Week</div><div class="kpi-sub">Committed by customers</div></div>
+    <div class="kpi purple" onclick="showTab('creditlimit')"><div class="kpi-icon">🛡️</div><div class="kpi-val">2</div><div class="kpi-lbl">Over Credit Limit</div><div class="kpi-sub">Hold new orders</div></div>
+    <div class="kpi red" onclick="showTab('escalation')"><div class="kpi-icon">⚠️</div><div class="kpi-val">3</div><div class="kpi-lbl">Escalated Cases</div><div class="kpi-sub">MD action pending</div></div>
+  </div>
+
+  <!-- APPROVAL CHAIN -->
+  <div class="approval-chain">
+    <strong style="font-size:12px;color:#9a3412;margin-right:4px">📋 Collection Approval Chain:</strong>
+    <div class="apv-step"><div class="apv-role">0–30 Days</div><div class="apv-action">Accounts Staff</div></div>
+    <div class="apv-arrow">→</div>
+    <div class="apv-step"><div class="apv-role">31–60 Days</div><div class="apv-action">Accounts Head</div></div>
+    <div class="apv-arrow">→</div>
+    <div class="apv-step"><div class="apv-role">&gt;60 Days</div><div class="apv-action">Sales + Accounts Head</div></div>
+    <div class="apv-arrow">→</div>
+    <div class="apv-step"><div class="apv-role">Disputed/Stuck</div><div class="apv-action">MD / Owner</div></div>
+    <div class="apv-arrow">→</div>
+    <div class="apv-step"><div class="apv-role">Legal Action</div><div class="apv-action">MD + Legal Counsel</div></div>
+  </div>
+
+  <!-- AGING SUMMARY -->
+  <div class="panel">
+    <div class="panel-head"><h3>⏰ Aging Summary by Customer</h3><span class="pill pill-red">Action Required</span></div>
+    <table>
+      <thead><tr><th>Customer</th><th>0–30 Days</th><th>31–60 Days</th><th>61–90 Days</th><th>&gt;90 Days</th><th>Total Outstanding</th><th>Last Payment</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr class="clickable-row" onclick="openCustDetail('Maruti Suzuki India')"><td><strong>Maruti Suzuki India</strong></td><td>₹2.8L</td><td>₹1.4L</td><td>—</td><td>—</td><td>₹4.2L</td><td>05-Jun-26</td><td><span class="pill pill-green">Regular</span></td><td><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();logFollowup('Maruti Suzuki India')">📞 Log</button></td></tr>
+        <tr class="clickable-row" onclick="openCustDetail('Hero MotoCorp')"><td><strong>Hero MotoCorp</strong></td><td>₹1.6L</td><td>₹2.2L</td><td>—</td><td>—</td><td>₹3.8L</td><td>28-May-26</td><td><span class="pill pill-orange">Slow</span></td><td><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();logFollowup('Hero MotoCorp')">📞 Log</button></td></tr>
+        <tr class="clickable-row" onclick="openCustDetail('Honda Cars India')"><td><strong>Honda Cars India</strong></td><td>₹1.2L</td><td>—</td><td>—</td><td>—</td><td>₹1.2L</td><td>10-Jun-26</td><td><span class="pill pill-green">Regular</span></td><td><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();logFollowup('Honda Cars India')">📞 Log</button></td></tr>
+        <tr class="clickable-row" onclick="openCustDetail('Tata Motors')"><td><strong>Tata Motors</strong></td><td>₹1.8L</td><td>₹1.6L</td><td>—</td><td>—</td><td>₹3.4L</td><td>01-Jun-26</td><td><span class="pill pill-orange">Slow</span></td><td><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();logFollowup('Tata Motors')">📞 Log</button></td></tr>
+        <tr class="clickable-row" onclick="openCustDetail('JBM Group')"><td><strong>JBM Group</strong></td><td>—</td><td>₹1.4L</td><td>₹3.8L</td><td>—</td><td>₹5.2L</td><td>18-Apr-26</td><td><span class="pill pill-red">Overdue</span></td><td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();escalateCase('JBM Group')">🚨 Escalate</button></td></tr>
+        <tr class="clickable-row" onclick="openCustDetail('Bajaj Auto')"><td><strong>Bajaj Auto</strong></td><td>₹0.8L</td><td>₹1.2L</td><td>—</td><td>—</td><td>₹2.0L</td><td>31-May-26</td><td><span class="pill pill-orange">Slow</span></td><td><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();logFollowup('Bajaj Auto')">📞 Log</button></td></tr>
+        <tr class="clickable-row" onclick="openCustDetail('Eicher Trucks')"><td><strong>Eicher Trucks</strong></td><td>—</td><td>—</td><td>₹4.6L</td><td>₹3.6L</td><td>₹8.2L</td><td>10-Mar-26</td><td><span class="pill pill-purple">Critical</span></td><td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();escalateCase('Eicher Trucks')">⚖️ Legal</button></td></tr>
+        <tr class="clickable-row" onclick="openCustDetail('TVS Motor')"><td><strong>TVS Motor</strong></td><td>—</td><td>—</td><td>₹4.0L</td><td>—</td><td>₹4.0L</td><td>20-Apr-26</td><td><span class="pill pill-red">Overdue</span></td><td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();escalateCase('TVS Motor')">🚨 Escalate</button></td></tr>
+        <tr style="font-weight:700;background:#f8fafc"><td>TOTAL</td><td>₹8.2L</td><td>₹7.8L</td><td>₹12.4L</td><td>₹3.6L</td><td>₹32.0L</td><td>—</td><td>—</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- COLLECTION THIS MONTH -->
+  <div class="panel">
+    <div class="panel-head"><h3>💰 Receipts This Month (June 2026)</h3></div>
+    <table>
+      <thead><tr><th>Date</th><th>Customer</th><th>Invoice No.</th><th>Amount</th><th>Mode</th><th>Entered By</th></tr></thead>
+      <tbody>
+        <tr><td>02-Jun-26</td><td>Maruti Suzuki</td><td>SSPI/2026/0088</td><td class="pill pill-green">₹6.4L</td><td>NEFT</td><td>Accounts</td></tr>
+        <tr><td>05-Jun-26</td><td>Honda Cars</td><td>SSPI/2026/0091</td><td class="pill pill-green">₹3.2L</td><td>RTGS</td><td>Accounts</td></tr>
+        <tr><td>10-Jun-26</td><td>Tata Motors</td><td>SSPI/2026/0085</td><td class="pill pill-green">₹8.8L</td><td>NEFT</td><td>Accounts</td></tr>
+        <tr><td>12-Jun-26</td><td>Hero MotoCorp</td><td>SSPI/2026/0087</td><td class="pill pill-green">₹4.6L</td><td>RTGS</td><td>Accounts</td></tr>
+        <tr><td>14-Jun-26</td><td>Bajaj Auto</td><td>SSPI/2026/0093</td><td class="pill pill-green">₹5.4L</td><td>NEFT</td><td>Accounts</td></tr>
+        <tr><td>15-Jun-26</td><td>TVS Motor</td><td>SSPI/2026/0082</td><td class="pill pill-green">₹3.8L</td><td>Cheque</td><td>Accounts</td></tr>
+        <tr><td>—</td><td><strong>Total Collected</strong></td><td>—</td><td><strong>₹32.2L</strong></td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ CUSTOMER LEDGER ═══ -->
+<div class="section" id="tab-ledger">
+  <div class="panel-head" style="background:#fff;border-radius:10px 10px 0 0;padding:12px 16px;border:1px solid var(--border);border-bottom:none;margin-bottom:0">
+    <h3 style="font-size:14px;font-weight:700">📒 Customer Ledger — Account-wise Outstanding</h3>
+    <input class="search-bar" type="text" placeholder="🔍 Search customer..." oninput="filterLedger(this.value)">
+  </div>
+  <div class="panel" style="border-radius:0 0 10px 10px;margin-bottom:16px">
+    <table id="ledgerTable">
+      <thead><tr><th>Cust Code</th><th>Customer Name</th><th>Credit Limit</th><th>Total Invoiced (FY)</th><th>Total Collected</th><th>Outstanding</th><th>Overdue Amt</th><th>Avg Collection Days</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr><td>CUST-001</td><td><strong>Maruti Suzuki India</strong></td><td>₹15L</td><td>₹68.4L</td><td>₹64.2L</td><td>₹4.2L</td><td>—</td><td>28 days</td><td><span class="pill pill-green">Good</span></td><td><button class="btn btn-outline btn-sm" onclick="openCustDetail('Maruti Suzuki India')">View</button></td></tr>
+        <tr><td>CUST-002</td><td><strong>Hero MotoCorp</strong></td><td>₹10L</td><td>₹42.8L</td><td>₹39.0L</td><td>₹3.8L</td><td>₹2.2L</td><td>38 days</td><td><span class="pill pill-orange">Watch</span></td><td><button class="btn btn-outline btn-sm" onclick="openCustDetail('Hero MotoCorp')">View</button></td></tr>
+        <tr><td>CUST-003</td><td><strong>Honda Cars India</strong></td><td>₹8L</td><td>₹28.6L</td><td>₹27.4L</td><td>₹1.2L</td><td>—</td><td>24 days</td><td><span class="pill pill-green">Good</span></td><td><button class="btn btn-outline btn-sm" onclick="openCustDetail('Honda Cars India')">View</button></td></tr>
+        <tr><td>CUST-004</td><td><strong>Tata Motors</strong></td><td>₹12L</td><td>₹58.2L</td><td>₹54.8L</td><td>₹3.4L</td><td>₹1.6L</td><td>35 days</td><td><span class="pill pill-orange">Watch</span></td><td><button class="btn btn-outline btn-sm" onclick="openCustDetail('Tata Motors')">View</button></td></tr>
+        <tr style="background:#fff5f5"><td>CUST-005</td><td><strong>JBM Group</strong></td><td>₹8L</td><td>₹32.4L</td><td>₹27.2L</td><td>₹5.2L</td><td>₹5.2L</td><td>72 days</td><td><span class="pill pill-red">Overdue</span></td><td><button class="btn btn-danger btn-sm" onclick="escalateCase('JBM Group')">Escalate</button></td></tr>
+        <tr><td>CUST-006</td><td><strong>Bajaj Auto</strong></td><td>₹6L</td><td>₹24.8L</td><td>₹22.8L</td><td>₹2.0L</td><td>₹1.2L</td><td>42 days</td><td><span class="pill pill-orange">Watch</span></td><td><button class="btn btn-outline btn-sm" onclick="openCustDetail('Bajaj Auto')">View</button></td></tr>
+        <tr style="background:#fff5f5"><td>CUST-007</td><td><strong>Eicher Trucks</strong></td><td>₹6L</td><td>₹18.6L</td><td>₹10.4L</td><td>₹8.2L</td><td>₹8.2L</td><td>118 days</td><td><span class="pill pill-purple">Critical</span></td><td><button class="btn btn-danger btn-sm" onclick="escalateCase('Eicher Trucks')">Legal</button></td></tr>
+        <tr style="background:#fff5f5"><td>CUST-008</td><td><strong>TVS Motor</strong></td><td>₹8L</td><td>₹22.4L</td><td>₹18.4L</td><td>₹4.0L</td><td>₹4.0L</td><td>65 days</td><td><span class="pill pill-red">Overdue</span></td><td><button class="btn btn-danger btn-sm" onclick="escalateCase('TVS Motor')">Escalate</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <button class="btn btn-primary" onclick="openAddCustModal()">+ Add New Customer</button>
+</div>
+
+<!-- ═══ INVOICE REGISTER ═══ -->
+<div class="section" id="tab-invoices">
+  <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="openNewInvModal()">+ New Invoice</button>
+    <button class="btn btn-outline" onclick="loadDebtorsFromSheets()" style="border-color:#1e3a5f;color:#1e3a5f">☁ Sync Live Data</button>
+    <input class="search-bar" type="text" placeholder="🔍 Search invoices..." oninput="filterInvoices(this.value)">
+    <select class="search-bar" style="width:160px" onchange="filterByStatus(this.value)">
+      <option value="">All Status</option><option>Open</option><option>Partial</option><option>Overdue</option><option>Paid</option>
+    </select>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>🧾 Invoice Register — Open & Outstanding</h3></div>
+    <table id="invoiceTable">
+      <thead><tr><th>Invoice No.</th><th>Date</th><th>Customer</th><th>Amount</th><th>Received</th><th>Balance</th><th>Due Date</th><th>Days Since Due</th><th>PO Reference</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr><td>SSPI/2026/0095</td><td>12-Jun-26</td><td>Maruti Suzuki</td><td>₹1.8L</td><td>—</td><td>₹1.8L</td><td>12-Jul-26</td><td><span class="pill pill-green">26 days left</span></td><td>MSIL/PO/2026/441</td><td><span class="pill pill-green">Open</span></td><td><button class="btn btn-success btn-sm" onclick="recordPayment('SSPI/2026/0095')">💰 Record</button></td></tr>
+        <tr><td>SSPI/2026/0094</td><td>10-Jun-26</td><td>Honda Cars</td><td>₹1.2L</td><td>—</td><td>₹1.2L</td><td>10-Jul-26</td><td><span class="pill pill-green">24 days left</span></td><td>HCI/PO/2026/218</td><td><span class="pill pill-green">Open</span></td><td><button class="btn btn-success btn-sm" onclick="recordPayment('SSPI/2026/0094')">💰 Record</button></td></tr>
+        <tr><td>SSPI/2026/0092</td><td>08-Jun-26</td><td>Maruti Suzuki</td><td>₹1.0L</td><td>—</td><td>₹1.0L</td><td>08-Jul-26</td><td><span class="pill pill-green">22 days left</span></td><td>MSIL/PO/2026/438</td><td><span class="pill pill-green">Open</span></td><td><button class="btn btn-success btn-sm" onclick="recordPayment('SSPI/2026/0092')">💰 Record</button></td></tr>
+        <tr><td>SSPI/2026/0090</td><td>05-Jun-26</td><td>Tata Motors</td><td>₹1.8L</td><td>—</td><td>₹1.8L</td><td>05-Jul-26</td><td><span class="pill pill-green">19 days left</span></td><td>TML/PO/2026/667</td><td><span class="pill pill-green">Open</span></td><td><button class="btn btn-success btn-sm" onclick="recordPayment('SSPI/2026/0090')">💰 Record</button></td></tr>
+        <tr><td>SSPI/2026/0089</td><td>03-Jun-26</td><td>Hero MotoCorp</td><td>₹1.6L</td><td>—</td><td>₹1.6L</td><td>03-Jul-26</td><td><span class="pill pill-green">17 days left</span></td><td>HMC/PO/2026/334</td><td><span class="pill pill-green">Open</span></td><td><button class="btn btn-success btn-sm" onclick="recordPayment('SSPI/2026/0089')">💰 Record</button></td></tr>
+        <tr><td>SSPI/2026/0086</td><td>28-May-26</td><td>Bajaj Auto</td><td>₹0.8L</td><td>—</td><td>₹0.8L</td><td>27-Jun-26</td><td><span class="pill pill-orange">11 days left</span></td><td>BAL/PO/2026/119</td><td><span class="pill pill-orange">Due Soon</span></td><td><button class="btn btn-success btn-sm" onclick="recordPayment('SSPI/2026/0086')">💰 Record</button></td></tr>
+        <tr><td>SSPI/2026/0084</td><td>22-May-26</td><td>Hero MotoCorp</td><td>₹2.2L</td><td>—</td><td>₹2.2L</td><td>21-Jun-26</td><td><span class="pill pill-red">5 days ago</span></td><td>HMC/PO/2026/321</td><td><span class="pill pill-red">Overdue</span></td><td><button class="btn btn-danger btn-sm" onclick="recordPayment('SSPI/2026/0084')">🚨 Chase</button></td></tr>
+        <tr><td>SSPI/2026/0083</td><td>20-May-26</td><td>Tata Motors</td><td>₹1.6L</td><td>—</td><td>₹1.6L</td><td>19-Jun-26</td><td><span class="pill pill-red">3 days ago</span></td><td>TML/PO/2026/649</td><td><span class="pill pill-red">Overdue</span></td><td><button class="btn btn-danger btn-sm" onclick="recordPayment('SSPI/2026/0083')">🚨 Chase</button></td></tr>
+        <tr><td>SSPI/2026/0081</td><td>15-May-26</td><td>Bajaj Auto</td><td>₹1.2L</td><td>—</td><td>₹1.2L</td><td>14-Jun-26</td><td><span class="pill pill-red">2 days ago</span></td><td>BAL/PO/2026/108</td><td><span class="pill pill-red">Overdue</span></td><td><button class="btn btn-danger btn-sm" onclick="recordPayment('SSPI/2026/0081')">🚨 Chase</button></td></tr>
+        <tr style="background:#fff5f5"><td>SSPI/2026/0078</td><td>28-Apr-26</td><td>JBM Group</td><td>₹2.8L</td><td>—</td><td>₹2.8L</td><td>28-May-26</td><td><span class="pill pill-red">19 days ago</span></td><td>JBM/PO/2026/087</td><td><span class="pill pill-red">Overdue</span></td><td><button class="btn btn-danger btn-sm" onclick="escalateCase('JBM Group')">⚠️ Escalate</button></td></tr>
+        <tr style="background:#fff5f5"><td>SSPI/2026/0075</td><td>18-Apr-26</td><td>JBM Group</td><td>₹2.4L</td><td>—</td><td>₹2.4L</td><td>18-May-26</td><td><span class="pill pill-purple">29 days ago</span></td><td>JBM/PO/2026/074</td><td><span class="pill pill-purple">Critical</span></td><td><button class="btn btn-danger btn-sm" onclick="escalateCase('JBM Group')">⚖️ Legal</button></td></tr>
+        <tr style="background:#fff5f5"><td>SSPI/2026/0074</td><td>15-Apr-26</td><td>TVS Motor</td><td>₹4.0L</td><td>—</td><td>₹4.0L</td><td>15-May-26</td><td><span class="pill pill-purple">32 days ago</span></td><td>TVS/PO/2026/156</td><td><span class="pill pill-purple">Critical</span></td><td><button class="btn btn-danger btn-sm" onclick="escalateCase('TVS Motor')">⚠️ Escalate</button></td></tr>
+        <tr style="background:#fff5f5"><td>SSPI/2026/0062</td><td>10-Mar-26</td><td>Eicher Trucks</td><td>₹4.6L</td><td>—</td><td>₹4.6L</td><td>09-Apr-26</td><td><span class="pill pill-purple">68 days ago</span></td><td>ETL/PO/2026/033</td><td><span class="pill pill-purple">Legal</span></td><td><button class="btn btn-danger btn-sm" onclick="escalateCase('Eicher Trucks')">⚖️ Legal</button></td></tr>
+        <tr style="background:#fff5f5"><td>SSPI/2026/0054</td><td>15-Feb-26</td><td>Eicher Trucks</td><td>₹3.6L</td><td>—</td><td>₹3.6L</td><td>17-Mar-26</td><td><span class="pill pill-purple">91 days ago</span></td><td>ETL/PO/2026/021</td><td><span class="pill pill-purple">Legal</span></td><td><button class="btn btn-danger btn-sm" onclick="escalateCase('Eicher Trucks')">⚖️ Legal</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══ AGING ANALYSIS ═══ -->
+<div class="section" id="tab-aging">
+  <div class="kpi-row">
+    <div class="kpi green"><div class="kpi-icon">0–30d</div><div class="kpi-val">₹8.2L</div><div class="kpi-lbl">Current — 12 invoices</div><div class="kpi-sub">Regular follow-up</div></div>
+    <div class="kpi orange"><div class="kpi-icon">31–60d</div><div class="kpi-val">₹7.8L</div><div class="kpi-lbl">Warning — 6 invoices</div><div class="kpi-sub">Accounts Head to act</div></div>
+    <div class="kpi red"><div class="kpi-icon">61–90d</div><div class="kpi-val">₹12.4L</div><div class="kpi-lbl">Overdue — 3 invoices</div><div class="kpi-sub">Sales + Accounts escalate</div></div>
+    <div class="kpi purple"><div class="kpi-icon">&gt;90d</div><div class="kpi-val">₹3.6L</div><div class="kpi-lbl">Critical — 2 invoices</div><div class="kpi-sub">MD + Legal action</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>⏰ Detailed Aging Analysis — Customer-wise</h3></div>
+    <table>
+      <thead><tr><th>Customer</th><th>0–30 Days</th><th>31–60 Days</th><th>61–90 Days</th><th>&gt;90 Days</th><th>TOTAL</th><th>% Share</th><th>Risk Level</th><th>Required Action</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Maruti Suzuki India</strong></td><td>₹2.8L</td><td>₹1.4L</td><td>—</td><td>—</td><td>₹4.2L</td><td>13.1%</td><td><span class="pill pill-green">Low</span></td><td>Regular statement / call</td></tr>
+        <tr><td><strong>Honda Cars India</strong></td><td>₹1.2L</td><td>—</td><td>—</td><td>—</td><td>₹1.2L</td><td>3.8%</td><td><span class="pill pill-green">Low</span></td><td>Regular statement / call</td></tr>
+        <tr><td><strong>Hero MotoCorp</strong></td><td>₹1.6L</td><td>₹2.2L</td><td>—</td><td>—</td><td>₹3.8L</td><td>11.9%</td><td><span class="pill pill-orange">Medium</span></td><td>Accounts Head reminder call + email</td></tr>
+        <tr><td><strong>Tata Motors</strong></td><td>₹1.8L</td><td>₹1.6L</td><td>—</td><td>—</td><td>₹3.4L</td><td>10.6%</td><td><span class="pill pill-orange">Medium</span></td><td>Accounts Head reminder call + email</td></tr>
+        <tr><td><strong>Bajaj Auto</strong></td><td>₹0.8L</td><td>₹1.2L</td><td>—</td><td>—</td><td>₹2.0L</td><td>6.3%</td><td><span class="pill pill-orange">Medium</span></td><td>Accounts Head reminder call + email</td></tr>
+        <tr style="background:#fff5f5"><td><strong>JBM Group</strong></td><td>—</td><td>₹1.4L</td><td>₹3.8L</td><td>—</td><td>₹5.2L</td><td>16.3%</td><td><span class="pill pill-red">High</span></td><td>MD notice + hold new orders</td></tr>
+        <tr style="background:#fff5f5"><td><strong>TVS Motor</strong></td><td>—</td><td>—</td><td>₹4.0L</td><td>—</td><td>₹4.0L</td><td>12.5%</td><td><span class="pill pill-red">High</span></td><td>MD notice + hold new orders</td></tr>
+        <tr style="background:#fff0f5"><td><strong>Eicher Trucks</strong></td><td>—</td><td>—</td><td>₹4.6L</td><td>₹3.6L</td><td>₹8.2L</td><td>25.6%</td><td><span class="pill pill-purple">Critical</span></td><td>Legal notice + stop supply + MD approval</td></tr>
+        <tr style="font-weight:700;background:#f8fafc"><td>TOTAL</td><td>₹8.2L</td><td>₹7.8L</td><td>₹12.4L</td><td>₹3.6L</td><td>₹32.0L</td><td>100%</td><td>—</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- AGING BARS VISUAL -->
+  <div class="panel">
+    <div class="panel-head"><h3>📊 Aging Distribution — Visual</h3></div>
+    <div class="panel-body">
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span><strong>0–30 Days (Current)</strong></span><span style="color:var(--green)">₹8.2L — 25.6%</span></div>
+        <div class="aging-bar current" style="width:25.6%"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span><strong>31–60 Days (Warning)</strong></span><span style="color:#f97316">₹7.8L — 24.4%</span></div>
+        <div class="aging-bar warn" style="width:24.4%"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span><strong>61–90 Days (Overdue)</strong></span><span style="color:#dc2626">₹12.4L — 38.8%</span></div>
+        <div class="aging-bar overdue" style="width:38.8%"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span><strong>&gt;90 Days (Critical/Legal)</strong></span><span style="color:#7c3aed">₹3.6L — 11.3%</span></div>
+        <div class="aging-bar critical" style="width:11.3%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPROVAL MATRIX -->
+  <div class="panel">
+    <div class="panel-head"><h3>✅ Escalation & Approval Matrix by Aging Bucket</h3></div>
+    <table>
+      <thead><tr><th>Aging Bucket</th><th>Action</th><th>Responsible</th><th>Approval Required</th><th>Timeline</th><th>Hold Supply?</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill pill-green">0–30 Days</span></td><td>Statement of Account + polite reminder</td><td>Accounts Staff</td><td>None</td><td>At 25th day</td><td>No</td></tr>
+        <tr><td><span class="pill pill-orange">31–60 Days</span></td><td>Formal email + phone call + visit if needed</td><td>Accounts Head</td><td>Accounts Head</td><td>At 31st day</td><td>No</td></tr>
+        <tr><td><span class="pill pill-red">61–90 Days</span></td><td>Formal notice + stop new orders + MD alert</td><td>Accounts + Sales Head</td><td>MD / Owner</td><td>At 61st day</td><td>Yes — hold new orders</td></tr>
+        <tr><td><span class="pill pill-purple">&gt;90 Days</span></td><td>Legal notice + MSME filing + interest claim</td><td>Accounts Head + Legal</td><td>MD / Owner sign</td><td>At 91st day</td><td>Yes — stop supply</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ RECEIPT ENTRY ═══ -->
+<div class="section" id="tab-receipt">
+  <div class="approval-chain">
+    <strong style="font-size:12px;color:#9a3412;margin-right:4px">✅ Receipt Entry Approval:</strong>
+    <div class="apv-step"><div class="apv-role">Entry</div><div class="apv-action">Accounts Staff</div></div>
+    <div class="apv-arrow">→</div>
+    <div class="apv-step"><div class="apv-role">Bank Confirm</div><div class="apv-action">Bank Statement Match</div></div>
+    <div class="apv-arrow">→</div>
+    <div class="apv-step"><div class="apv-role">Verify</div><div class="apv-action">Accounts Head</div></div>
+    <div class="apv-arrow">→</div>
+    <div class="apv-step"><div class="apv-role">Update Ledger</div><div class="apv-action">System Auto-Update</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>💰 Record Payment Receipt</h3></div>
+    <div class="panel-body">
+      <div class="form-grid">
+        <div class="fg"><label>Receipt Date *</label><input type="date" id="r_date" value="2026-06-16"></div>
+        <div class="fg"><label>Customer *</label>
+          <select id="r_cust">
+            <option>-- Select Customer --</option>
+            <option>Maruti Suzuki India</option><option>Hero MotoCorp</option>
+            <option>Honda Cars India</option><option>Tata Motors</option>
+            <option>JBM Group</option><option>Bajaj Auto</option>
+            <option>Eicher Trucks</option><option>TVS Motor</option>
+          </select>
+        </div>
+        <div class="fg"><label>Invoice No. *</label><input type="text" id="r_inv" placeholder="SSPI/2026/XXXX"></div>
+        <div class="fg"><label>Amount Received (₹) *</label><input type="number" id="r_amt" placeholder="0"></div>
+        <div class="fg"><label>Payment Mode *</label>
+          <select id="r_mode"><option>NEFT</option><option>RTGS</option><option>Cheque</option><option>Cash</option><option>UPI</option><option>DD</option></select>
+        </div>
+        <div class="fg"><label>Bank / Ref No.</label><input type="text" id="r_ref" placeholder="UTR / Cheque No."></div>
+        <div class="fg"><label>Receipt Against</label>
+          <select id="r_type"><option>Full Payment</option><option>Partial Payment</option><option>Advance</option><option>TDS Deducted</option></select>
+        </div>
+        <div class="fg"><label>TDS Amount (if any ₹)</label><input type="number" id="r_tds" placeholder="0"></div>
+        <div class="fg"><label>Accounts Head Approval</label><input type="text" id="r_appr" placeholder="Name + date"></div>
+        <div class="fg"><label>Bank Statement Date</label><input type="date" id="r_bdate"></div>
+        <div class="fg full"><label>Remarks</label><input type="text" id="r_rem" placeholder="Payment details / any deduction remarks"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-success" onclick="submitReceipt()">✅ Record Receipt</button>
+        <button class="btn btn-outline" onclick="clearReceipt()">🗑 Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>📋 Recent Receipts (June 2026)</h3></div>
+    <table id="receiptLog">
+      <thead><tr><th>Date</th><th>Customer</th><th>Invoice</th><th>Amount</th><th>TDS</th><th>Net</th><th>Mode</th><th>Ref No.</th><th>Entered By</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>15-Jun-26</td><td>TVS Motor</td><td>SSPI/2026/0073</td><td>₹3.8L</td><td>₹0.04L</td><td>₹3.76L</td><td>Cheque</td><td>CHQ-448821</td><td>Accounts</td><td><span class="pill pill-green">Verified</span></td></tr>
+        <tr><td>14-Jun-26</td><td>Bajaj Auto</td><td>SSPI/2026/0077</td><td>₹5.4L</td><td>—</td><td>₹5.4L</td><td>NEFT</td><td>BAJAJAUTO2606</td><td>Accounts</td><td><span class="pill pill-green">Verified</span></td></tr>
+        <tr><td>12-Jun-26</td><td>Hero MotoCorp</td><td>SSPI/2026/0080</td><td>₹4.6L</td><td>₹0.05L</td><td>₹4.55L</td><td>RTGS</td><td>HEROMC1206</td><td>Accounts</td><td><span class="pill pill-green">Verified</span></td></tr>
+        <tr><td>10-Jun-26</td><td>Tata Motors</td><td>SSPI/2026/0079</td><td>₹8.8L</td><td>₹0.09L</td><td>₹8.71L</td><td>NEFT</td><td>TATAMOTOR1006</td><td>Accounts</td><td><span class="pill pill-green">Verified</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ FOLLOW-UP LOG ═══ -->
+<div class="section" id="tab-followup">
+  <div class="approval-chain">
+    <strong style="font-size:12px;color:#9a3412;margin-right:4px">📞 Follow-up Accountability:</strong>
+    <div class="apv-step"><div class="apv-role">Daily</div><div class="apv-action">Accounts Staff</div></div>
+    <div class="apv-arrow">→</div>
+    <div class="apv-step"><div class="apv-role">Weekly Review</div><div class="apv-action">Accounts Head</div></div>
+    <div class="apv-arrow">→</div>
+    <div class="apv-step"><div class="apv-role">No Progress</div><div class="apv-action">Escalate to MD</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="panel">
+      <div class="panel-head"><h3>📞 Log New Follow-up</h3></div>
+      <div class="panel-body">
+        <div class="form-grid">
+          <div class="fg"><label>Date *</label><input type="date" id="fu_date" value="2026-06-16"></div>
+          <div class="fg"><label>Customer *</label>
+            <select id="fu_cust"><option>-- Select --</option><option>Maruti Suzuki India</option><option>Hero MotoCorp</option><option>Honda Cars India</option><option>Tata Motors</option><option>JBM Group</option><option>Bajaj Auto</option><option>Eicher Trucks</option><option>TVS Motor</option></select>
+          </div>
+          <div class="fg"><label>Invoice No.</label><input type="text" id="fu_inv" placeholder="SSPI/2026/XXXX"></div>
+          <div class="fg"><label>Contact Mode</label>
+            <select id="fu_mode"><option>Phone Call</option><option>Email</option><option>WhatsApp</option><option>Physical Visit</option><option>Letter / Notice</option><option>Legal Notice</option></select>
+          </div>
+          <div class="fg"><label>Contacted Person</label><input type="text" id="fu_person" placeholder="Name & designation"></div>
+          <div class="fg"><label>Promise Date</label><input type="date" id="fu_promise"></div>
+          <div class="fg"><label>Amount Promised (₹)</label><input type="number" id="fu_pamnt" placeholder="0"></div>
+          <div class="fg"><label>Follow-up By</label><input type="text" id="fu_by" placeholder="Your name"></div>
+          <div class="fg full"><label>Outcome / Remarks *</label><textarea id="fu_outcome" rows="3" placeholder="What was said? Any promise? Dispute? Reason for delay?"></textarea></div>
+          <div class="fg full"><label>Next Action Required</label><input type="text" id="fu_next" placeholder="Call again on / Send email / Escalate to MD"></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="submitFollowup()">📝 Save Follow-up</button>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <div class="panel-head"><h3>📅 Follow-up Timeline — JBM Group</h3></div>
+      <div class="panel-body">
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot legal"></div>
+            <div class="tl-content">
+              <div class="tl-date">16-Jun-26 · Accounts Head</div>
+              <div class="tl-text">Legal Notice issued — ₹5.2L outstanding &gt;60 days. MD sign obtained.</div>
+              <div class="tl-result"><span class="pill pill-purple">Legal Action Initiated</span></div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot call"></div>
+            <div class="tl-content">
+              <div class="tl-date">10-Jun-26 · Accounts Staff</div>
+              <div class="tl-text">Called Arun Sharma (Finance, JBM). Says approval pending at their GM level. Promised payment by 20-Jun.</div>
+              <div class="tl-result"><span class="pill pill-orange">Promise: 20-Jun-26</span></div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot email"></div>
+            <div class="tl-content">
+              <div class="tl-date">03-Jun-26 · Accounts Staff</div>
+              <div class="tl-text">Email sent with Statement of Account and copy of both invoices. No reply received.</div>
+              <div class="tl-result"><span class="pill pill-grey">Awaiting Response</span></div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot call"></div>
+            <div class="tl-content">
+              <div class="tl-date">25-May-26 · Accounts Staff</div>
+              <div class="tl-text">First reminder call — said payment will come by month end. Did not come.</div>
+              <div class="tl-result"><span class="pill pill-orange">Promise broken</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>📋 All Follow-up Log — June 2026</h3></div>
+    <table>
+      <thead><tr><th>Date</th><th>Customer</th><th>Invoice</th><th>Mode</th><th>Person Contacted</th><th>Outcome</th><th>Promise Date</th><th>Promise Amt</th><th>By</th><th>Next Action</th></tr></thead>
+      <tbody>
+        <tr><td>16-Jun-26</td><td>JBM Group</td><td>SSPI/2026/0078</td><td><span class="pill pill-purple">Legal Notice</span></td><td>—</td><td>Legal notice issued — MD signed</td><td>—</td><td>—</td><td>Accts Head</td><td>Await 7 days</td></tr>
+        <tr><td>15-Jun-26</td><td>Eicher Trucks</td><td>SSPI/2026/0062</td><td><span class="pill pill-red">Legal Notice</span></td><td>Nikhil Kapoor (Finance)</td><td>Notice delivered. Dispute raised on quality claim — MD to review</td><td>—</td><td>—</td><td>Accts Head</td><td>MD to respond</td></tr>
+        <tr><td>14-Jun-26</td><td>TVS Motor</td><td>SSPI/2026/0074</td><td><span class="pill pill-blue">Phone Call</span></td><td>Susheel Menon (AP)</td><td>Payment held due to PO price difference. Said will release by 25-Jun</td><td>25-Jun-26</td><td>₹4.0L</td><td>Accts Staff</td><td>Call 23-Jun</td></tr>
+        <tr><td>12-Jun-26</td><td>Hero MotoCorp</td><td>SSPI/2026/0084</td><td><span class="pill pill-blue">Email</span></td><td>Priya Sharma</td><td>Acknowledgment received. Payment in next cycle (20-Jun)</td><td>20-Jun-26</td><td>₹2.2L</td><td>Accts Staff</td><td>Follow 19-Jun</td></tr>
+        <tr><td>10-Jun-26</td><td>JBM Group</td><td>SSPI/2026/0075</td><td><span class="pill pill-blue">Phone</span></td><td>Arun Sharma</td><td>GM approval pending. Promise 20-Jun — not received</td><td>20-Jun-26</td><td>₹5.2L</td><td>Accts Staff</td><td>Escalate</td></tr>
+        <tr><td>08-Jun-26</td><td>Tata Motors</td><td>SSPI/2026/0083</td><td><span class="pill pill-blue">Phone</span></td><td>Rahul Gupta (AP)</td><td>Payment in process — next NEFT batch 18-Jun</td><td>18-Jun-26</td><td>₹1.6L</td><td>Accts Staff</td><td>Confirm 18-Jun</td></tr>
+        <tr><td>05-Jun-26</td><td>Bajaj Auto</td><td>SSPI/2026/0081</td><td><span class="pill pill-green">WhatsApp</span></td><td>Deepak Patil</td><td>Confirmed — payment by 18-Jun</td><td>18-Jun-26</td><td>₹1.2L</td><td>Accts Staff</td><td>Confirm 18-Jun</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ ESCALATION ═══ -->
+<div class="section" id="tab-escalation">
+  <div class="alert-box red"><span class="alert-icon">🚨</span><div><strong>3 cases need immediate MD / Owner action.</strong> Total ₹17.4L at risk. Eicher Trucks (₹8.2L) requires legal notice with MD sign. All new orders to these customers MUST be on hold.</div></div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>📋 My Submitted Requests — Live Status</h3><button class="btn btn-outline btn-sm" onclick="loadMyApprovalRequests()">🔄 Refresh</button></div>
+    <div class="table-wrap"><table id="myReqTable">
+      <thead><tr><th>Request ID</th><th>Type</th><th>Summary</th><th>Status</th><th>Decided By</th><th>Notes</th></tr></thead>
+      <tbody><tr><td colspan="6">Click Refresh to load.</td></tr></tbody>
+    </table></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>⚠️ Escalation Register — Active Cases</h3><button class="btn btn-danger btn-sm" onclick="openEscModal()">+ New Escalation</button></div>
+    <table>
+      <thead><tr><th>Case No.</th><th>Customer</th><th>Amount</th><th>Days Overdue</th><th>Escalation Level</th><th>Approved By</th><th>Action Taken</th><th>Next Step</th><th>Supply Status</th><th>Target Resolution</th></tr></thead>
+      <tbody>
+        <tr style="background:#fff0f5"><td>ESC-001</td><td><strong>Eicher Trucks</strong></td><td class="pill pill-purple">₹8.2L</td><td>91+ days</td><td><span class="pill pill-purple">LEGAL</span></td><td>MD / Owner</td><td>Legal notice issued 15-Jun-26. Quality dispute raised by customer.</td><td>MD response to dispute + file MSME case</td><td><span class="pill pill-red">STOPPED</span></td><td>30-Jun-26</td></tr>
+        <tr style="background:#fff5f5"><td>ESC-002</td><td><strong>JBM Group</strong></td><td class="pill pill-red">₹5.2L</td><td>68 days</td><td><span class="pill pill-red">MD NOTICE</span></td><td>MD / Owner</td><td>Legal notice issued 16-Jun-26. 7 day demand notice.</td><td>Await 7 days response. File case if no payment.</td><td><span class="pill pill-red">HOLD</span></td><td>23-Jun-26</td></tr>
+        <tr style="background:#fff5f5"><td>ESC-003</td><td><strong>TVS Motor</strong></td><td class="pill pill-red">₹4.0L</td><td>62 days</td><td><span class="pill pill-orange">SALES HEAD</span></td><td>Accounts Head + Sales Head</td><td>PO price dispute — meeting scheduled with TVS AP team</td><td>Resolve price dispute by 20-Jun. Escalate to MD if no resolution.</td><td><span class="pill pill-orange">CONDITIONAL</span></td><td>25-Jun-26</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>📋 Escalation Approval Flow</h3></div>
+    <table>
+      <thead><tr><th>Level</th><th>Condition</th><th>Approver</th><th>Actions Unlocked</th><th>Documentation Required</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill pill-orange">Level 1</span></td><td>31–60 days overdue</td><td>Accounts Head</td><td>Formal email + call + internal hold</td><td>Statement of Account + call log</td></tr>
+        <tr><td><span class="pill pill-red">Level 2</span></td><td>61–90 days overdue</td><td>Accounts Head + Sales Head</td><td>Stop new orders + visit + MD alert</td><td>Escalation memo + MD sign-off</td></tr>
+        <tr><td><span class="pill pill-purple">Level 3</span></td><td>&gt;90 days / disputed</td><td>MD / Owner</td><td>Legal notice + stop supply + MSME filing</td><td>Legal notice draft + MD signature + evidence file</td></tr>
+        <tr><td><span class="pill pill-red">Level 4</span></td><td>No response to legal notice</td><td>MD + Legal Counsel</td><td>File case in MSME court / civil suit</td><td>Complete documentation + legal retainer approval</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ FORECAST ═══ -->
+<div class="section" id="tab-forecast">
+  <div class="kpi-row">
+    <div class="kpi green"><div class="kpi-val">₹11.2L</div><div class="kpi-lbl">Committed This Week</div><div class="kpi-sub">Based on customer promises</div></div>
+    <div class="kpi blue"><div class="kpi-val">₹18.4L</div><div class="kpi-lbl">Expected This Month</div><div class="kpi-sub">June 2026 forecast</div></div>
+    <div class="kpi orange"><div class="kpi-val">₹6.0L</div><div class="kpi-lbl">Uncertain</div><div class="kpi-sub">No commitment received</div></div>
+    <div class="kpi red"><div class="kpi-val">₹4.4L</div><div class="kpi-lbl">Unlikely (Disputed)</div><div class="kpi-sub">Under legal/escalation</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>📈 Weekly Collection Forecast — June 2026</h3></div>
+    <div class="panel-body">
+      <div class="forecast-band">
+        <div class="fc-week">Wk 3 (16–20)</div>
+        <div class="fc-bar-wrap"><div class="fc-bar" style="width:68%;background:#16a34a">Hero ₹2.2L + Tata ₹1.6L + Hero ₹2.2L</div></div>
+        <div class="fc-amt" style="color:#16a34a">₹6.0L</div>
+      </div>
+      <div class="forecast-band">
+        <div class="fc-week">Wk 3 also</div>
+        <div class="fc-bar-wrap"><div class="fc-bar" style="width:59%;background:#f97316">Bajaj ₹1.2L + Tata ₹1.8L</div></div>
+        <div class="fc-amt" style="color:#f97316">₹3.0L</div>
+      </div>
+      <div class="forecast-band">
+        <div class="fc-week">Wk 4 (21–25)</div>
+        <div class="fc-bar-wrap"><div class="fc-bar" style="width:52%;background:#0ea5e9">TVS ₹4.0L + Maruti ₹2.2L</div></div>
+        <div class="fc-amt" style="color:#0ea5e9">₹6.2L</div>
+      </div>
+      <div class="forecast-band">
+        <div class="fc-week">JBM (Legal)</div>
+        <div class="fc-bar-wrap"><div class="fc-bar" style="width:35%;background:#dc2626">If legal notice works — ₹5.2L</div></div>
+        <div class="fc-amt" style="color:#dc2626">₹5.2L?</div>
+      </div>
+      <div class="forecast-band">
+        <div class="fc-week">Eicher (Legal)</div>
+        <div class="fc-bar-wrap"><div class="fc-bar" style="width:20%;background:#7c3aed">Court/settlement — uncertain</div></div>
+        <div class="fc-amt" style="color:#7c3aed">₹8.2L?</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>📋 Customer-wise Collection Commitment</h3></div>
+    <table>
+      <thead><tr><th>Customer</th><th>Outstanding</th><th>Committed Amount</th><th>Promise Date</th><th>Confidence</th><th>Last Contact</th><th>Remarks</th></tr></thead>
+      <tbody>
+        <tr><td>Hero MotoCorp</td><td>₹3.8L</td><td>₹2.2L</td><td>20-Jun-26</td><td><span class="pill pill-green">High</span></td><td>12-Jun-26</td><td>Confirmed by email — in payment cycle</td></tr>
+        <tr><td>Tata Motors</td><td>₹3.4L</td><td>₹1.6L</td><td>18-Jun-26</td><td><span class="pill pill-green">High</span></td><td>08-Jun-26</td><td>NEFT batch confirmed</td></tr>
+        <tr><td>Bajaj Auto</td><td>₹2.0L</td><td>₹1.2L</td><td>18-Jun-26</td><td><span class="pill pill-green">High</span></td><td>05-Jun-26</td><td>WhatsApp confirmation</td></tr>
+        <tr><td>TVS Motor</td><td>₹4.0L</td><td>₹4.0L</td><td>25-Jun-26</td><td><span class="pill pill-orange">Medium</span></td><td>14-Jun-26</td><td>Price dispute — meeting scheduled</td></tr>
+        <tr><td>Maruti Suzuki</td><td>₹4.2L</td><td>₹2.8L</td><td>30-Jun-26</td><td><span class="pill pill-green">High</span></td><td>Regular</td><td>Regular payer — statement sent</td></tr>
+        <tr><td>JBM Group</td><td>₹5.2L</td><td>—</td><td>—</td><td><span class="pill pill-red">Low</span></td><td>16-Jun-26</td><td>Legal notice issued — uncertain</td></tr>
+        <tr><td>Eicher Trucks</td><td>₹8.2L</td><td>—</td><td>—</td><td><span class="pill pill-purple">Disputed</span></td><td>15-Jun-26</td><td>Quality dispute raised — legal stage</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ CREDIT LIMITS ═══ -->
+<div class="section" id="tab-creditlimit">
+  <div class="alert-box orange"><span class="alert-icon">🛡️</span><div><strong>2 customers are OVER their credit limit.</strong> JBM Group (₹5.2L vs ₹4L limit) and Eicher Trucks (₹8.2L vs ₹6L limit). No new orders to be accepted without MD approval.</div></div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>🛡️ Credit Limit Register — All Customers</h3></div>
+    <table>
+      <thead><tr><th>Customer</th><th>Credit Limit</th><th>Outstanding</th><th>Available Credit</th><th>% Utilised</th><th>Status</th><th>New Orders?</th><th>Last Reviewed</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Maruti Suzuki India</strong></td><td>₹15L</td><td>₹4.2L</td><td>₹10.8L</td><td>28%</td><td><span class="pill pill-green">✓ Within Limit</span></td><td><span class="pill pill-green">Accept</span></td><td>01-Apr-26</td></tr>
+        <tr><td><strong>Honda Cars India</strong></td><td>₹8L</td><td>₹1.2L</td><td>₹6.8L</td><td>15%</td><td><span class="pill pill-green">✓ Within Limit</span></td><td><span class="pill pill-green">Accept</span></td><td>01-Apr-26</td></tr>
+        <tr><td><strong>Tata Motors</strong></td><td>₹12L</td><td>₹3.4L</td><td>₹8.6L</td><td>28%</td><td><span class="pill pill-green">✓ Within Limit</span></td><td><span class="pill pill-green">Accept</span></td><td>01-Apr-26</td></tr>
+        <tr><td><strong>Hero MotoCorp</strong></td><td>₹10L</td><td>₹3.8L</td><td>₹6.2L</td><td>38%</td><td><span class="pill pill-orange">⚠ Watch</span></td><td><span class="pill pill-orange">Caution</span></td><td>01-Apr-26</td></tr>
+        <tr><td><strong>Bajaj Auto</strong></td><td>₹6L</td><td>₹2.0L</td><td>₹4.0L</td><td>33%</td><td><span class="pill pill-green">✓ Within Limit</span></td><td><span class="pill pill-green">Accept</span></td><td>01-Apr-26</td></tr>
+        <tr><td><strong>TVS Motor</strong></td><td>₹8L</td><td>₹4.0L</td><td>₹4.0L</td><td>50%</td><td><span class="pill pill-orange">⚠ Watch</span></td><td><span class="pill pill-orange">Caution</span></td><td>01-Apr-26</td></tr>
+        <tr style="background:#fff5f5"><td><strong>JBM Group</strong></td><td>₹4L</td><td>₹5.2L</td><td><span style="color:#dc2626">-₹1.2L (OVER)</span></td><td><span style="color:#dc2626;font-weight:700">130%</span></td><td><span class="pill pill-red">❌ Over Limit</span></td><td><span class="pill pill-red">HOLD — MD Only</span></td><td>01-Apr-26</td></tr>
+        <tr style="background:#fff5f5"><td><strong>Eicher Trucks</strong></td><td>₹6L</td><td>₹8.2L</td><td><span style="color:#dc2626">-₹2.2L (OVER)</span></td><td><span style="color:#dc2626;font-weight:700">137%</span></td><td><span class="pill pill-purple">❌ Critical</span></td><td><span class="pill pill-purple">STOPPED — Legal</span></td><td>01-Apr-26</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>✅ Credit Limit Change — Approval Required</h3></div>
+    <div class="panel-body">
+      <div class="form-grid">
+        <div class="fg"><label>Customer</label><select id="clc_cust"><option>-- Select --</option><option>Maruti Suzuki India</option><option>Hero MotoCorp</option><option>Honda Cars India</option><option>Tata Motors</option><option>JBM Group</option><option>Bajaj Auto</option><option>Eicher Trucks</option><option>TVS Motor</option></select></div>
+        <div class="fg"><label>Current Limit (₹)</label><input type="text" id="clc_current" placeholder="Existing limit"></div>
+        <div class="fg"><label>Proposed New Limit (₹)</label><input type="number" id="clc_proposed" placeholder="New limit amount"></div>
+        <div class="fg"><label>Reason for Change</label><select id="clc_reason"><option>Good payment history</option><option>Higher order volumes</option><option>Risk reduction</option><option>Management directive</option></select></div>
+        <div class="fg"><label>Requested By</label><input type="text" id="clc_reqby" placeholder="Your name (Accounts)"></div>
+      </div>
+      <div class="note" style="margin-top:8px">This submits a Pending request to the SSPI Approvals Inbox — the limit only changes once Accounts Head / MD approves it there.</div>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="submitCreditLimitRequest()">📤 Submit for Approval</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- MODALS -->
+<div class="overlay" id="newInvModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('newInvModal')">✕</button>
+    <h3>🧾 New Invoice Entry</h3>
+    <div class="form-grid">
+      <div class="fg"><label>Invoice No.</label><input type="text" id="ni_invno" placeholder="SSPI/2026/XXXX"></div>
+      <div class="fg"><label>Invoice Date</label><input type="date" id="ni_date"></div>
+      <div class="fg"><label>Customer *</label><select id="ni_cust"><option>-- Select --</option><option>Maruti Suzuki India</option><option>Hero MotoCorp</option><option>Honda Cars India</option><option>Tata Motors</option><option>JBM Group</option><option>Bajaj Auto</option><option>Eicher Trucks</option><option>TVS Motor</option></select></div>
+      <div class="fg"><label>PO Reference *</label><input type="text" id="ni_poref" placeholder="Customer PO number"></div>
+      <div class="fg"><label>Invoice Amount (₹) *</label><input type="number" id="ni_amt" placeholder="0"></div>
+      <div class="fg"><label>Payment Terms</label><select id="ni_terms"><option>30 Days</option><option>45 Days</option><option>60 Days</option><option>Advance</option></select></div>
+      <div class="fg"><label>Product Description</label><input type="text" id="ni_desc" placeholder="Wooden Pallets / Steel Crates etc."></div>
+      <div class="fg"><label>Dispatch/Delivery Date</label><input type="date" id="ni_dispatch"></div>
+      <div class="fg"><label>Entered By</label><input type="text" id="ni_entby" placeholder="Your name"></div>
+      <div class="fg"><label>Accounts Head Check</label><input type="text" id="ni_acchead" placeholder="Name + date"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn btn-primary" onclick="saveNewInvoice()">✅ Save to Google Sheets</button>
+      <button class="btn btn-outline" onclick="closeModal('newInvModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="custDetailModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('custDetailModal')">✕</button>
+    <h3 id="custDetailTitle">Customer Account Detail</h3>
+    <div id="custDetailBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="escModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('escModal')">✕</button>
+    <h3>⚠️ New Escalation Case</h3>
+    <div class="alert-box red"><span class="alert-icon">🔐</span><div>This submits a Pending request to the SSPI Approvals Inbox. MD/Owner must Approve it there before any escalation action (legal notice, supply hold) is considered active.</div></div>
+    <div class="form-grid">
+      <div class="fg"><label>Customer *</label><select id="esc_cust"><option>JBM Group</option><option>Eicher Trucks</option><option>TVS Motor</option><option>Hero MotoCorp</option><option>Tata Motors</option></select></div>
+      <div class="fg"><label>Total Amount (₹)</label><input type="number" id="esc_amount" placeholder="0"></div>
+      <div class="fg"><label>Days Overdue</label><input type="number" id="esc_days" placeholder="0"></div>
+      <div class="fg"><label>Escalation Level</label><select id="esc_level"><option>Level 1 — Accounts Head</option><option>Level 2 — MD Alert + Hold Orders</option><option>Level 3 — Legal Notice</option><option>Level 4 — Court Filing</option></select></div>
+      <div class="fg"><label>Requested By</label><input type="text" id="esc_reqby" placeholder="Your name (Accounts)"></div>
+      <div class="fg"><label>Proposed Action</label><input type="text" id="esc_action" placeholder="Notice sent / Orders held etc."></div>
+      <div class="fg full"><label>Case Notes</label><textarea rows="3" id="esc_notes" placeholder="Dispute details, customer reason, prior attempts..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn btn-danger" onclick="submitEscalationRequest()">🚨 Submit for Approval</button>
+      <button class="btn btn-outline" onclick="closeModal('escModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS BACKEND — LIVE CROSS-DEVICE SYNC
+// ═══════════════════════════════════════════════════════
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+let _botLocation = localStorage.getItem('sspi_location') || 'Bhiwadi';
+
+// POST — fire-and-forget (no-cors bypasses CORS for writes)
+// ── OFFLINE QUEUE + AUTH TOKEN + LOCATION ───────────────────
+var _offQ = JSON.parse(localStorage.getItem('sspi_offline_q') || '[]');
+var _botOnline = navigator.onLine;
+function _saveOffQ(){ localStorage.setItem('sspi_offline_q', JSON.stringify(_offQ)); }
+function syncBotQueue(){
+  if (!_botOnline || !_offQ.length) return;
+  var item = _offQ.shift(); _saveOffQ();
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(function(){ if(_offQ.length) setTimeout(syncBotQueue,600); })
+    .catch(function(){ _offQ.unshift(item); _saveOffQ(); });
+}
+window.addEventListener('online',  function(){ _botOnline=true;  syncBotQueue(); });
+window.addEventListener('offline', function(){ _botOnline=false; });
+function gsPost(payload){
+  if (!GS_URL) return;
+  payload.authToken = GS_AUTH_TOKEN;
+  payload.location  = payload.location || _botLocation;
+  payload._ts = payload._ts || new Date().toISOString();
+  if (!_botOnline) {
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+    return;
+  }
+  fetch(GS_URL, {method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  }).catch(function(){
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+  });
+}
+
+// GET — JSONP (bypasses CORS for reads from any domain)
+function gsGet(type, limit){
+  return new Promise(function(resolve){
+    var cbName = '_gsJP_' + Date.now();
+    var script = document.createElement('script');
+    var done = false;
+    window[cbName] = function(d){
+      done = true; delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      resolve((d && d.data) ? d.data : []);
+    };
+    script.onerror = function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } }, 10000);
+    script.src = GS_URL + '?type=' + type + '&limit=' + (limit||100) + '&callback=' + cbName;
+    document.head.appendChild(script);
+  });
+}
+
+// ── Toast notification ────────────────────────────────
+function showToast(msg, type){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:24px;right:24px;background:'+(type==='error'?'#dc2626':'#1e3a5f')+';color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);max-width:350px';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 4000);
+}
+
+// ── Load Invoices from Google Sheets ─────────────────
+function loadDebtorsFromSheets(){
+  // Load invoices
+  gsGet('debtors', 200).then(function(rows){
+    if(!rows || !rows.length){ showToast('☁ No cloud invoices found (demo data shown)', 'info'); return; }
+    var tbody = document.querySelector('#invoiceTable tbody');
+    tbody.innerHTML = '';
+    rows.forEach(function(r){
+      var invNo = r['Invoice No'] || '';
+      var date  = r['Date'] || '';
+      var cust  = r['Customer'] || '';
+      var amt   = r['Amount'] || 0;
+      var due   = r['Due Date'] || '';
+      var poRef = r['PO Ref'] || '';
+      var status= r['Status'] || 'Open';
+      // Calculate days
+      var daysHtml = '';
+      if(due){
+        var diff = Math.round((new Date(due) - new Date()) / 86400000);
+        if(diff > 0) daysHtml = '<span class="pill pill-green">'+diff+' days left</span>';
+        else if(diff > -15) daysHtml = '<span class="pill pill-red">'+Math.abs(diff)+' days ago</span>';
+        else daysHtml = '<span class="pill pill-purple">'+Math.abs(diff)+' days ago</span>';
+      }
+      var statusPill = status==='Open'?'pill-green':status==='Due Soon'?'pill-orange':status==='Overdue'?'pill-red':'pill-purple';
+      var amtL = (parseFloat(amt)/100000).toFixed(1);
+      var btn = (status==='Overdue'||status==='Critical'||status==='Legal')
+        ? '<button class="btn btn-danger btn-sm" onclick="recordPayment(\''+invNo+'\')">🚨 Chase</button>'
+        : '<button class="btn btn-success btn-sm" onclick="recordPayment(\''+invNo+'\')">💰 Record</button>';
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>'+invNo+'</td><td>'+date+'</td><td>'+cust+'</td><td>₹'+amtL+'L</td><td>—</td><td>₹'+amtL+'L</td><td>'+due+'</td><td>'+daysHtml+'</td><td>'+poRef+'</td><td><span class="pill '+statusPill+'">'+status+'</span></td><td>'+btn+'</td>';
+      tbody.appendChild(tr);
+    });
+    showToast('☁ '+rows.length+' invoices loaded from Google Sheets', 'success');
+  });
+
+  // Load receipts
+  gsGet('debtorsPay', 100).then(function(rows){
+    if(!rows || !rows.length) return;
+    var tbody = document.querySelector('#receiptLog tbody');
+    // Keep demo rows, prepend cloud rows
+    var existingHTML = tbody.innerHTML;
+    tbody.innerHTML = '';
+    rows.forEach(function(r){
+      var amtL = (parseFloat(r['Amount']||0)/100000).toFixed(1);
+      var netL = (parseFloat(r['Net']||r['Amount']||0)/100000).toFixed(1);
+      var tr = document.createElement('tr');
+      tr.innerHTML='<td>'+r['Date']+'</td><td>'+r['Customer']+'</td><td>'+r['Invoice No']+'</td><td>₹'+amtL+'L</td><td>—</td><td>₹'+netL+'L</td><td>'+r['Mode']+'</td><td>'+r['Ref No']+'</td><td>'+r['Entered By']+'</td><td><span class="pill pill-green">Verified</span></td>';
+      tbody.appendChild(tr);
+    });
+    tbody.innerHTML += existingHTML;
+    showToast('☁ '+rows.length+' receipts synced from Google Sheets', 'success');
+  });
+}
+
+// ── Save New Invoice to Google Sheets ────────────────
+function saveNewInvoice(){
+  var invNo = document.getElementById('ni_invno').value.trim();
+  var date  = document.getElementById('ni_date').value;
+  var cust  = document.getElementById('ni_cust').value;
+  var poRef = document.getElementById('ni_poref').value.trim();
+  var amt   = document.getElementById('ni_amt').value;
+  var terms = document.getElementById('ni_terms').value;
+  var entBy = document.getElementById('ni_entby').value.trim();
+  if(!invNo||!date||cust.includes('Select')||!amt){
+    alert('Please fill Invoice No., Date, Customer, and Amount.'); return;
+  }
+  // Calculate due date from payment terms
+  var termDays = parseInt(terms)||30;
+  var dueDate = new Date(date); dueDate.setDate(dueDate.getDate()+termDays);
+  var dueDateStr = dueDate.toISOString().split('T')[0];
+  // Post to GS
+  gsPost({type:'debtors', invoiceNo:invNo, date:date, customer:cust,
+          amount:parseFloat(amt), dueDate:dueDateStr, poRef:poRef, status:'Open',
+          submittedBy: entBy||'Accounts'});
+  // Also add to table immediately (optimistic UI)
+  var tbody = document.querySelector('#invoiceTable tbody');
+  var amtL = (parseFloat(amt)/100000).toFixed(1);
+  var diff = Math.round((dueDate - new Date()) / 86400000);
+  var daysHtml = '<span class="pill pill-green">'+diff+' days left</span>';
+  var tr = document.createElement('tr');
+  tr.style.background='#f0fff4';
+  tr.innerHTML='<td>'+invNo+'</td><td>'+date+'</td><td>'+cust+'</td><td>₹'+amtL+'L</td><td>—</td><td>₹'+amtL+'L</td><td>'+dueDateStr+'</td><td>'+daysHtml+'</td><td>'+poRef+'</td><td><span class="pill pill-green">Open</span></td><td><button class="btn btn-success btn-sm" onclick="recordPayment(\''+invNo+'\')">💰 Record</button></td>';
+  tbody.insertBefore(tr, tbody.firstChild);
+  closeModal('newInvModal');
+  showToast('✅ Invoice '+invNo+' saved to Google Sheets', 'success');
+  // Clear form
+  ['ni_invno','ni_date','ni_poref','ni_amt','ni_desc','ni_dispatch','ni_entby','ni_acchead'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('ni_cust').selectedIndex=0;
+}
+
+const PINS = ['VC@2026','OWNER@2026','CEO@2026','ADMIN@2026','PROD@2026'];
+window.onload = () => {
+  document.getElementById('pinOverlay').classList.add('open');
+  document.getElementById('pinInput').focus();
+  // Set today's date on new invoice form
+  document.getElementById('ni_date').value = new Date().toISOString().split('T')[0];
+};
+function verifyPin(){
+  const p=document.getElementById('pinInput').value.trim();
+  if(PINS.includes(p)){
+    document.getElementById('pinOverlay').classList.remove('open');
+    // Load live data after PIN verified
+    loadDebtorsFromSheets();
+  } else {
+    document.getElementById('pinErr').style.display='block';
+    document.getElementById('pinInput').value='';
+    document.getElementById('pinInput').focus();
+  }
+}
+function goBack(){ window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'; }
+
+function showTab(id){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.querySelectorAll('.tab').forEach(t=>{ t.classList.remove('active'); if(t.getAttribute('onclick') && t.getAttribute('onclick').includes("'"+id+"'")) t.classList.add('active'); }); document.getElementById('tab-'+id).classList.add('active'); }
+
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function openNewInvModal(){openModal('newInvModal')}
+function openEscModal(){openModal('escModal')}
+function openAddCustModal(){alert('Customer Master form — Add customer with credit limit, payment terms, contact details, and GST number.')}
+
+function filterLedger(q){ document.querySelectorAll('#ledgerTable tbody tr').forEach(r=>{ r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none'; }); }
+function filterInvoices(q){ document.querySelectorAll('#invoiceTable tbody tr').forEach(r=>{ r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none'; }); }
+function filterByStatus(s){ document.querySelectorAll('#invoiceTable tbody tr').forEach(r=>{ r.style.display=(!s||r.textContent.includes(s))?'':'none'; }); }
+
+function recordPayment(inv){ document.getElementById('r_inv').value=inv; showTab('receipt'); document.querySelectorAll('.tab').forEach(t=>{ if(t.textContent.includes('Receipt')) t.classList.add('active'); else t.classList.remove('active'); }); }
+
+function submitReceipt(){
+  const cust=document.getElementById('r_cust').value; const amt=document.getElementById('r_amt').value; const inv=document.getElementById('r_inv').value;
+  if(!cust||cust.includes('Select')||!amt||!inv){alert('Please fill Customer, Invoice No. and Amount.');return;}
+  const tds = parseFloat(document.getElementById('r_tds').value)||0;
+  const net = parseFloat(amt) - tds;
+  const mode = document.getElementById('r_mode').value;
+  const ref  = document.getElementById('r_ref').value||'';
+  const date = document.getElementById('r_date').value;
+  // POST to Google Sheets — live!
+  gsPost({type:'debtorsPay', date:date, customer:cust, invoiceNo:inv,
+          amount:parseFloat(amt), tds:tds, net:net, mode:mode, refNo:ref,
+          enteredBy:'Accounts', status:'Pending Verify', submittedBy:'Accounts'});
+  // Optimistic DOM update
+  const tbl=document.getElementById('receiptLog').querySelector('tbody');
+  const row=tbl.insertRow(0);
+  const amtL=(parseFloat(amt)/100000).toFixed(1);
+  const netL=(net/100000).toFixed(1);
+  row.style.background='#f0fff4';
+  row.innerHTML=`<td>${date}</td><td>${cust}</td><td>${inv}</td><td>₹${amtL}L</td><td>${tds?'₹'+(tds/100000).toFixed(1)+'L':'—'}</td><td>₹${netL}L</td><td>${mode}</td><td>${ref||'—'}</td><td>Accounts</td><td><span class="pill pill-orange">Pending Verify</span></td>`;
+  showToast('✅ Receipt of ₹'+amtL+'L from '+cust+' saved to Google Sheets', 'success');
+  clearReceipt();
+}
+function clearReceipt(){ ['r_date','r_cust','r_inv','r_amt','r_ref','r_tds','r_appr','r_bdate','r_rem'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); }
+
+function submitFollowup(){
+  const cust=document.getElementById('fu_cust').value; const out=document.getElementById('fu_outcome').value;
+  if(!cust||cust.includes('Select')||!out){alert('Please fill Customer and Outcome.');return;}
+  // Use type: key (matches Code.gs doPost routing)
+  gsPost({type:'debtorsFU', customer:cust, outcome:out, next:document.getElementById('fu_next').value||''});
+  showToast('✅ Follow-up logged for '+cust+' — saved to Google Sheets', 'success');
+  ['fu_cust','fu_outcome','fu_next'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+}
+
+function logFollowup(cust){ document.getElementById('fu_cust').value=cust; showTab('followup'); document.querySelectorAll('.tab').forEach(t=>{ if(t.textContent.includes('Follow')) t.classList.add('active'); else t.classList.remove('active'); }); }
+
+function escalateCase(cust){
+  const level = (cust==='Eicher Trucks') ? 'Level 3 — Legal Notice' : 'Level 2 — MD Alert + Hold Orders';
+  openModal('escModal');
+  const custSel = document.getElementById('esc_cust');
+  if (custSel) { for (const o of custSel.options) { if (o.value === cust || o.textContent === cust) { custSel.value = o.value; break; } } }
+  const levelSel = document.getElementById('esc_level');
+  if (levelSel) { for (const o of levelSel.options) { if (o.textContent.includes(level.split(' — ')[1])) { levelSel.value = o.value; break; } } }
+}
+
+function submitEscalationRequest(){
+  const cust = document.getElementById('esc_cust').value;
+  const amount = parseFloat(document.getElementById('esc_amount').value) || 0;
+  const days = parseInt(document.getElementById('esc_days').value) || 0;
+  const level = document.getElementById('esc_level').value;
+  const reqBy = document.getElementById('esc_reqby').value || 'Accounts';
+  const action = document.getElementById('esc_action').value;
+  const notes = document.getElementById('esc_notes').value;
+  if (!cust) { alert('Select a customer.'); return; }
+  gsPost({
+    type: 'approvalRequest',
+    requestType: 'debtorsEscalation',
+    reference: cust,
+    summary: 'Escalation — ' + cust + ' · ₹' + amount.toLocaleString('en-IN') + ' · ' + days + ' days overdue · ' + level,
+    detailsObj: {
+      customer: cust, amount: amount, daysOverdue: days, escalationLevel: level,
+      actionTaken: action, nextStep: notes, submittedBy: reqBy
+    },
+    submittedBy: reqBy
+  });
+  showToast ? showToast('Escalation request submitted for approval', 'warning') : alert('Escalation request submitted for approval.');
+  closeModal('escModal');
+}
+
+async function loadMyApprovalRequests(){
+  const tbody = document.querySelector('#myReqTable tbody');
+  tbody.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
+  const all = await gsGet('approvalRequest', 300);
+  const mine = all.filter(r => r['Type'] === 'debtorsEscalation' || r['Type'] === 'creditLimitChange').slice(0, 30);
+  if (!mine.length) { tbody.innerHTML = '<tr><td colspan="6">No requests submitted yet.</td></tr>'; return; }
+  tbody.innerHTML = mine.map(r => {
+    const statusColor = r['Status'] === 'Approved' ? '#1d7a3c' : (r['Status'] === 'Rejected' ? '#b3261e' : '#b8860b');
+    return '<tr><td>' + (r['Request ID']||'') + '</td><td>' + (r['Type']||'') + '</td><td>' + (r['Summary']||'') +
+           '</td><td style="font-weight:bold;color:' + statusColor + '">' + (r['Status']||'') + '</td><td>' + (r['Decided By']||'') +
+           '</td><td>' + (r['Decision Notes']||'') + '</td></tr>';
+  }).join('');
+}
+
+function submitCreditLimitRequest(){
+  const cust = document.getElementById('clc_cust').value;
+  if (!cust || cust === '-- Select --') { alert('Select a customer.'); return; }
+  const current = document.getElementById('clc_current').value;
+  const proposed = parseFloat(document.getElementById('clc_proposed').value) || 0;
+  const reason = document.getElementById('clc_reason').value;
+  const reqBy = document.getElementById('clc_reqby').value || 'Accounts';
+  if (!proposed) { alert('Enter the proposed new limit.'); return; }
+  gsPost({
+    type: 'approvalRequest',
+    requestType: 'creditLimitChange',
+    reference: cust,
+    summary: 'Credit limit change — ' + cust + ' · ' + (current || '?') + ' → ₹' + proposed.toLocaleString('en-IN') + ' (' + reason + ')',
+    detailsObj: { customer: cust, currentLimit: current, proposedLimit: proposed, reason: reason, submittedBy: reqBy },
+    submittedBy: reqBy
+  });
+  showToast ? showToast('Credit limit change submitted for approval', 'warning') : alert('Credit limit change request submitted for approval.');
+}
+
+function openCustDetail(name){
+  const details = {
+    'Maruti Suzuki India': {outstanding:'₹4.2L',limit:'₹15L',used:'28%',days:'28',status:'Good payer — regular NEFT'},
+    'Hero MotoCorp': {outstanding:'₹3.8L',limit:'₹10L',used:'38%',days:'38',status:'Slow — 31–60 day bucket'},
+    'Honda Cars India': {outstanding:'₹1.2L',limit:'₹8L',used:'15%',days:'24',status:'Excellent payer'},
+    'Tata Motors': {outstanding:'₹3.4L',limit:'₹12L',used:'28%',days:'35',status:'Regular — slight delay'},
+    'JBM Group': {outstanding:'₹5.2L',limit:'₹4L',used:'130%',days:'72',status:'OVER LIMIT — Legal notice issued'},
+    'Bajaj Auto': {outstanding:'₹2.0L',limit:'₹6L',used:'33%',days:'42',status:'Mild delay — follow up'},
+    'Eicher Trucks': {outstanding:'₹8.2L',limit:'₹6L',used:'137%',days:'118',status:'CRITICAL — quality dispute + legal'},
+    'TVS Motor': {outstanding:'₹4.0L',limit:'₹8L',used:'50%',days:'65',status:'Price dispute — escalated'}
+  };
+  const d=details[name]||{outstanding:'—',limit:'—',used:'—',days:'—',status:'—'};
+  document.getElementById('custDetailTitle').textContent='📒 '+name+' — Account Detail';
+  document.getElementById('custDetailBody').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="kpi blue"><div class="kpi-val">${d.outstanding}</div><div class="kpi-lbl">Total Outstanding</div></div>
+      <div class="kpi orange"><div class="kpi-val">${d.limit}</div><div class="kpi-lbl">Credit Limit</div></div>
+      <div class="kpi yellow"><div class="kpi-val">${d.used}</div><div class="kpi-lbl">Limit Utilised</div></div>
+      <div class="kpi green"><div class="kpi-val">${d.days} days</div><div class="kpi-lbl">Avg Collection Days</div></div>
+    </div>
+    <div class="alert-box orange"><span class="alert-icon">ℹ️</span><div>${d.status}</div></div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="btn btn-primary btn-sm" onclick="logFollowup('${name}');closeModal('custDetailModal')">📞 Log Follow-up</button>
+      <button class="btn btn-success btn-sm" onclick="closeModal('custDetailModal');showTab('receipt')">💰 Record Receipt</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('custDetailModal');escalateCase('${name}')">⚠️ Escalate</button>
+    </div>`;
+  openModal('custDetailModal');
+}
+</script>
+
+<script>
+function openBot(url){
+  if(!url||url==='#')return false;
+  if(window.location.protocol==='file:'){window.location.href=url;return false;}
+  try{var w=window.open(url,'_blank');if(!w||w.closed||typeof w.closed==='undefined'){window.location.href=url;}}catch(e){window.location.href=url;}
+  return false;
+}
+</script>
+</body>
+</html>

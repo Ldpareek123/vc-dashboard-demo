@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI ESIC &amp; EPF Compliance Bot</title>
+<style>
+  :root{
+    --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#ffffff;
+    --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --yellow:#fff7cc; --red:#b3261e;
+  }
+  *{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
+  body{margin:0; background:var(--bg); color:var(--text);}
+  header{background:var(--navy); color:#fff; padding:16px 24px;}
+  header h1{margin:0; font-size:20px;}
+  header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+  .tabs{display:flex; flex-wrap:wrap; background:var(--navy2); padding:0 16px;}
+  .tab{padding:10px 16px; color:#fff; cursor:pointer; font-size:13px; opacity:.8; border-bottom:3px solid transparent;}
+  .tab.active{opacity:1; border-bottom:3px solid var(--accent); font-weight:bold;}
+  .container{max-width:1200px; margin:0 auto; padding:20px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:18px;}
+  .card h2{margin-top:0; font-size:16px; color:var(--navy);}
+  .card p.hint{font-size:12px; color:var(--muted); margin-top:-6px;}
+  .grid{display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:12px;}
+  label{display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:var(--navy);}
+  input, select, textarea{width:100%; padding:7px 8px; border:1px solid var(--border); border-radius:5px; font-size:13px;}
+  button{background:var(--accent); color:#fff; border:none; padding:9px 16px; border-radius:5px; font-size:13px; cursor:pointer; font-weight:bold;}
+  button:hover{background:var(--navy);}
+  button.secondary{background:#888;}
+  button.secondary:hover{background:#555;}
+  .row-actions{margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;}
+  table{width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;}
+  th, td{border:1px solid var(--border); padding:5px 6px; text-align:left;}
+  th{background:var(--navy); color:#fff; position:sticky; top:0;}
+  tr:nth-child(even){background:#fafbfc;}
+  .table-wrap{max-height:440px; overflow:auto; border:1px solid var(--border); border-radius:6px;}
+  .pill{display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;}
+  .pill.ok{background:#e3f6e9; color:var(--green);}
+  .pill.no{background:#f2f2f2; color:#888;}
+  .pill.warn{background:#fff3cd; color:#8a6300;}
+  .summary{display:flex; gap:16px; flex-wrap:wrap; margin-top:10px;}
+  .summary .stat{background:var(--yellow); border:1px solid #e6d98a; border-radius:6px; padding:10px 16px; font-size:12px;}
+  .summary .stat b{display:block; font-size:18px; color:var(--navy);}
+  .note{background:#eef5fb; border-left:4px solid var(--accent); border-radius:0 6px 6px 0; padding:10px 14px; font-size:12px; color:#333; margin-bottom:14px; line-height:1.6;}
+  .note.warn{background:#fff3cd; border-left-color:#e6a000;}
+  footer{text-align:center; font-size:11px; color:var(--muted); padding:16px;}
+  .pushbtn{background:var(--green); padding:4px 10px; font-size:11px;}
+  .pushbtn:hover{background:#156b34;}
+</style>
+</head>
+<body>
+<!-- ACCESS CONTROL GATE -->
+<div id="accessGate" style="position:fixed;inset:0;background:#1E3A5F;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Arial,Helvetica,sans-serif">
+  <div style="background:#fff;border-radius:10px;padding:30px 36px;max-width:380px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.35)">
+    <div style="font-size:32px;margin-bottom:8px">🔒</div>
+    <h2 style="margin:0 0 6px;color:#1E3A5F;font-size:16px">ESIC &amp; EPF Compliance Bot — Restricted Access</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 14px">Enter the access code provided by your supervisor / VC Admin to continue.</p>
+    <input id="gatePin" type="password" placeholder="Access Code" autocomplete="off" style="width:100%;padding:9px;font-size:14px;border:1px solid #d6dce4;border-radius:6px;text-align:center;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkGatePin()">
+    <div id="gateErr" style="color:#b3261e;font-size:11px;margin-top:6px;min-height:14px"></div>
+    <button onclick="checkGatePin()" style="margin-top:8px;background:#2E86AB;color:#fff;border:none;border-radius:6px;padding:9px 22px;font-size:12px;font-weight:bold;cursor:pointer">Unlock</button>
+    <div style="font-size:10.5px;color:#999;margin-top:10px">Authorized: HR Head, HR Executive, Accounts Head, Accountant</div>
+  </div>
+</div>
+<script>
+(function(){
+  var VALID_PINS = ['ESI-PF-2026','SAL-ACC-2026'];
+  var SESSION_KEY = 'sspi_gate_esiepf';
+  function checkGatePin(){
+    var v=document.getElementById('gatePin').value.trim();
+    if(VALID_PINS.indexOf(v)>-1){
+      sessionStorage.setItem(SESSION_KEY,'1');
+      document.getElementById('accessGate').remove();
+    } else {
+      document.getElementById('gateErr').textContent='Incorrect code. Contact VC Admin / your supervisor.';
+    }
+  }
+  window.checkGatePin=checkGatePin;
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    var g=document.getElementById('accessGate'); if(g) g.remove();
+  }
+})();
+</script>
+<header>
+  <h1>SSPI ESIC &amp; EPF Compliance Bot</h1>
+  <p>Reads Gross Salary from the Salary Data Entry Bot · calculates statutory ESI + EPF contributions · pushes results back into the salary sheet</p>
+</header>
+<div class="tabs">
+  <div class="tab active" data-tab="calc">Monthly Calculation</div>
+  <div class="tab" data-tab="settings">EPF Wage Basis Setting</div>
+  <div class="tab" data-tab="rates">Statutory Rates Reference</div>
+  <div class="tab" data-tab="challan">Compliance Summary / Challan</div>
+</div>
+<div class="container">
+
+  <!-- MONTHLY CALCULATION -->
+  <div class="panel active" id="panel-calc">
+    <div class="note warn" id="mandatoryNote">
+      ⚠️ SSPI has <b>21 active employees</b> — at or above the 20-employee threshold where <b>EPF registration is mandatory by law</b> (Employees' Provident Funds &amp; Miscellaneous Provisions Act). If SSPI is not yet EPF-registered, please confirm registration status with your compliance consultant.
+    </div>
+    <div class="card">
+      <h2>Select Month</h2>
+      <p class="hint">Pulls each employee's auto-calculated Gross Salary from the Salary Monthly sheet (posted by the Salary Data Entry Bot) for the selected month.</p>
+      <div class="grid">
+        <div>
+          <label>Month</label>
+          <select id="c_month"></select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button onclick="loadMonthData()">🔄 Load Salary Data for Month</button>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <span id="loadStatus" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Employee-wise ESI + EPF Calculation</h2>
+      <div class="table-wrap"><table id="calc_table">
+        <thead><tr>
+          <th>Code</th><th>Name</th><th>Category</th><th>Gross Salary</th>
+          <th>ESI Eligible</th><th>ESI Emp (0.75%)</th><th>ESI Employer (3.25%)</th>
+          <th>PF Wage</th><th>EPF Emp (12%)</th><th>EPF Employer (3.67%+8.33%)</th><th>Admin+EDLI (1%)</th>
+          <th>Net Pay (Final)</th><th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="row-actions">
+        <button onclick="pushAllToSalarySheet()">📤 Push All Rows to Salary Sheet</button>
+        <button class="secondary" onclick="exportCalcCSV()">Export Calculation CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EPF WAGE BASIS SETTING -->
+  <div class="panel" id="panel-settings">
+    <div class="card">
+      <h2>EPF Wage Basis — Company Policy</h2>
+      <p class="hint">This is SSPI's own policy choice, not a fixed rule. Pick whichever basis matches how SSPI is actually registered/contributing today. The default (₹15,000 ceiling) is the statutory minimum and the safer default if you are unsure.</p>
+      <div class="grid">
+        <div>
+          <label>PF Wage Basis</label>
+          <select id="pfBasis" onchange="savePfBasis()">
+            <option value="ceiling">₹15,000 ceiling (statutory minimum — default)</option>
+            <option value="full">Full Basic Salary (only if SSPI already contributes on full basic)</option>
+          </select>
+        </div>
+      </div>
+      <div class="note" style="margin-top:14px">
+        EPS (Pension Scheme) contribution and EDLI are always capped at a ₹15,000 wage basis by law, regardless of which option you pick here — only the EPF (Provident Fund) portion and the employee's 12% deduction change with this setting.
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUTORY RATES REFERENCE -->
+  <div class="panel" id="panel-rates">
+    <div class="note">
+      Rates below are current as of <b>June 2026</b>, verified against ESIC and EPFO sources. These rates have not changed since the last government revision (ESI: July 2019; EPF: long-standing). Always confirm with your compliance consultant before filing — this bot is a calculation aid, not a filing authority.
+    </div>
+    <div class="card">
+      <h2>ESI (Employees' State Insurance)</h2>
+      <table>
+        <tr><th>Item</th><th>Rate / Limit</th></tr>
+        <tr><td>Employee contribution</td><td>0.75% of gross monthly wages</td></tr>
+        <tr><td>Employer contribution</td><td>3.25% of gross monthly wages</td></tr>
+        <tr><td>Wage ceiling for coverage</td><td>₹21,000/month gross (₹25,000 for employees with disability)</td></tr>
+        <tr><td>Employee-share exemption</td><td>Average daily wage ≤ ₹176 — employee share waived, employer still pays 3.25%</td></tr>
+        <tr><td>Contribution periods</td><td>Apr–Sep and Oct–Mar. Once covered at the start of a period, an employee stays covered (and contributions continue) for the rest of that period even if wages rise above the ceiling mid-period.</td></tr>
+        <tr><td>Payment due date</td><td>15th of the following month</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2>EPF (Employees' Provident Fund)</h2>
+      <table>
+        <tr><th>Item</th><th>Rate / Limit</th></tr>
+        <tr><td>Employee contribution</td><td>12% of PF wage (Basic + DA)</td></tr>
+        <tr><td>Employer contribution</td><td>12% total — split 3.67% to EPF + 8.33% to EPS</td></tr>
+        <tr><td>EPS cap</td><td>8.33% is always capped at ₹15,000 wage basis (max ₹1,250/month) regardless of actual basic</td></tr>
+        <tr><td>Admin charges (employer, establishment-level)</td><td>0.50% of PF wage, minimum ₹75/month per establishment</td></tr>
+        <tr><td>EDLI (employer)</td><td>0.50% of PF wage, capped at ₹15,000 basis</td></tr>
+        <tr><td>Mandatory registration threshold</td><td>20+ employees</td></tr>
+        <tr><td>Payment due date</td><td>15th of the following month</td></tr>
+      </table>
+    </div>
+    <div class="note" style="font-size:11px">
+      Sources: ESIC contribution rate and wage ceiling (frozen since July 2019); EPFO contribution rate circular (epfindia.gov.in). Verified via web search on the date this bot was built — re-check before relying on these figures for a future filing period, as government notifications can change them.
+    </div>
+  </div>
+
+  <!-- COMPLIANCE SUMMARY / CHALLAN -->
+  <div class="panel" id="panel-challan">
+    <div class="card">
+      <h2>Monthly Compliance Summary</h2>
+      <p class="hint">Load month data on the "Monthly Calculation" tab first — this summary totals those rows.</p>
+      <div class="summary" id="challan_stats"></div>
+    </div>
+    <div class="card">
+      <h2>Due Dates</h2>
+      <table>
+        <tr><th>Return</th><th>Due Date (15th of following month)</th><th>Status</th></tr>
+        <tbody id="dueDateRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+<footer>SSPI ESIC &amp; EPF Compliance Bot · calculation aid only — verify with your compliance consultant before filing · data syncs to the same Google Sheet backend as the Salary Data Entry Bot</footer>
+
+<script>
+// SSPI's 21 active employees (company = SSPI), matching Employee_Reference_List.csv / Employee Master.
+// cat: 'ESI' marks employees the accountant has flagged as ESI-covered.
+const EMPLOYEES = [
+  {code:1,  name:'SATVEER SINGH',     cat:'ESI', base:30000},
+  {code:2,  name:'AMAR CHAND',        cat:'ESI', base:20000},
+  {code:3,  name:'NAND PRATAP',       cat:'ESI', base:20000},
+  {code:4,  name:'BHARAT/RAM ADHAR',  cat:'ESI', base:20000},
+  {code:5,  name:'RAJ KUMAR PASWAN',  cat:'ESI', base:19000},
+  {code:6,  name:'SACHINE S/O MANOJ', cat:'',    base:11000},
+  {code:7,  name:'SHYAM PASWAN',      cat:'ESI', base:13500},
+  {code:9,  name:'RAM VILAS',         cat:'ESI', base:13000},
+  {code:10, name:'SATISH AGRA',       cat:'',    base:13000},
+  {code:11, name:'MANJEET',           cat:'ESI', base:19000},
+  {code:12, name:'RAJEEV',            cat:'ESI', base:13500},
+  {code:13, name:'PREM CHAND',        cat:'ESI', base:12000},
+  {code:14, name:'MANOJ',             cat:'',    base:13000},
+  {code:15, name:'HARENDARA SINGH',   cat:'ESI', base:12000},
+  {code:16, name:'SANJEEV',           cat:'',    base:11000},
+  {code:17, name:'VIKAS PRAJAPAT',    cat:'ESI', base:13000},
+  {code:18, name:'JAIKISAN RAM',      cat:'',    base:11000},
+  {code:19, name:'SANJEET',           cat:'ESI', base:14000},
+  {code:20, name:'HARI SHANKAR',      cat:'ESI', base:13000},
+  {code:21, name:'VIRENDER',          cat:'ESI', base:11000},
+  {code:22, name:'ANKIT YADAV',       cat:'',    base:11500},
+  {code:24, name:'SATYNARAN',         cat:'ESI', base:13500},
+];
+const EMP_BY_CODE = {};
+EMPLOYEES.forEach(e => EMP_BY_CODE[e.code] = e);
+const MONTHS = [["Apr","April",4],["May","May",5],["Jun","June",6],["Jul","July",7],["Aug","August",8],["Sep","September",9],["Oct","October",10],["Nov","November",11],["Dec","December",12],["Jan","January",1],["Feb","February",2],["Mar","March",3]];
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS BACKEND — same backend as the Salary Data Entry Bot
+// ═══════════════════════════════════════════════════════
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+var _offQ = JSON.parse(localStorage.getItem('sspi_offline_q') || '[]');
+var _botOnline = navigator.onLine;
+function _saveOffQ(){ localStorage.setItem('sspi_offline_q', JSON.stringify(_offQ)); }
+function syncBotQueue(){
+  if (!_botOnline || !_offQ.length) return;
+  var item = _offQ.shift(); _saveOffQ();
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(function(){ if(_offQ.length) setTimeout(syncBotQueue,600); })
+    .catch(function(){ _offQ.unshift(item); _saveOffQ(); });
+}
+window.addEventListener('online',  function(){ _botOnline=true;  syncBotQueue(); });
+window.addEventListener('offline', function(){ _botOnline=false; });
+function gsPost(payload){
+  if (!GS_URL) return;
+  payload.authToken = GS_AUTH_TOKEN;
+  payload._ts = payload._ts || new Date().toISOString();
+  if (!_botOnline) { _offQ.push(JSON.parse(JSON.stringify(payload))); _saveOffQ(); return; }
+  fetch(GS_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)})
+    .catch(function(){ _offQ.push(JSON.parse(JSON.stringify(payload))); _saveOffQ(); });
+}
+function gsGet(type, limit){
+  return new Promise(function(resolve){
+    var cbName = '_gsJP_' + Date.now();
+    var script = document.createElement('script');
+    var done = false;
+    window[cbName] = function(d){
+      done = true; delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      resolve((d && d.data) ? d.data : []);
+    };
+    script.onerror = function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } }, 10000);
+    script.src = GS_URL + '?type=' + type + '&limit=' + (limit||500) + '&callback=' + cbName;
+    document.head.appendChild(script);
+  });
+}
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  if(t.dataset.tab === 'challan') renderChallan();
+}));
+
+// ---------- month select ----------
+function populateMonthSelect(sel){
+  sel.innerHTML = '';
+  MONTHS.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m[0]; o.textContent = m[1] + ' (' + m[0] + ')';
+    sel.appendChild(o);
+  });
+}
+populateMonthSelect(document.getElementById('c_month'));
+// default to current month
+(function(){
+  const now = new Date();
+  const sheetName = MONTHS.find(m => m[2] === now.getMonth()+1);
+  if (sheetName) document.getElementById('c_month').value = sheetName[0];
+})();
+
+// ---------- PF wage basis setting ----------
+function loadPfBasis(){ return localStorage.getItem('sspi_pf_basis') || 'ceiling'; }
+function savePfBasis(){ localStorage.setItem('sspi_pf_basis', document.getElementById('pfBasis').value); recalcAll(); }
+document.getElementById('pfBasis').value = loadPfBasis();
+
+// ---------- statutory calculation ----------
+const ESI_EMP_RATE = 0.0075, ESI_EMPLOYER_RATE = 0.0325, ESI_CEILING = 21000;
+const EPF_EMP_RATE = 0.12, EPF_TO_PF_RATE = 0.0367, EPF_TO_EPS_RATE = 0.0833, EPF_ADMIN_RATE = 0.005, EPF_EDLI_RATE = 0.005, EPF_CEILING = 15000;
+
+let monthRows = []; // [{code, name, cat, base, gross}]
+
+function calcRow(emp, gross){
+  const esiEligible = emp.cat === 'ESI'; // accountant-maintained coverage flag (handles contribution-period carry-forward)
+  const esiEmp = esiEligible ? round2(gross * ESI_EMP_RATE) : 0;
+  const esiEmployer = esiEligible ? round2(gross * ESI_EMPLOYER_RATE) : 0;
+
+  const basis = loadPfBasis();
+  const pfWage = basis === 'full' ? emp.base : Math.min(emp.base, EPF_CEILING);
+  const epsWage = Math.min(pfWage, EPF_CEILING);
+  const epfEmp = round2(pfWage * EPF_EMP_RATE);
+  const epfToPf = round2(pfWage * EPF_TO_PF_RATE);
+  const epfToEps = round2(epsWage * EPF_TO_EPS_RATE);
+  const epfEmployer = round2(epfToPf + epfToEps);
+  const adminEdli = round2(pfWage * EPF_ADMIN_RATE + epsWage * EPF_EDLI_RATE);
+
+  return { esiEligible, esiEmp, esiEmployer, pfWage, epfEmp, epfEmployer, adminEdli };
+}
+function round2(n){ return Math.round(n * 100) / 100; }
+
+async function loadMonthData(){
+  document.getElementById('loadStatus').textContent = 'Loading…';
+  const month = document.getElementById('c_month').value;
+  const rows = await gsGet('salary', 500);
+  const filtered = rows.filter(r => r['Month'] === month && EMP_BY_CODE[parseInt(r['Emp Code'])]);
+  // de-dupe by Emp Code, keep latest (rows arrive newest-first from gsGet)
+  const seen = {};
+  monthRows = [];
+  filtered.forEach(r => {
+    const code = parseInt(r['Emp Code']);
+    if (seen[code]) return;
+    seen[code] = true;
+    const emp = EMP_BY_CODE[code];
+    const gross = parseFloat(r['Gross Salary']) || 0;
+    const netBeforePF = parseFloat(r['Net Pay (Before PF/ESI — Accounts to deduct exact PF/ESI before payment)']) || gross;
+    monthRows.push({ code, name: emp.name, cat: emp.cat, base: emp.base, gross, netBeforePF });
+  });
+  document.getElementById('loadStatus').textContent = monthRows.length
+    ? monthRows.length + ' employee row(s) loaded for ' + month
+    : 'No Salary Monthly entries found for ' + month + ' yet — enter them in the Salary Data Entry Bot first.';
+  renderCalcTable();
+}
+
+function recalcAll(){ renderCalcTable(); }
+
+function renderCalcTable(){
+  const tbody = document.querySelector('#calc_table tbody');
+  tbody.innerHTML = '';
+  monthRows.forEach(r => {
+    const c = calcRow(r, r.gross);
+    const netFinal = round2(r.netBeforePF - c.esiEmp - c.epfEmp);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.code}</td><td>${r.name}</td><td>${r.cat || '—'}</td><td>₹${r.gross.toFixed(2)}</td>
+      <td>${c.esiEligible ? '<span class="pill ok">Yes</span>' : '<span class="pill no">No</span>'}${(c.esiEligible && r.gross>21000) ? ' <span class="pill warn">verify period</span>' : ''}</td>
+      <td>₹${c.esiEmp.toFixed(2)}</td><td>₹${c.esiEmployer.toFixed(2)}</td>
+      <td>₹${c.pfWage.toFixed(2)}</td><td>₹${c.epfEmp.toFixed(2)}</td><td>₹${c.epfEmployer.toFixed(2)}</td><td>₹${c.adminEdli.toFixed(2)}</td>
+      <td><b>₹${netFinal.toFixed(2)}</b></td>
+      <td><button class="pushbtn" onclick="pushOneToSalarySheet(${r.code})">Push</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function pushOneToSalarySheet(code){
+  const r = monthRows.find(x => x.code === code);
+  if (!r) return;
+  const c = calcRow(r, r.gross);
+  const month = document.getElementById('c_month').value;
+  gsPost({ type:'esiEpf', month, empCode: code, employee: r.name,
+           esiEmployee: c.esiEmp, esiEmployer: c.esiEmployer,
+           epfEmployee: c.epfEmp, epfEmployer: c.epfEmployer,
+           adminEdli: c.adminEdli, pfWage: c.pfWage, submittedBy: 'Accounts' });
+  showToast(r.name + ' — PF/ESI pushed to Salary Sheet for ' + month);
+}
+function pushAllToSalarySheet(){
+  if (!monthRows.length) { showToast('Load a month first.', 'error'); return; }
+  monthRows.forEach(r => pushOneToSalarySheet(r.code));
+}
+
+function exportCalcCSV(){
+  const rows = [['Emp Code','Name','Category','Gross Salary','ESI Eligible','ESI Employee','ESI Employer','PF Wage','EPF Employee','EPF Employer','Admin+EDLI','Net Pay Final']];
+  monthRows.forEach(r => {
+    const c = calcRow(r, r.gross);
+    const netFinal = round2(r.netBeforePF - c.esiEmp - c.epfEmp);
+    rows.push([r.code, r.name, r.cat, r.gross, c.esiEligible?'Yes':'No', c.esiEmp, c.esiEmployer, c.pfWage, c.epfEmp, c.epfEmployer, c.adminEdli, netFinal]);
+  });
+  const csv = rows.map(r => r.map(v => { v = (v===undefined||v===null)?'':String(v); return v.includes(',')?'"'+v+'"':v; }).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ESI_EPF_Calculation_' + document.getElementById('c_month').value + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ---------- compliance summary ----------
+function renderChallan(){
+  const stats = document.getElementById('challan_stats');
+  let esiEmp=0, esiEmployer=0, epfEmp=0, epfEmployer=0, adminEdli=0;
+  monthRows.forEach(r => {
+    const c = calcRow(r, r.gross);
+    esiEmp += c.esiEmp; esiEmployer += c.esiEmployer;
+    epfEmp += c.epfEmp; epfEmployer += c.epfEmployer; adminEdli += c.adminEdli;
+  });
+  stats.innerHTML = `
+    <div class="stat"><b>₹${round2(esiEmp+esiEmployer).toFixed(2)}</b>Total ESI Challan (Emp + Employer)</div>
+    <div class="stat"><b>₹${round2(epfEmp+epfEmployer+adminEdli).toFixed(2)}</b>Total EPF Challan (EPF+EPS+Admin+EDLI)</div>
+    <div class="stat"><b>${monthRows.length}</b>Employees in this Month's Calculation</div>
+  `;
+  const month = document.getElementById('c_month').value;
+  const monthInfo = MONTHS.find(m => m[0] === month);
+  const dueRows = document.getElementById('dueDateRows');
+  dueRows.innerHTML = '';
+  if (monthInfo) {
+    const monthNo = monthInfo[2]; // calendar month number
+    // due date = 15th of the NEXT calendar month, same year logic kept simple (year not tracked per sheet)
+    const dueMonthNo = monthNo === 12 ? 1 : monthNo + 1;
+    const dueMonthName = MONTHS.find(m => m[2] === dueMonthNo)[1];
+    ['ESI Challan', 'EPF (ECR) Challan'].forEach(label => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${label}</td><td>15 ${dueMonthName}</td><td><span class="pill warn">Confirm exact year/date with consultant</span></td>`;
+      dueRows.appendChild(tr);
+    });
+  }
+}
+
+// ---------- toast ----------
+function showToast(msg, type){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:24px;right:24px;background:'+(type==='error'?'#dc2626':'#1e3a5f')+';color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);max-width:350px';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3500);
+}
+</script>
+</body>
+</html>

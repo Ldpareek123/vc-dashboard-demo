@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Manufacturing Dashboard | Shree Shyam Packaging Industries</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+  :root{--primary:#f97316;--secondary:#0ea5e9;--success:#22c55e;--danger:#ef4444;--warn:#eab308;--purple:#a855f7;--bg1:#1e293b;--bg2:#0f172a;--bg3:#334155;--text1:#f1f5f9;--text2:#94a3b8;--border:#334155}
+  
+  /* HEADER */
+  .header{background:linear-gradient(135deg,#1e293b,#0f172a);border-bottom:2px solid var(--primary);padding:0;position:sticky;top:0;z-index:100}
+  .header-top{display:flex;align-items:center;gap:16px;padding:10px 20px;background:rgba(249,115,22,0.08)}
+  .logo-area{display:flex;align-items:center;gap:12px}
+  .logo-circle{width:48px;height:48px;background:linear-gradient(135deg,var(--primary),#dc2626);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff}
+  .company-info h1{font-size:18px;font-weight:700;color:var(--primary)}
+  .company-info p{font-size:11px;color:var(--text2)}
+  .header-badges{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+  .badge{background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.3);color:var(--primary);padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
+  .badge.blue{background:rgba(14,165,233,0.15);border-color:rgba(14,165,233,0.3);color:var(--secondary)}
+  .badge.green{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:var(--success)}
+  
+  /* NAV */
+  .nav{display:flex;gap:4px;padding:8px 20px;overflow-x:auto;background:#1e293b}
+  .nav-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all .2s}
+  .nav-btn:hover,.nav-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+  .nav-btn.blue:hover,.nav-btn.blue.active{background:var(--secondary);border-color:var(--secondary)}
+  
+  /* CONTENT */
+  .content{padding:20px;max-width:1600px;margin:0 auto}
+  .section{display:none}
+  .section.active{display:block}
+  
+  /* SECTION HEADER */
+  .sec-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+  .sec-header h2{font-size:20px;font-weight:700;color:var(--text1)}
+  .sec-header p{font-size:13px;color:var(--text2);margin-left:auto}
+  
+  /* CARDS */
+  .cards{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:24px}
+  .card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .card.orange::before{background:var(--primary)}
+  .card.blue::before{background:var(--secondary)}
+  .card.green::before{background:var(--success)}
+  .card.red::before{background:var(--danger)}
+  .card.purple::before{background:var(--purple)}
+  .card.yellow::before{background:var(--warn)}
+  .card-icon{font-size:28px;margin-bottom:8px}
+  .card-value{font-size:28px;font-weight:800;color:var(--text1)}
+  .card-label{font-size:12px;color:var(--text2);margin-top:2px}
+  .card-sub{font-size:11px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+  
+  /* TABLES */
+  .table-wrap{background:var(--bg1);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+  .table-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+  .table-head h3{font-size:14px;font-weight:700;color:var(--text1)}
+  table{width:100%;border-collapse:collapse}
+  th{background:#0f172a;color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:10px 14px;font-size:13px;color:var(--text1);border-bottom:1px solid rgba(51,65,85,.5)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(249,115,22,0.04)}
+  .tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700}
+  .tag.green{background:rgba(34,197,94,.15);color:var(--success)}
+  .tag.orange{background:rgba(249,115,22,.15);color:var(--primary)}
+  .tag.blue{background:rgba(14,165,233,.15);color:var(--secondary)}
+  .tag.red{background:rgba(239,68,68,.15);color:var(--danger)}
+  .tag.purple{background:rgba(168,85,247,.15);color:var(--purple)}
+  .tag.yellow{background:rgba(234,179,8,.15);color:var(--warn)}
+  
+  /* ROUTE FLOW */
+  .route-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .route-step{background:rgba(14,165,233,.12);border:1px solid rgba(14,165,233,.3);color:var(--secondary);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+  .route-step.special{background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.3);color:var(--purple)}
+  .route-arrow{color:var(--text2);font-size:14px}
+  
+  /* DEPT GRID */
+  .dept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;margin-bottom:20px}
+  .dept-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .dept-card-head{padding:14px 18px;display:flex;align-items:center;gap:10px}
+  .dept-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .dept-card-head h3{font-size:14px;font-weight:700;color:var(--text1)}
+  .dept-card-head p{font-size:11px;color:var(--text2)}
+  .dept-card-body{padding:0 18px 14px}
+  .dept-item{padding:6px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:12px;color:var(--text2);display:flex;justify-content:space-between}
+  .dept-item:last-child{border-bottom:none}
+  .dept-item span{color:var(--text1)}
+  
+  /* APPROVAL CHANNEL */
+  .approval-box{background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.25);border-radius:10px;padding:14px 18px;margin-bottom:16px}
+  .approval-box h4{color:var(--primary);font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .approval-steps{display:flex;gap:10px;flex-wrap:wrap}
+  .apv-step{background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:6px 12px;text-align:center}
+  .apv-step .role{font-size:10px;color:var(--text2)}
+  .apv-step .action{font-size:11px;font-weight:700;color:var(--primary)}
+  .apv-arrow{color:var(--primary);font-size:16px;align-self:center}
+  
+  /* SPECIAL PROCESS */
+  .sp-card{background:linear-gradient(135deg,rgba(168,85,247,.1),rgba(249,115,22,.05));border:1px solid rgba(168,85,247,.3);border-radius:12px;padding:16px;margin-bottom:14px}
+  .sp-card h4{color:var(--purple);font-size:14px;font-weight:700;margin-bottom:4px}
+  .sp-card p{font-size:12px;color:var(--text2);margin-bottom:8px}
+  .sp-meta{display:flex;gap:12px;flex-wrap:wrap}
+  .sp-meta-item{font-size:11px;color:var(--text2)}
+  .sp-meta-item span{color:var(--text1);font-weight:600}
+  
+  /* MACHINE LOADING */
+  .loading-bar-wrap{margin-bottom:12px}
+  .loading-bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+  .loading-bar-label .name{color:var(--text1)}
+  .loading-bar-label .pct{color:var(--text2)}
+  .loading-bar{background:#1e293b;border-radius:4px;height:18px;overflow:hidden}
+  .loading-bar-fill{height:100%;border-radius:4px;transition:width .5s;display:flex;align-items:center;padding-left:8px;font-size:10px;font-weight:700;color:#fff}
+  
+  /* LINKS BAR */
+  .links-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+  .link-btn{background:var(--bg1);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+  .link-btn:hover{border-color:var(--primary);color:var(--primary)}
+  
+  /* FILTERS */
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .filter-btn{background:var(--bg1);border:1px solid var(--border);color:var(--text2);padding:5px 14px;border-radius:20px;cursor:pointer;font-size:11px;transition:all .2s}
+  .filter-btn.active,.filter-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff}
+  
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:#1e293b;border:1px solid var(--border);border-radius:14px;padding:24px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;position:relative}
+  .modal h3{font-size:16px;font-weight:700;color:var(--primary);margin-bottom:16px}
+  .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer}
+  .modal-close:hover{color:var(--danger)}
+  .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px}
+  .form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:600}
+  .form-group input,.form-group select,.form-group textarea{width:100%;background:#0f172a;border:1px solid var(--border);color:var(--text1);padding:8px 12px;border-radius:6px;font-size:13px}
+  .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--primary)}
+  .btn{padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-secondary{background:var(--bg3);color:var(--text1)}
+  
+  /* PIN GATE */
+  .pin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center}
+  .pin-overlay.open{display:flex}
+  .pin-box{background:#1e293b;border:1px solid var(--primary);border-radius:14px;padding:30px;width:340px;text-align:center}
+  .pin-box h3{color:var(--primary);font-size:16px;font-weight:700;margin-bottom:6px}
+  .pin-box p{font-size:12px;color:var(--text2);margin-bottom:16px}
+  .pin-box input{width:100%;background:#0f172a;border:1px solid var(--border);color:var(--text1);padding:10px;border-radius:8px;font-size:14px;text-align:center;letter-spacing:3px;margin-bottom:12px}
+  .pin-error{color:var(--danger);font-size:12px;margin-top:8px;display:none}
+  
+  /* SEARCH */
+  .search-bar{background:#0f172a;border:1px solid var(--border);color:var(--text1);padding:8px 14px;border-radius:8px;font-size:13px;width:260px}
+  
+  /* RESPONSIVE */
+  @media(max-width:768px){.cards{grid-template-columns:repeat(2,1fr)}.dept-grid{grid-template-columns:1fr}.header-badges{display:none}}
+  /* Flatpickr dark theme overrides */
+  .flatpickr-calendar{background:#1e293b!important;border:1px solid #334155!important;box-shadow:0 8px 32px rgba(0,0,0,.6)!important}
+  .flatpickr-months,.flatpickr-weekdays{background:#0f172a!important}
+  .flatpickr-month,.flatpickr-weekday,.flatpickr-day{color:#e2e8f0!important}
+  .flatpickr-day.selected,.flatpickr-day.startRange,.flatpickr-day.endRange{background:#f97316!important;border-color:#f97316!important;color:#fff!important}
+  .flatpickr-day:hover{background:#334155!important}
+  .flatpickr-day.today{border-color:#f97316!important}
+  .flatpickr-current-month input,.flatpickr-current-month .numInputWrapper input{color:#e2e8f0!important;background:#1e293b!important}
+  .flatpickr-time input,.flatpickr-time .numInputWrapper{color:#e2e8f0!important;background:#1e293b!important}
+  .flatpickr-time input:hover,.flatpickr-time input:focus{background:#334155!important}
+  .numInputWrapper:hover{background:#334155!important}
+  .flatpickr-prev-month svg,.flatpickr-next-month svg{fill:#e2e8f0!important}
+  .flatpickr-day.flatpickr-disabled,.flatpickr-day.flatpickr-disabled:hover{color:#475569!important}
+  .date-wrap{position:relative;display:flex;align-items:center}
+  .date-wrap input{flex:1;padding-right:36px!important}
+  .date-wrap .cal-icon{position:absolute;right:8px;cursor:pointer;font-size:15px;color:#94a3b8;pointer-events:none}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+</head>
+<body>
+<div id="back_to_dashboard" style="background:#1E3A5F;color:#fff;padding:8px 20px;display:flex;align-items:center;gap:12px;font-size:12px;position:sticky;top:0;z-index:9999;box-shadow:0 2px 6px rgba(0,0,0,.35)">
+  <button onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">← Back to Dashboard</button>
+  <span style="opacity:.55;font-size:11px;">SSPI Operations Dashboard V4</span>
+</div>
+
+<!-- PIN GATE -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div style="font-size:36px;margin-bottom:10px">🏭</div>
+    <h3>Manufacturing Module Access</h3>
+    <p>Shree Shyam Packaging Industries<br>Enter your authorization PIN to continue</p>
+    <input type="password" id="pinInput" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')verifyPin()">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:1" onclick="verifyPin()">🔓 Unlock</button>
+      <button class="btn btn-secondary" onclick="goBack()">✕ Cancel</button>
+    </div>
+    <p class="pin-error" id="pinError">❌ Invalid PIN. Please try again.</p>
+    <div style="margin-top:14px;font-size:10px;color:#475569">
+      PROD@2026 · OWNER@2026 · VC-ADMIN-2026 · VC-HEAD-2026
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo-area">
+      <div class="logo-circle">SS</div>
+      <div class="company-info">
+        <h1>⚙️ SSPI Manufacturing Module</h1>
+        <p>Shree Shyam Packaging Industries, Bhiwadi · Integrated with VirtualCoordinator</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge">ISO 9001</span>
+      <span class="badge">ISO 14001</span>
+      <span class="badge">ISO 45001</span>
+      <span class="badge blue">4 Departments</span>
+      <span class="badge green">23 Products</span>
+      <span class="badge">26 Machines</span>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showSection('overview')">📊 Overview</button>
+    <button class="nav-btn" onclick="showSection('products')">📦 Products</button>
+    <button class="nav-btn" onclick="showSection('machines')">⚙️ Machines</button>
+    <button class="nav-btn" onclick="showSection('routes')">🗺️ Route Cards</button>
+    <button class="nav-btn" onclick="showSection('flowchart')">🔄 Machine Flow Chart</button>
+    <button class="nav-btn" onclick="showSection('jobcards')">📋 Job Cards</button>
+    <button class="nav-btn" onclick="showSection('prodplan')">📅 Production Planning</button>
+    <button class="nav-btn" onclick="showSection('special')">⭐ Special Processes</button>
+    <button class="nav-btn" onclick="showSection('loading')">📈 Machine Loading</button>
+    <button class="nav-btn blue" onclick="showSection('employees')">👷 Employees</button>
+    <button class="nav-btn" onclick="showSection('approval')">✅ Approval Channels</button>
+    <button class="nav-btn" onclick="showSection('reports')">📑 Reports</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+<!-- INTEGRATION LINKS -->
+<div class="links-bar">
+  <a class="link-btn" href="SSPI_Machine_Module.html" onclick="openBot(this.href);return false;">⚙️ Machine Module (All Reports)</a>
+  <a class="link-btn" href="SSPI_HR_Admin_Module.html" onclick="openBot(this.href);return false;">🧑‍💼 HR &amp; Admin Module</a>
+  <a class="link-btn" href="SSPI_Finance_Accounts_Module.html" onclick="openBot(this.href);return false;">💰 Finance &amp; Accounts Module</a>
+  <a class="link-btn" href="SSPI_Master_Machine_Flow_Chart.html" onclick="openBot(this.href);return false;">🔄 Printable Flow Chart</a>
+  <a class="link-btn" href="SSPI_Salary_Data_Entry_Bot.html" onclick="openBot(this.href);return false;">💰 Salary Bot</a>
+  <a class="link-btn" href="Stores_Inventory_Bot.html" onclick="openBot(this.href);return false;">🏪 Stores Bot</a>
+  <a class="link-btn" href="Bills_Data_Entry_Bot.html" onclick="openBot(this.href);return false;">🧾 Bills Bot</a>
+  <a class="link-btn" href="GST_Recon_DataEntry_Bot.html" onclick="openBot(this.href);return false;">📊 GST Bot</a>
+  <a class="link-btn" href="Accounting_Voucher_Bot.html" onclick="openBot(this.href);return false;">📒 Voucher Bot</a>
+</div>
+
+<!-- ═══════════════ OVERVIEW ═══════════════ -->
+<div class="section active" id="overview">
+  <div class="sec-header">
+    <h2>📊 Manufacturing Overview</h2>
+    <p>Shree Shyam Packaging Industries — Production Dashboard</p>
+  </div>
+  <div class="cards">
+    <div class="card orange"><div class="card-icon">📦</div><div class="card-value">23</div><div class="card-label">Total Products</div><div class="card-sub">6 Wood · 5 Corrugation · 6 Nailless · 6 Steel</div></div>
+    <div class="card blue"><div class="card-icon">⚙️</div><div class="card-value">26</div><div class="card-label">Machines / Lines</div><div class="card-sub">Across 4 production departments</div></div>
+    <div class="card green"><div class="card-icon">👷</div><div class="card-value">21</div><div class="card-label">Active Employees</div><div class="card-sub">Production · Skilled · Unskilled</div></div>
+    <div class="card purple"><div class="card-icon">⭐</div><div class="card-value">4</div><div class="card-label">Special Processes</div><div class="card-sub">CNC · ISPM-15 · Robotic Welding · Laser</div></div>
+    <div class="card yellow"><div class="card-icon">📋</div><div class="card-value">12</div><div class="card-label">Active Job Cards</div><div class="card-sub">WIP across all departments</div></div>
+    <div class="card red"><div class="card-icon">🔥</div><div class="card-value">3</div><div class="card-label">Special Requests</div><div class="card-sub">Pending approval · Owner/Prod Head</div></div>
+  </div>
+  
+  <div class="dept-grid">
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(249,115,22,.08)">
+        <div class="dept-icon" style="background:rgba(249,115,22,.15)">🪵</div>
+        <div><h3>Wood / Plywood Department</h3><p>Dept Head: Raj Kumar Paswan · Operators: Sunil, May Pet</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Products <span>6 (W-001 to W-006)</span></div>
+        <div class="dept-item">Key Machines <span>Beam Saw, Auto Cut Saw, CNC Router, Pneumatic Nailer</span></div>
+        <div class="dept-item">Special Process <span>CNC Routing · ISPM-15 Heat Treatment</span></div>
+        <div class="dept-item">RM Input <span>Timber/Logs, Plywood, Nails, Adhesive</span></div>
+        <div class="dept-item">Certifications <span>ISO 9001 · ISPM-15 (Export)</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(14,165,233,.08)">
+        <div class="dept-icon" style="background:rgba(14,165,233,.15)">📦</div>
+        <div><h3>Corrugation Department</h3><p>Dept Head: Raj Kumar · Operator: Manjeet</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Products <span>5 (C-001 to C-005)</span></div>
+        <div class="dept-item">Key Machines <span>Table Cutters, Beam Saw, 2-Color Printing, Strapping</span></div>
+        <div class="dept-item">Special Process <span>None (standard corrugation flow)</span></div>
+        <div class="dept-item">RM Input <span>Corrugated Sheets, Paper Pallets, Strapping Material</span></div>
+        <div class="dept-item">Process Flow <span>Cut → Print (opt) → Box Make → Strap → QC</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(34,197,94,.08)">
+        <div class="dept-icon" style="background:rgba(34,197,94,.15)">🔩</div>
+        <div><h3>Nail-less / Foldable Box Dept</h3><p>Dept Head: Sanjay · Operators: Ladies Team</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Products <span>6 (N-001 to N-006)</span></div>
+        <div class="dept-item">Key Machines <span>Auto Strip Making, Tongue/Lock Machine, Hydraulic Press, Folding Line</span></div>
+        <div class="dept-item">Special Process <span>None (proprietary nailless system)</span></div>
+        <div class="dept-item">RM Input <span>Hardwood/Plywood Strips, Lock Clips, Adhesive</span></div>
+        <div class="dept-item">Process Flow <span>Strip → Tongue/Lock → Press → Assembly → QC</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(168,85,247,.08)">
+        <div class="dept-icon" style="background:rgba(168,85,247,.15)">🔧</div>
+        <div><h3>Steel Fabrication Department</h3><p>Dept Head: Ranjeet Singh · Operators: Hari Shankar, Lokesh</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Products <span>6 (S-001 to S-006)</span></div>
+        <div class="dept-item">Key Machines <span>Shearing, CNC Press Brake, Robotic Welder, Laser Cutter 1.5KW</span></div>
+        <div class="dept-item">Special Process <span>Robotic Welding · Laser Cutting</span></div>
+        <div class="dept-item">RM Input <span>MS Sheets, Angle Iron, Flat Bars, Paint/Primer</span></div>
+        <div class="dept-item">Process Flow <span>Shear/Laser → Bend → Weld → Surface Treat → QC</span></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- KPI STATUS -->
+  <div class="table-wrap">
+    <div class="table-head"><h3>📊 Today's Production Status</h3><span style="font-size:12px;color:var(--text2)">June 2026</span></div>
+    <table>
+      <thead><tr><th>Dept</th><th>Active Job Cards</th><th>On Schedule</th><th>Delayed</th><th>Completed Today</th><th>Pending QC</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>🪵 Wood/Plywood</td><td>4</td><td>3</td><td>1</td><td>2</td><td>1</td><td><span class="tag yellow">⚠ Watch</span></td></tr>
+        <tr><td>📦 Corrugation</td><td>3</td><td>3</td><td>0</td><td>4</td><td>0</td><td><span class="tag green">✓ On Track</span></td></tr>
+        <tr><td>🔩 Nail-less</td><td>3</td><td>2</td><td>1</td><td>1</td><td>2</td><td><span class="tag yellow">⚠ Watch</span></td></tr>
+        <tr><td>🔧 Steel Fab</td><td>2</td><td>2</td><td>0</td><td>1</td><td>0</td><td><span class="tag green">✓ On Track</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════════ PRODUCTS ═══════════════ -->
+<div class="section" id="products">
+  <div class="sec-header"><h2>📦 Product Master</h2><p>23 Products · 4 Departments</p></div>
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterProducts('all',this)">All (23)</button>
+    <button class="filter-btn" onclick="filterProducts('Wood',this)">🪵 Wood/Plywood (6)</button>
+    <button class="filter-btn" onclick="filterProducts('Corrugation',this)">📦 Corrugation (5)</button>
+    <button class="filter-btn" onclick="filterProducts('Nailless',this)">🔩 Nail-less (6)</button>
+    <button class="filter-btn" onclick="filterProducts('Steel',this)">🔧 Steel (6)</button>
+  </div>
+  <div class="table-wrap">
+    <div class="table-head">
+      <h3>Product Register</h3>
+      <input class="search-bar" type="text" placeholder="🔍 Search products..." oninput="searchProducts(this.value)">
+    </div>
+    <table id="productTable">
+      <thead><tr><th>Code</th><th>Product Name</th><th>Dept</th><th>UOM</th><th>Machine 1</th><th>Machine 2</th><th>Machine 3</th><th>Operator</th><th>Special</th></tr></thead>
+      <tbody>
+        <tr data-dept="Wood"><td><span class="tag orange">W-001</span></td><td>Wooden Pallets</td><td>🪵 Wood</td><td>Nos</td><td>Wood Sawing Machine</td><td>Auto Cut Saw</td><td>Notching Machine</td><td>Sunil</td><td>ISPM-15 (Export)</td></tr>
+        <tr data-dept="Wood"><td><span class="tag orange">W-002</span></td><td>Wooden Boxes</td><td>🪵 Wood</td><td>Nos</td><td>Wood Sawing Machine</td><td>Wood Planing Machine</td><td>Pneumatic Nailing</td><td>May Pet</td><td>—</td></tr>
+        <tr data-dept="Wood"><td><span class="tag orange">W-003</span></td><td>Special Packing (CNC)</td><td>🪵 Wood</td><td>Nos</td><td>CNC Routing Machine</td><td>Wood Sawing Machine</td><td>Drilling Machine</td><td>Raj Kumar</td><td><span class="tag purple">CNC Routing</span></td></tr>
+        <tr data-dept="Wood"><td><span class="tag orange">W-004</span></td><td>Jumbo Box (Car Packing)</td><td>🪵 Wood</td><td>Nos</td><td>Beam Saw Machine</td><td>Table Cutters</td><td>Pneumatic Nailing</td><td>Sunil</td><td>—</td></tr>
+        <tr data-dept="Wood"><td><span class="tag orange">W-005</span></td><td>Wooden Crate</td><td>🪵 Wood</td><td>Nos</td><td>Wood Sawing Machine</td><td>Drilling Machines</td><td>Pneumatic Nailing</td><td>May Pet</td><td>—</td></tr>
+        <tr data-dept="Wood"><td><span class="tag orange">W-006</span></td><td>Heavy Duty Plywood Box</td><td>🪵 Wood</td><td>Nos</td><td>Beam Saw Machine</td><td>Table Cutters</td><td>Wood Planing Machine</td><td>Sunil</td><td>—</td></tr>
+        <tr data-dept="Corrugation"><td><span class="tag blue">C-001</span></td><td>Specialized Corrugation Packaging</td><td>📦 Corrugation</td><td>Nos</td><td>Table Cutters</td><td>Two Color Printing Machine</td><td>Strapping Machine</td><td>Manjeet</td><td>—</td></tr>
+        <tr data-dept="Corrugation"><td><span class="tag blue">C-002</span></td><td>Corrugation + Hybrid Packaging</td><td>📦 Corrugation</td><td>Nos</td><td>Table Cutters</td><td>Beam Saw Machine</td><td>Strapping Machine</td><td>Manjeet</td><td>—</td></tr>
+        <tr data-dept="Corrugation"><td><span class="tag blue">C-003</span></td><td>Half Fold Box</td><td>📦 Corrugation</td><td>Nos</td><td>Table Cutters</td><td>Strapping Machine</td><td>—</td><td>Manjeet</td><td>—</td></tr>
+        <tr data-dept="Corrugation"><td><span class="tag blue">C-004</span></td><td>Box with Paper Pallet</td><td>📦 Corrugation</td><td>Nos</td><td>Table Cutters</td><td>Strapping Machine</td><td>—</td><td>Raj Kumar</td><td>—</td></tr>
+        <tr data-dept="Corrugation"><td><span class="tag blue">C-005</span></td><td>Paper Pallet</td><td>📦 Corrugation</td><td>Nos</td><td>Table Cutters</td><td>—</td><td>—</td><td>Manjeet</td><td>—</td></tr>
+        <tr data-dept="Nailless"><td><span class="tag green">N-001</span></td><td>Nailless Box</td><td>🔩 Nailless</td><td>Nos</td><td>Auto Strip Making Machine</td><td>Auto Tongue/Lock Making</td><td>Hydraulic Presses</td><td>Ladies Team</td><td>—</td></tr>
+        <tr data-dept="Nailless"><td><span class="tag green">N-002</span></td><td>Nailless S Type</td><td>🔩 Nailless</td><td>Nos</td><td>Auto Strip Making Machine</td><td>Auto Tongue/Lock Making</td><td>Hydraulic Presses</td><td>Sanjay</td><td>—</td></tr>
+        <tr data-dept="Nailless"><td><span class="tag green">N-003</span></td><td>Pallet Collar</td><td>🔩 Nailless</td><td>Nos</td><td>Hydraulic Presses</td><td>Folding Box Making Line</td><td>—</td><td>Ladies Team</td><td>—</td></tr>
+        <tr data-dept="Nailless"><td><span class="tag green">N-004</span></td><td>Nailless Folding Box</td><td>🔩 Nailless</td><td>Nos</td><td>Folding Box Making Line</td><td>Hydraulic Presses</td><td>Double Hole Making</td><td>Sanjay</td><td>—</td></tr>
+        <tr data-dept="Nailless"><td><span class="tag green">N-005</span></td><td>Small Size Nailless Box</td><td>🔩 Nailless</td><td>Nos</td><td>Auto Strip Making Machine</td><td>Hydraulic Presses</td><td>Folding Box Making Line</td><td>Ladies Team</td><td>—</td></tr>
+        <tr data-dept="Nailless"><td><span class="tag green">N-006</span></td><td>Nailless Without Frame Box</td><td>🔩 Nailless</td><td>Nos</td><td>Hydraulic Presses</td><td>Auto Tongue/Lock Making</td><td>—</td><td>Sanjay</td><td>—</td></tr>
+        <tr data-dept="Steel"><td><span class="tag purple">S-001</span></td><td>Open Steel Crate (Light Duty)</td><td>🔧 Steel</td><td>Nos</td><td>Shearing Machine</td><td>CO2 MIG/MAG Welding</td><td>Robotic Welding</td><td>Ranjeet Singh</td><td><span class="tag purple">Robotic Welding</span></td></tr>
+        <tr data-dept="Steel"><td><span class="tag purple">S-002</span></td><td>Heavy Duty Closed Steel Crate</td><td>🔧 Steel</td><td>Nos</td><td>CNC Hydraulic Press Brake</td><td>Shearing Machine</td><td>Robotic Welding</td><td>Hari Shankar</td><td><span class="tag purple">Robotic Welding</span></td></tr>
+        <tr data-dept="Steel"><td><span class="tag purple">S-003</span></td><td>Medium Steel Crate</td><td>🔧 Steel</td><td>Nos</td><td>NC Hydraulic Press Brakes</td><td>Shearing Machine</td><td>Spot Welding (Stationary)</td><td>Lokesh</td><td>—</td></tr>
+        <tr data-dept="Steel"><td><span class="tag purple">S-004</span></td><td>Steel Crate with Equipment Support</td><td>🔧 Steel</td><td>Nos</td><td>Laser Cutting 1.5 KW</td><td>CO2 MIG/MAG Welding</td><td>Robotic Welding Table</td><td>Ranjeet Singh</td><td><span class="tag red">Laser Cutting</span></td></tr>
+        <tr data-dept="Steel"><td><span class="tag purple">S-005</span></td><td>Steel Crate for Heavy Machinery</td><td>🔧 Steel</td><td>Nos</td><td>CNC Hydraulic Press Brake</td><td>Robotic Welding</td><td>Robotic Welding Table</td><td>Hari Shankar</td><td><span class="tag purple">Robotic Welding</span></td></tr>
+        <tr data-dept="Steel"><td><span class="tag purple">S-006</span></td><td>Collapsible/Stackable Steel Pallet</td><td>🔧 Steel</td><td>Nos</td><td>Power Presses 10T-50T</td><td>Projection Welding 50 KVA</td><td>Shearing Machine</td><td>Lokesh</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════════ MACHINES ═══════════════ -->
+<div class="section" id="machines">
+  <div class="sec-header"><h2>⚙️ Machine Master</h2><p>26 Machines · 4 Departments</p></div>
+  
+  <div class="dept-grid">
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(249,115,22,.08)">
+        <div class="dept-icon" style="background:rgba(249,115,22,.15)">🪵</div>
+        <div><h3>Wood / Plywood Machines</h3><p>7 machines</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Beam Saw Machine <span class="tag orange">Heavy Cut</span></div>
+        <div class="dept-item">Wood Sawing Machine <span class="tag orange">General</span></div>
+        <div class="dept-item">Auto Cut Saw <span class="tag orange">Automated</span></div>
+        <div class="dept-item">Wood Planing Machine <span class="tag orange">Finishing</span></div>
+        <div class="dept-item">Table Cutters (Wood) <span class="tag orange">Precision</span></div>
+        <div class="dept-item">Notching Machine <span class="tag orange">Pallet</span></div>
+        <div class="dept-item">Pneumatic Nailing Machine <span class="tag orange">Assembly</span></div>
+        <div class="dept-item">Drilling Machine <span class="tag orange">Hole Work</span></div>
+        <div class="dept-item" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border)"><strong>Special Machines:</strong></div>
+        <div class="dept-item">CNC Routing Machine <span class="tag purple">Special SP-01</span></div>
+        <div class="dept-item">ISPM-15 Heat Treatment Chamber <span class="tag purple">Special SP-02</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(14,165,233,.08)">
+        <div class="dept-icon" style="background:rgba(14,165,233,.15)">📦</div>
+        <div><h3>Corrugation Machines</h3><p>4 machines</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Table Cutters (Corrugation) <span class="tag blue">Primary</span></div>
+        <div class="dept-item">Beam Saw Machine (Shared) <span class="tag blue">Shared</span></div>
+        <div class="dept-item">Two Color Printing Machine <span class="tag blue">Printing</span></div>
+        <div class="dept-item">Strapping Machine <span class="tag blue">Finish</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(34,197,94,.08)">
+        <div class="dept-icon" style="background:rgba(34,197,94,.15)">🔩</div>
+        <div><h3>Nail-less / Foldable Box Machines</h3><p>4 machines</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Auto Strip Making Machine <span class="tag green">Primary</span></div>
+        <div class="dept-item">Auto Tongue/Lock Making & Fixing <span class="tag green">Proprietary</span></div>
+        <div class="dept-item">Hydraulic Presses <span class="tag green">Press</span></div>
+        <div class="dept-item">Folding Box Making Line <span class="tag green">Assembly</span></div>
+        <div class="dept-item">Double Hole Making Machine <span class="tag green">Collar</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(168,85,247,.08)">
+        <div class="dept-icon" style="background:rgba(168,85,247,.15)">🔧</div>
+        <div><h3>Steel Fabrication Machines</h3><p>10 machines</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Shearing Machine <span class="tag purple">Cutting</span></div>
+        <div class="dept-item">CNC Hydraulic Press Brake <span class="tag purple">Bending</span></div>
+        <div class="dept-item">NC Hydraulic Press Brakes <span class="tag purple">Bending</span></div>
+        <div class="dept-item">Power Presses 10T-50T <span class="tag purple">Press</span></div>
+        <div class="dept-item">CO2 MIG/MAG Welding Machine <span class="tag purple">Welding</span></div>
+        <div class="dept-item">Spot Welding Machine (Stationary) <span class="tag purple">Spot Weld</span></div>
+        <div class="dept-item">Projection Welding 50 KVA <span class="tag purple">Projection</span></div>
+        <div class="dept-item" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border)"><strong>Special Machines:</strong></div>
+        <div class="dept-item">Robotic Welding Machine <span class="tag red">Special SP-03</span></div>
+        <div class="dept-item">Robotic Welding Table <span class="tag red">Special SP-03</span></div>
+        <div class="dept-item">Laser Cutting Machine 1.5 KW <span class="tag red">Special SP-04</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ROUTE CARDS ═══════════════ -->
+<div class="section" id="routes">
+  <div class="sec-header"><h2>🗺️ Route Cards (Bill of Process)</h2><p>Standard production flow per department</p></div>
+  
+  <div class="table-wrap">
+    <div class="table-head"><h3>🪵 Wood / Plywood — Route Card</h3></div>
+    <table>
+      <thead><tr><th>Step</th><th>Operation</th><th>Machine</th><th>Operator</th><th>Check Point</th><th>Approval</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>RM Inspection & Grading</td><td>Manual / Visual</td><td>Supervisor</td><td>Species, Size, Moisture</td><td>Store Incharge sign-off</td></tr>
+        <tr><td>2</td><td>Sawing / Cross Cutting</td><td>Beam Saw / Wood Sawing</td><td>Sunil / May Pet</td><td>Dimension tolerance ±2mm</td><td>Operator self-check</td></tr>
+        <tr><td>3</td><td>Planing / Dressing</td><td>Wood Planing Machine</td><td>May Pet</td><td>Surface finish, thickness</td><td>Operator self-check</td></tr>
+        <tr><td>4</td><td>Notching / Drilling</td><td>Notching / Drilling Machine</td><td>Sunil</td><td>Notch depth, hole centers</td><td>Operator self-check</td></tr>
+        <tr><td>5*</td><td>CNC Routing (if special)</td><td>CNC Routing Machine</td><td>Raj Kumar</td><td>Profile match to drawing</td><td><span class="tag purple">Prod Head Approval</span></td></tr>
+        <tr><td>6</td><td>Assembly / Nailing</td><td>Pneumatic Nailing Machine</td><td>All operators</td><td>Squareness, nail spacing</td><td>Dept Head check</td></tr>
+        <tr><td>7*</td><td>ISPM-15 Heat Treatment (export)</td><td>Heat Treatment Chamber</td><td>Specialist</td><td>Core temp 56°C for 30 min</td><td><span class="tag red">Owner/MD Approval</span></td></tr>
+        <tr><td>8</td><td>QC Final Inspection</td><td>Manual / Gauge</td><td>QC Inspector</td><td>Dimension, strength, mark</td><td>QC sign-off required</td></tr>
+        <tr><td>9</td><td>Marking & Dispatch</td><td>Manual</td><td>Store Incharge</td><td>Customer label, count</td><td>Dispatch gate pass</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>📦 Corrugation — Route Card</h3></div>
+    <table>
+      <thead><tr><th>Step</th><th>Operation</th><th>Machine</th><th>Operator</th><th>Check Point</th><th>Approval</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>RM Inspection (Corrugated Sheets)</td><td>Manual / Visual</td><td>Supervisor</td><td>GSM, ply, dimensions</td><td>Store Incharge sign-off</td></tr>
+        <tr><td>2</td><td>Sheet Cutting / Scoring</td><td>Table Cutters</td><td>Manjeet</td><td>Cut size tolerance ±1mm</td><td>Operator self-check</td></tr>
+        <tr><td>3</td><td>Printing (if required)</td><td>Two Color Printing Machine</td><td>Manjeet</td><td>Color registration, text</td><td>Dept Head approval for logo</td></tr>
+        <tr><td>4</td><td>Box Making / Folding</td><td>Table Cutters / Manual</td><td>Manjeet / Raj Kumar</td><td>Fold lines, glue joints</td><td>Operator self-check</td></tr>
+        <tr><td>5</td><td>Strapping / Bundling</td><td>Strapping Machine</td><td>Manjeet</td><td>Strap tension, bundle count</td><td>Operator self-check</td></tr>
+        <tr><td>6</td><td>QC Final Inspection</td><td>Manual</td><td>QC Inspector</td><td>Dimensions, print quality</td><td>QC sign-off required</td></tr>
+        <tr><td>7</td><td>Dispatch</td><td>Manual</td><td>Store Incharge</td><td>Packing list verification</td><td>Dispatch gate pass</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>🔩 Nail-less / Foldable Box — Route Card</h3></div>
+    <table>
+      <thead><tr><th>Step</th><th>Operation</th><th>Machine</th><th>Operator</th><th>Check Point</th><th>Approval</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>RM Inspection (Plywood/Hardwood)</td><td>Manual</td><td>Sanjay</td><td>Thickness, grade, moisture</td><td>Store Incharge sign-off</td></tr>
+        <tr><td>2</td><td>Sheet / Plank Cutting</td><td>Auto Strip Making Machine</td><td>Ladies Team</td><td>Strip width tolerance ±0.5mm</td><td>Operator self-check</td></tr>
+        <tr><td>3</td><td>Tongue & Lock Making/Fixing</td><td>Auto Tongue/Lock Machine</td><td>Sanjay</td><td>Lock engagement strength</td><td>Dept Head first-piece check</td></tr>
+        <tr><td>4</td><td>Hydraulic Pressing</td><td>Hydraulic Presses</td><td>Ladies Team / Sanjay</td><td>Press pressure, dwell time</td><td>Operator self-check</td></tr>
+        <tr><td>5</td><td>Folding / Assembly</td><td>Folding Box Making Line</td><td>Ladies Team</td><td>Fold accuracy, locking</td><td>First-piece approval Dept Head</td></tr>
+        <tr><td>6</td><td>QC Final Inspection</td><td>Manual</td><td>QC Inspector</td><td>Load test, fold/unfold</td><td>QC sign-off required</td></tr>
+        <tr><td>7</td><td>Dispatch</td><td>Manual</td><td>Store Incharge</td><td>Count, packing</td><td>Dispatch gate pass</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>🔧 Steel Fabrication — Route Card</h3></div>
+    <table>
+      <thead><tr><th>Step</th><th>Operation</th><th>Machine</th><th>Operator</th><th>Check Point</th><th>Approval</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>RM Inspection (MS Sheets/Sections)</td><td>Manual / Gauge</td><td>Ranjeet Singh</td><td>Grade, thickness, flatness</td><td>Store Incharge sign-off</td></tr>
+        <tr><td>2</td><td>Marking & Layout</td><td>Manual</td><td>Ranjeet Singh</td><td>Drawing compliance</td><td>Dept Head drawing approval</td></tr>
+        <tr><td>3</td><td>Shearing / Laser Cutting</td><td>Shearing / Laser 1.5KW</td><td>Hari Shankar</td><td>Cut dimensions ±0.5mm</td><td>Laser: <span class="tag red">Prod Head Approval</span></td></tr>
+        <tr><td>4</td><td>Bending / Forming</td><td>CNC/NC Press Brake / Power Press</td><td>Lokesh</td><td>Angle tolerance ±1°</td><td>First-piece approval</td></tr>
+        <tr><td>5</td><td>Welding (MIG/Spot/Projection)</td><td>CO2 MIG / Spot / Projection</td><td>Hari Shankar / Lokesh</td><td>Weld quality visual + gauge</td><td>Dept Head weld check</td></tr>
+        <tr><td>6*</td><td>Robotic Welding (if special)</td><td>Robotic Welding Machine</td><td>Ranjeet Singh</td><td>Program verified, bead quality</td><td><span class="tag purple">Prod Head Approval</span></td></tr>
+        <tr><td>7</td><td>Surface Treatment / Painting</td><td>Manual / Spray</td><td>All operators</td><td>DFT (dry film thickness)</td><td>Customer spec compliance</td></tr>
+        <tr><td>8</td><td>QC Final Inspection</td><td>Manual / Load Test</td><td>QC Inspector</td><td>All dimensions, load rating</td><td>QC sign-off required</td></tr>
+        <tr><td>9</td><td>Dispatch</td><td>Manual</td><td>Store Incharge</td><td>Packing, marking</td><td>Dispatch gate pass</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ MACHINE FLOW CHART (MIS) ═══════════════ -->
+<div class="section" id="flowchart">
+  <div class="sec-header"><h2>🔄 Master Machine &amp; Process Flow Chart</h2><p>All 26 machines, 4 departments, one consolidated view for MIS reporting</p></div>
+  <div class="table-wrap" style="padding:18px;overflow-x:auto">
+    <svg viewBox="0 0 1800 940" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;min-width:1400px">
+<defs><marker id="fcArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="1800" height="940" fill="#0f172a" rx="10"/>
+<text x="900" y="34" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="700" fill="#f1f5f9">🏭 SSPI Bhiwadi — Master Machine &amp; Process Flow Chart</text>
+<text x="900" y="56" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="12.5" fill="#94a3b8">26 machines · 4 departments · single consolidated view for MIS reporting</text>
+<text x="20" y="120" font-family="Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" fill="#f97316">🪵 Wood / Plywood</text>
+<rect x="180" y="90" width="150" height="50" rx="7" fill="rgb(249,115,22)" fill-opacity="0.16" stroke="#f97316" stroke-width="1.4"/>
+<text x="255" y="111" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">RM Inspection</text>
+<text x="255" y="125" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">&amp; Grading</text>
+<rect x="352" y="90" width="150" height="50" rx="7" fill="rgb(249,115,22)" fill-opacity="0.16" stroke="#f97316" stroke-width="1.4"/>
+<text x="427" y="111" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Beam Saw /</text>
+<text x="427" y="125" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Wood Sawing</text>
+<line x1="330" y1="115" x2="352" y2="115" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="524" y="90" width="150" height="50" rx="7" fill="rgb(249,115,22)" fill-opacity="0.16" stroke="#f97316" stroke-width="1.4"/>
+<text x="599" y="111" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Wood Planing</text>
+<text x="599" y="125" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Machine</text>
+<line x1="502" y1="115" x2="524" y2="115" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="696" y="90" width="150" height="50" rx="7" fill="rgb(249,115,22)" fill-opacity="0.16" stroke="#f97316" stroke-width="1.4"/>
+<text x="771" y="111" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Notching /</text>
+<text x="771" y="125" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Drilling Machine</text>
+<line x1="674" y1="115" x2="696" y2="115" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="868" y="90" width="150" height="50" rx="7" fill="rgb(239,68,68)" fill-opacity="0.18" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,3"/>
+<text x="943" y="111" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">⭐ CNC Routing</text>
+<text x="943" y="125" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Machine (SP-01)</text>
+<line x1="846" y1="115" x2="868" y2="115" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="1040" y="90" width="150" height="50" rx="7" fill="rgb(249,115,22)" fill-opacity="0.16" stroke="#f97316" stroke-width="1.4"/>
+<text x="1115" y="111" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Pneumatic</text>
+<text x="1115" y="125" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Nailing Machine</text>
+<line x1="1018" y1="115" x2="1040" y2="115" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="1212" y="90" width="150" height="50" rx="7" fill="rgb(239,68,68)" fill-opacity="0.18" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,3"/>
+<text x="1287" y="111" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">⭐ ISPM-15 Heat</text>
+<text x="1287" y="125" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Treatment Chamber (SP-02)</text>
+<line x1="1190" y1="115" x2="1212" y2="115" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="1384" y="90" width="150" height="50" rx="7" fill="rgb(249,115,22)" fill-opacity="0.16" stroke="#f97316" stroke-width="1.4"/>
+<text x="1459" y="111" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">QC Final</text>
+<text x="1459" y="125" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Inspection</text>
+<line x1="1362" y1="115" x2="1384" y2="115" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<text x="20" y="290" font-family="Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" fill="#0ea5e9">📦 Corrugation</text>
+<rect x="180" y="260" width="150" height="50" rx="7" fill="rgb(14,165,233)" fill-opacity="0.16" stroke="#0ea5e9" stroke-width="1.4"/>
+<text x="255" y="281" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">RM Inspection</text>
+<text x="255" y="295" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">(Sheets)</text>
+<rect x="352" y="260" width="150" height="50" rx="7" fill="rgb(14,165,233)" fill-opacity="0.16" stroke="#0ea5e9" stroke-width="1.4"/>
+<text x="427" y="281" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Table Cutters</text>
+<text x="427" y="295" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">(Cutting)</text>
+<line x1="330" y1="285" x2="352" y2="285" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="524" y="260" width="150" height="50" rx="7" fill="rgb(14,165,233)" fill-opacity="0.16" stroke="#0ea5e9" stroke-width="1.4"/>
+<text x="599" y="281" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Two Color</text>
+<text x="599" y="295" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Printing Machine</text>
+<line x1="502" y1="285" x2="524" y2="285" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="696" y="260" width="150" height="50" rx="7" fill="rgb(14,165,233)" fill-opacity="0.16" stroke="#0ea5e9" stroke-width="1.4"/>
+<text x="771" y="281" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Box Making /</text>
+<text x="771" y="295" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Folding</text>
+<line x1="674" y1="285" x2="696" y2="285" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="868" y="260" width="150" height="50" rx="7" fill="rgb(14,165,233)" fill-opacity="0.16" stroke="#0ea5e9" stroke-width="1.4"/>
+<text x="943" y="281" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Strapping</text>
+<text x="943" y="295" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Machine</text>
+<line x1="846" y1="285" x2="868" y2="285" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="1040" y="260" width="150" height="50" rx="7" fill="rgb(14,165,233)" fill-opacity="0.16" stroke="#0ea5e9" stroke-width="1.4"/>
+<text x="1115" y="281" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">QC Final</text>
+<text x="1115" y="295" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Inspection</text>
+<line x1="1018" y1="285" x2="1040" y2="285" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<text x="20" y="460" font-family="Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" fill="#22c55e">🔩 Nail-less</text>
+<rect x="180" y="430" width="150" height="50" rx="7" fill="rgb(34,197,94)" fill-opacity="0.16" stroke="#22c55e" stroke-width="1.4"/>
+<text x="255" y="451" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">RM Inspection</text>
+<text x="255" y="465" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">(Plywood)</text>
+<rect x="352" y="430" width="150" height="50" rx="7" fill="rgb(34,197,94)" fill-opacity="0.16" stroke="#22c55e" stroke-width="1.4"/>
+<text x="427" y="451" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Auto Strip</text>
+<text x="427" y="465" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Making Machine</text>
+<line x1="330" y1="455" x2="352" y2="455" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="524" y="430" width="150" height="50" rx="7" fill="rgb(34,197,94)" fill-opacity="0.16" stroke="#22c55e" stroke-width="1.4"/>
+<text x="599" y="451" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Auto Tongue/</text>
+<text x="599" y="465" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Lock Machine</text>
+<line x1="502" y1="455" x2="524" y2="455" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="696" y="430" width="150" height="50" rx="7" fill="rgb(34,197,94)" fill-opacity="0.16" stroke="#22c55e" stroke-width="1.4"/>
+<text x="771" y="451" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Hydraulic</text>
+<text x="771" y="465" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Presses</text>
+<line x1="674" y1="455" x2="696" y2="455" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="868" y="430" width="150" height="50" rx="7" fill="rgb(34,197,94)" fill-opacity="0.16" stroke="#22c55e" stroke-width="1.4"/>
+<text x="943" y="451" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Folding Box</text>
+<text x="943" y="465" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Making Line</text>
+<line x1="846" y1="455" x2="868" y2="455" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="1040" y="430" width="150" height="50" rx="7" fill="rgb(34,197,94)" fill-opacity="0.16" stroke="#22c55e" stroke-width="1.4"/>
+<text x="1115" y="451" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">QC Final</text>
+<text x="1115" y="465" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Inspection</text>
+<line x1="1018" y1="455" x2="1040" y2="455" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<text x="20" y="630" font-family="Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" fill="#a855f7">🔧 Steel Fabrication</text>
+<rect x="180" y="600" width="150" height="50" rx="7" fill="rgb(168,85,247)" fill-opacity="0.16" stroke="#a855f7" stroke-width="1.4"/>
+<text x="255" y="621" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">RM Inspection</text>
+<text x="255" y="635" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">(MS Sheets)</text>
+<rect x="352" y="600" width="150" height="50" rx="7" fill="rgb(168,85,247)" fill-opacity="0.16" stroke="#a855f7" stroke-width="1.4"/>
+<text x="427" y="621" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Shearing</text>
+<text x="427" y="635" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Machine</text>
+<line x1="330" y1="625" x2="352" y2="625" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="524" y="600" width="150" height="50" rx="7" fill="rgb(239,68,68)" fill-opacity="0.18" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,3"/>
+<text x="599" y="621" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">⭐ Laser Cutting</text>
+<text x="599" y="635" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">1.5KW (SP-04)</text>
+<line x1="502" y1="625" x2="524" y2="625" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="696" y="600" width="150" height="50" rx="7" fill="rgb(168,85,247)" fill-opacity="0.16" stroke="#a855f7" stroke-width="1.4"/>
+<text x="771" y="621" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">CNC Hydraulic</text>
+<text x="771" y="635" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Press Brake</text>
+<line x1="674" y1="625" x2="696" y2="625" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="868" y="600" width="150" height="50" rx="7" fill="rgb(168,85,247)" fill-opacity="0.16" stroke="#a855f7" stroke-width="1.4"/>
+<text x="943" y="621" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">CO2 MIG/MAG</text>
+<text x="943" y="635" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Welding</text>
+<line x1="846" y1="625" x2="868" y2="625" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="1040" y="600" width="150" height="50" rx="7" fill="rgb(239,68,68)" fill-opacity="0.18" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,3"/>
+<text x="1115" y="621" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">⭐ Robotic</text>
+<text x="1115" y="635" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Welding Machine (SP-03)</text>
+<line x1="1018" y1="625" x2="1040" y2="625" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="1212" y="600" width="150" height="50" rx="7" fill="rgb(168,85,247)" fill-opacity="0.16" stroke="#a855f7" stroke-width="1.4"/>
+<text x="1287" y="621" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Surface Treat. /</text>
+<text x="1287" y="635" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Painting</text>
+<line x1="1190" y1="625" x2="1212" y2="625" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="1384" y="600" width="150" height="50" rx="7" fill="rgb(168,85,247)" fill-opacity="0.16" stroke="#a855f7" stroke-width="1.4"/>
+<text x="1459" y="621" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">QC Final</text>
+<text x="1459" y="635" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#f1f5f9">Inspection</text>
+<line x1="1362" y1="625" x2="1384" y2="625" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<rect x="1590" y="300" width="160" height="170" rx="10" fill="rgba(34,197,94,0.18)" stroke="#16a34a" stroke-width="2"/>
+<text x="1670" y="369" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#f1f5f9">📦 Dispatch &amp;</text>
+<text x="1670" y="385" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#f1f5f9">Gate Pass</text>
+<text x="1670" y="403" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="10.5" fill="#cbd5e1">(All Departments)</text>
+<line x1="1534" y1="115" x2="1590" y2="340" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<line x1="1190" y1="285" x2="1590" y2="370" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<line x1="1190" y1="455" x2="1590" y2="410" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<line x1="1534" y1="625" x2="1590" y2="440" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#fcArrow)"/>
+<text x="20" y="780" font-family="Segoe UI,Arial,sans-serif" font-size="13" font-weight="700" fill="#f1f5f9">Legend</text>
+<rect x="20" y="794" width="16" height="16" rx="3" fill="rgb(249,115,22)" fill-opacity="0.2" stroke="#f97316" stroke-width="1.4"/>
+<text x="44" y="806" font-family="Segoe UI,Arial,sans-serif" font-size="11.5" fill="#cbd5e1">Wood / Plywood Department</text>
+<rect x="350" y="794" width="16" height="16" rx="3" fill="rgb(14,165,233)" fill-opacity="0.2" stroke="#0ea5e9" stroke-width="1.4"/>
+<text x="374" y="806" font-family="Segoe UI,Arial,sans-serif" font-size="11.5" fill="#cbd5e1">Corrugation Department</text>
+<rect x="680" y="794" width="16" height="16" rx="3" fill="rgb(34,197,94)" fill-opacity="0.2" stroke="#22c55e" stroke-width="1.4"/>
+<text x="704" y="806" font-family="Segoe UI,Arial,sans-serif" font-size="11.5" fill="#cbd5e1">Nail-less Department</text>
+<rect x="1010" y="794" width="16" height="16" rx="3" fill="rgb(168,85,247)" fill-opacity="0.2" stroke="#a855f7" stroke-width="1.4"/>
+<text x="1034" y="806" font-family="Segoe UI,Arial,sans-serif" font-size="11.5" fill="#cbd5e1">Steel Fabrication Department</text>
+<rect x="20" y="820" width="16" height="16" rx="3" fill="rgba(239,68,68,0.16)" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,3"/>
+<text x="44" y="832" font-family="Segoe UI,Arial,sans-serif" font-size="11.5" fill="#cbd5e1">⭐ Special Process (SP) — requires Production Head / Owner-MD approval before execution</text>
+<text x="20" y="858" font-family="Segoe UI,Arial,sans-serif" font-size="11" fill="#64748b">Each departments QC Final Inspection converges to one shared Dispatch &amp; Gate Pass stage, common across all 26 machines.</text>
+</svg>
+  </div>
+</div>
+
+
+<!-- ═══════════════ JOB CARDS ═══════════════ -->
+<div class="section" id="jobcards">
+  <div class="sec-header"><h2>📋 Job Cards — Work Orders</h2><p>Active production orders across all departments</p></div>
+  
+  <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="openNewJobModal()">+ New Job Card</button>
+    <input class="search-bar" type="text" placeholder="🔍 Search job cards..." id="jobSearch" oninput="searchJobCards(this.value)">
+  </div>
+  
+  <div class="approval-box">
+    <h4>✅ Approval Required Before Starting Any Job Card</h4>
+    <div class="approval-steps">
+      <div class="apv-step"><div class="role">STEP 1</div><div class="action">Dept Head</div><div class="role">Reviews BOM & Route</div></div>
+      <div class="apv-arrow">→</div>
+      <div class="apv-step"><div class="role">STEP 2</div><div class="action">Store Incharge</div><div class="role">Confirms RM Available</div></div>
+      <div class="apv-arrow">→</div>
+      <div class="apv-step"><div class="role">STEP 3</div><div class="action">Production Head</div><div class="role">Authorizes Start</div></div>
+      <div class="apv-arrow">→</div>
+      <div class="apv-step"><div class="role">STEP 4</div><div class="action">Operator</div><div class="role">Acknowledges & Starts</div></div>
+    </div>
+  </div>
+  
+  <div class="table-wrap">
+    <div class="table-head"><h3>Active Job Cards</h3></div>
+    <table id="jobCardTable">
+      <thead><tr><th>JC No.</th><th>Product</th><th>Dept</th><th>Qty</th><th>SO / Customer</th><th>Operator</th><th>Start</th><th>Due</th><th>Stage</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr><td>JC-2026-001</td><td>W-001 Wooden Pallets</td><td>🪵 Wood</td><td>500 Nos</td><td>Maruti Suzuki</td><td>Sunil</td><td>10-Jun</td><td>18-Jun</td><td>Assembly</td><td><span class="tag yellow">In Progress</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-001')">View</button></td></tr>
+        <tr><td>JC-2026-002</td><td>S-001 Open Steel Crate</td><td>🔧 Steel</td><td>50 Nos</td><td>Hero MotoCorp</td><td>Ranjeet Singh</td><td>12-Jun</td><td>20-Jun</td><td>Welding</td><td><span class="tag yellow">In Progress</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-002')">View</button></td></tr>
+        <tr><td>JC-2026-003</td><td>N-001 Nailless Box</td><td>🔩 Nailless</td><td>200 Nos</td><td>Honda Cars</td><td>Sanjay</td><td>13-Jun</td><td>19-Jun</td><td>Strip Making</td><td><span class="tag yellow">In Progress</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-003')">View</button></td></tr>
+        <tr><td>JC-2026-004</td><td>C-001 Corrugation Pkg</td><td>📦 Corrugation</td><td>1000 Nos</td><td>Tata Motors</td><td>Manjeet</td><td>14-Jun</td><td>17-Jun</td><td>QC Check</td><td><span class="tag green">Near Complete</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-004')">View</button></td></tr>
+        <tr><td>JC-2026-005</td><td>W-003 Special CNC</td><td>🪵 Wood</td><td>100 Nos</td><td>Export Order</td><td>Raj Kumar</td><td>11-Jun</td><td>22-Jun</td><td>CNC Routing</td><td><span class="tag purple">Special Process</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-005')">View</button></td></tr>
+        <tr><td>JC-2026-006</td><td>S-004 Steel Crate Equip</td><td>🔧 Steel</td><td>25 Nos</td><td>JBM Group</td><td>Ranjeet Singh</td><td>15-Jun</td><td>24-Jun</td><td>Laser Cutting</td><td><span class="tag red">Special Process</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-006')">View</button></td></tr>
+        <tr><td>JC-2026-007</td><td>W-004 Jumbo Box</td><td>🪵 Wood</td><td>300 Nos</td><td>Maruti Suzuki</td><td>Sunil</td><td>09-Jun</td><td>16-Jun</td><td>Dispatch</td><td><span class="tag green">Ready</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-007')">View</button></td></tr>
+        <tr><td>JC-2026-008</td><td>N-004 Nailless Folding</td><td>🔩 Nailless</td><td>150 Nos</td><td>TVS Motor</td><td>Ladies Team</td><td>14-Jun</td><td>21-Jun</td><td>Pressing</td><td><span class="tag yellow">In Progress</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-008')">View</button></td></tr>
+        <tr><td>JC-2026-009</td><td>C-002 Hybrid Pkg</td><td>📦 Corrugation</td><td>500 Nos</td><td>Bajaj Auto</td><td>Manjeet</td><td>15-Jun</td><td>20-Jun</td><td>Cutting</td><td><span class="tag blue">Started</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-009')">View</button></td></tr>
+        <tr><td>JC-2026-010</td><td>S-002 Heavy Duty Crate</td><td>🔧 Steel</td><td>30 Nos</td><td>Eicher Trucks</td><td>Hari Shankar</td><td>16-Jun</td><td>25-Jun</td><td>RM Inspection</td><td><span class="tag blue">Pending Start</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('JC-2026-010')">View</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ SPECIAL PROCESSES ═══════════════ -->
+<div class="section" id="special">
+  <div class="sec-header"><h2>⭐ Special Process Register</h2><p>Processes requiring elevated approval</p></div>
+  
+  <div class="approval-box" style="background:rgba(168,85,247,.06);border-color:rgba(168,85,247,.3)">
+    <h4 style="color:var(--purple)">⚠️ Special Process Activation — Mandatory Approval Chain</h4>
+    <div class="approval-steps">
+      <div class="apv-step" style="background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.2)"><div class="role">STEP 1</div><div class="action" style="color:var(--purple)">Request Raised</div><div class="role">Dept Head / Operator</div></div>
+      <div class="apv-arrow" style="color:var(--purple)">→</div>
+      <div class="apv-step" style="background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.2)"><div class="role">STEP 2</div><div class="action" style="color:var(--purple)">Technical Review</div><div class="role">Production Head</div></div>
+      <div class="apv-arrow" style="color:var(--purple)">→</div>
+      <div class="apv-step" style="background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.2)"><div class="role">STEP 3</div><div class="action" style="color:var(--purple)">Authorization</div><div class="role">Owner/MD (ISPM) or Prod Head</div></div>
+      <div class="apv-arrow" style="color:var(--purple)">→</div>
+      <div class="apv-step" style="background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.2)"><div class="role">STEP 4</div><div class="action" style="color:var(--purple)">Execution Log</div><div class="role">Certified Operator Only</div></div>
+    </div>
+  </div>
+  
+  <div class="sp-card">
+    <h4>SP-01 · CNC Routing</h4>
+    <p>Custom profile cutting for special packing configurations requiring precision routing of wood/plywood.</p>
+    <div class="sp-meta">
+      <div class="sp-meta-item">Machine: <span>CNC Routing Machine</span></div>
+      <div class="sp-meta-item">Operator: <span>Raj Kumar Paswan (certified)</span></div>
+      <div class="sp-meta-item">Approval: <span>Production Head</span></div>
+      <div class="sp-meta-item">Products: <span>W-003 Special Packing</span></div>
+      <div class="sp-meta-item">Log Required: <span>Yes — Drawing ref + Prod Head sign</span></div>
+    </div>
+  </div>
+  
+  <div class="sp-card" style="background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(249,115,22,.05));border-color:rgba(239,68,68,.3)">
+    <h4 style="color:var(--danger)">SP-02 · ISPM-15 Heat Treatment (Export Compliance)</h4>
+    <p>Mandatory heat treatment for wood packaging used in international export orders. Requires certification mark application.</p>
+    <div class="sp-meta">
+      <div class="sp-meta-item">Machine: <span>ISPM-15 Heat Treatment Chamber</span></div>
+      <div class="sp-meta-item">Operator: <span>Certified Specialist only</span></div>
+      <div class="sp-meta-item">Approval: <span style="color:var(--danger)">OWNER / MD (Mandatory)</span></div>
+      <div class="sp-meta-item">Products: <span>W-001 (Export lots)</span></div>
+      <div class="sp-meta-item">Process: <span>Core temp 56°C for minimum 30 minutes continuous</span></div>
+      <div class="sp-meta-item">Log Required: <span>Yes — Temp chart + time log + Owner sign + IPPC mark ref</span></div>
+    </div>
+  </div>
+  
+  <div class="sp-card">
+    <h4>SP-03 · Robotic Welding</h4>
+    <p>Automated robotic welding for high-precision, high-volume steel fabrication orders. Requires program verification before run.</p>
+    <div class="sp-meta">
+      <div class="sp-meta-item">Machine: <span>Robotic Welding Machine + Table</span></div>
+      <div class="sp-meta-item">Operator: <span>Ranjeet Singh (certified)</span></div>
+      <div class="sp-meta-item">Approval: <span>Production Head</span></div>
+      <div class="sp-meta-item">Products: <span>S-001, S-002, S-004, S-005</span></div>
+      <div class="sp-meta-item">Log Required: <span>Yes — Program ID + first-piece check + Prod Head sign</span></div>
+    </div>
+  </div>
+  
+  <div class="sp-card" style="background:linear-gradient(135deg,rgba(234,179,8,.1),rgba(249,115,22,.05));border-color:rgba(234,179,8,.3)">
+    <h4 style="color:var(--warn)">SP-04 · Laser Cutting (1.5 KW)</h4>
+    <p>High-precision laser cutting for complex steel profiles. Requires safety clearance and program file verification.</p>
+    <div class="sp-meta">
+      <div class="sp-meta-item">Machine: <span>Laser Cutting Machine 1.5 KW</span></div>
+      <div class="sp-meta-item">Operator: <span>Hari Shankar (certified)</span></div>
+      <div class="sp-meta-item">Approval: <span>Production Head (safety check mandatory)</span></div>
+      <div class="sp-meta-item">Products: <span>S-004 Steel Crate with Equipment Support</span></div>
+      <div class="sp-meta-item">Log Required: <span>Yes — DXF file ref + safety check + Prod Head sign</span></div>
+    </div>
+  </div>
+  
+  <div class="table-wrap">
+    <div class="table-head"><h3>Special Process Request Log</h3><button class="btn btn-primary" onclick="openSpReqModal()" style="font-size:12px;padding:6px 14px">+ New Request</button></div>
+    <table>
+      <thead><tr><th>SR No.</th><th>Process</th><th>Job Card</th><th>Product</th><th>Requested By</th><th>Date</th><th>Approved By</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>SP-REQ-001</td><td><span class="tag purple">SP-01 CNC</span></td><td>JC-2026-005</td><td>W-003</td><td>Raj Kumar</td><td>11-Jun-26</td><td>Prod Head</td><td><span class="tag green">Approved</span></td></tr>
+        <tr><td>SP-REQ-002</td><td><span class="tag red">SP-02 ISPM-15</span></td><td>JC-2026-001</td><td>W-001</td><td>Sunil</td><td>12-Jun-26</td><td>Owner/MD</td><td><span class="tag green">Approved</span></td></tr>
+        <tr><td>SP-REQ-003</td><td><span class="tag purple">SP-03 Robotic</span></td><td>JC-2026-002</td><td>S-001</td><td>Ranjeet Singh</td><td>13-Jun-26</td><td>Prod Head</td><td><span class="tag green">Approved</span></td></tr>
+        <tr><td>SP-REQ-004</td><td><span class="tag yellow">SP-04 Laser</span></td><td>JC-2026-006</td><td>S-004</td><td>Hari Shankar</td><td>15-Jun-26</td><td>Pending</td><td><span class="tag yellow">Pending</span></td></tr>
+        <tr><td>SP-REQ-005</td><td><span class="tag purple">SP-03 Robotic</span></td><td>JC-2026-005</td><td>S-005</td><td>Ranjeet Singh</td><td>16-Jun-26</td><td>Pending</td><td><span class="tag yellow">Pending</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════════ PRODUCTION PLANNING ═══════════════ -->
+<div class="section" id="prodplan">
+  <div class="sec-header"><h2>📅 Production Planning System</h2><p>Entered by: Production Manager · Reviewed by: MD</p></div>
+
+  <div class="cards">
+    <div class="card green"><div class="card-icon">📅</div><div class="card-value">9,800</div><div class="card-label">Monthly Plan (Units)</div><div class="card-sub">All products</div></div>
+    <div class="card orange"><div class="card-icon">📈</div><div class="card-value">87.3%</div><div class="card-label">Achieved vs Plan</div><div class="card-sub">8,556 of 9,800</div></div>
+    <div class="card blue"><div class="card-icon">⚙️</div><div class="card-value">79.4%</div><div class="card-label">Machine Utilisation</div><div class="card-sub">Target: 85%</div></div>
+    <div class="card red"><div class="card-icon">⚠️</div><div class="card-value">5</div><div class="card-label">Plan Deviations</div><div class="card-sub">This month</div></div>
+  </div>
+
+  <div class="table-wrap" style="padding:18px">
+    <h3 style="margin-bottom:12px">➕ Create Production Plan</h3>
+    <div style="font-size:11px;color:var(--text2);background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.25);border-radius:6px;padding:8px 12px;margin-bottom:12px">🤖 Plan auto-breaks into weekly &amp; daily schedule · BOM auto-linked · Instructions can be sent to Supervisor on WhatsApp</div>
+    <div class="form-row">
+      <div class="form-group"><label>Plan Period</label><select id="pp_period"><option>Week 1 (1-7 Jun)</option><option>Week 2 (8-14 Jun)</option><option>Week 3 (15-21 Jun)</option><option>Week 4 (22-30 Jun)</option><option>Full Month</option></select></div>
+      <div class="form-group"><label>Product</label><select id="pp_prod" onchange="ppProductChanged()"><option>W-001 Wooden Pallets</option><option>W-002 Wooden Boxes</option><option>W-003 Special Packing (CNC)</option><option>W-004 Jumbo Box</option><option>W-005 Wooden Crate</option><option>W-006 Heavy Duty Plywood Box</option><option>C-001 Corrugation Packaging</option><option>C-002 Hybrid Packaging</option><option>C-003 Half Fold Box</option><option>C-004 Box with Paper Pallet</option><option>C-005 Paper Pallet</option><option>N-001 Nailless Box</option><option>N-002 Nailless S Type</option><option>N-003 Pallet Collar</option><option>N-004 Nailless Folding Box</option><option>N-005 Small Nailless Box</option><option>N-006 Nailless Without Frame</option><option>S-001 Open Steel Crate</option><option>S-002 Heavy Duty Steel Crate</option><option>S-003 Medium Steel Crate</option><option>S-004 Steel Crate Equipment</option><option>S-005 Steel Crate Heavy Machinery</option><option>S-006 Collapsible Steel Pallet</option></select></div>
+      <div class="form-group"><label>Planned Qty (units)</label><input type="number" id="pp_qty" placeholder="200" oninput="calcDailyTargetPP()"></div>
+      <div class="form-group"><label>Daily Target (Auto)</label><input id="pp_daily" readonly style="font-weight:700;color:var(--primary)"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Machine Allocated</label><select id="pp_machine"></select></div>
+      <div class="form-group"><label>Shift</label><select id="pp_shift"><option>Morning (6AM-2PM)</option><option>Evening (2PM-10PM)</option><option>Night (10PM-6AM)</option><option>General (8AM-5PM)</option><option>Double Shift</option></select></div>
+      <div class="form-group"><label>Supervisor In-Charge</label><select id="pp_sup"><option>Sunil</option><option>May Pet</option><option>Manjeet</option><option>Sanjay</option><option>Ladies Team</option><option>Ranjeet Singh</option><option>Hari Shankar</option><option>Lokesh</option><option>Raj Kumar Paswan</option></select></div>
+      <div class="form-group"><label>Sales Order Link</label><input id="pp_so" placeholder="SO-20260018 (optional)"></div>
+    </div>
+
+    <!-- BOM for Planning -->
+    <div style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:8px">📦 BOM — Material Requirement for this Plan</div>
+      <table style="width:100%;font-size:11px"><thead><tr><th>Material</th><th>Per Unit</th><th>Total Req.</th><th>Available</th><th>To Purchase</th><th>Status</th></tr></thead><tbody id="ppBomBody"></tbody></table>
+    </div>
+
+    <!-- Route Stages for Planning -->
+    <div id="ppRoutePanel" style="display:none;background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.3);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--secondary);margin-bottom:8px">🗺️ Route Stages — Schedule each process step</div>
+      <table style="width:100%;font-size:11px"><thead><tr><th>Step</th><th>Operation</th><th>Machine</th><th>Assigned Operator</th><th>Plan Start</th><th>Plan End</th><th>SP?</th></tr></thead><tbody id="ppRouteBody"></tbody></table>
+      <div style="font-size:10px;color:var(--text2);margin-top:6px">* Steps marked SP require Special Process approval before execution</div>
+    </div>
+    <!-- Special Process Alert for Plan -->
+    <div id="ppSPAlert" style="display:none;border-radius:8px;padding:12px;margin-bottom:12px"></div>
+
+    <div class="form-row" style="grid-template-columns:1fr 1fr">
+      <div class="form-group">
+        <label>📐 Product Drawing / Reference (Upload)</label>
+        <div onclick="document.getElementById('pp_drg').click()" style="border:2px dashed var(--border);border-radius:6px;padding:14px;text-align:center;cursor:pointer;font-size:11px;color:var(--text2)">
+          🖼 Upload drawing, sketch, or spec sheet<br><span style="font-size:10px">JPG, PNG, PDF</span>
+          <input type="file" id="pp_drg" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="previewPPDrawing(event)">
+        </div>
+        <div id="ppDrgPreview" style="margin-top:6px;display:none;font-size:11px;color:var(--success)"></div>
+      </div>
+      <div class="form-group">
+        <label>📋 Supervisor Instructions (sent on WhatsApp when plan is confirmed)</label>
+        <textarea id="pp_instr" rows="6" placeholder="AUTO-GENERATED on Confirm Plan, e.g.
+
+Dear Supervisor,
+Production Plan — Week 1:
+Product: Wooden Pallet
+Target: 350 units (50/day)
+Machine: M01
+Shift: Morning
+
+1. Check tool condition before starting
+2. Use drawing reference provided
+3. Inspect 1st piece before mass production
+4. Report any deviation immediately"></textarea>
+      </div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr">
+      <div class="form-group"><label>Quality Checkpoints</label><textarea id="pp_qc" rows="3" placeholder="1st piece approval mandatory&#10;In-process: check every 10 pcs&#10;Final: 100% visual + dimension check"></textarea></div>
+      <div class="form-group"><label>Special Notes / Alerts</label><textarea id="pp_notes" rows="3" placeholder="e.g. Critical order — no rejection acceptable&#10;Customer delivery date&#10;Alert Prod Head if target not met by Day 3"></textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="submitProdPlanMfg()">✅ Confirm Plan &amp; Send Instructions</button>
+      <button class="btn btn-secondary" onclick="generateScheduleMfg()">📅 Generate Daily Schedule</button>
+      <button class="btn btn-secondary" onclick="printProdPlanMfg()">🖨 Print Production Plan</button>
+      <button class="btn btn-secondary" onclick="clearProdPlanMfg()">🗑 Clear</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>📅 Weekly Production Schedule Board</h3><span class="tag green" id="ppWeekLabel">Week 2 — Jun 8-14</span></div>
+    <table id="scheduleTable">
+      <thead><tr><th>Product</th><th>Mon 9</th><th>Tue 10</th><th>Wed 11</th><th>Thu 12</th><th>Fri 13</th><th>Sat 14</th><th>Week Total</th><th>Status</th></tr></thead>
+      <tbody id="scheduleBody">
+        <tr><td>W-001 Wooden Pallets</td><td>50</td><td>50</td><td>50</td><td>55</td><td>48</td><td>52</td><td><b>305</b></td><td><span class="tag green">On Track</span></td></tr>
+        <tr><td>S-001 Open Steel Crate</td><td>8</td><td>8</td><td>7</td><td>8</td><td>9</td><td>8</td><td><b>48</b></td><td><span class="tag yellow">Slightly Behind</span></td></tr>
+        <tr><td>N-001 Nailless Box</td><td>30</td><td>32</td><td>28</td><td>30</td><td>30</td><td>30</td><td><b>180</b></td><td><span class="tag green">On Track</span></td></tr>
+        <tr><td>C-001 Corrugation Pkg</td><td>150</td><td>150</td><td>160</td><td>140</td><td>150</td><td>150</td><td><b>900</b></td><td><span class="tag green">On Track</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap" style="padding:18px">
+    <h3 style="margin-bottom:12px">📊 Machine Capacity vs Demand (This Month)</h3>
+    <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Wood Dept (Beam Saw, Sawing, Planing)</span><span class="pct">82%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:82%;background:linear-gradient(90deg,#ef4444,#f97316)">82%</div></div></div>
+    <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Corrugation Dept (Table Cutters, Printing)</span><span class="pct">68%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:68%;background:linear-gradient(90deg,#f97316,#eab308)">68%</div></div></div>
+    <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Nail-less Dept (Strip Making, Pressing)</span><span class="pct">72%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:72%;background:linear-gradient(90deg,#f97316,#eab308)">72%</div></div></div>
+    <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Steel Dept (Shearing, Welding, Forming)</span><span class="pct">61%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:61%;background:linear-gradient(90deg,#eab308,#22c55e)">61%</div></div></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════ MACHINE LOADING ═══════════════ -->
+<div class="section" id="loading">
+  <div class="sec-header"><h2>📈 Machine Loading — Capacity Planning</h2><p>Current utilization across all departments</p></div>
+  
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:20px">
+    <div class="table-wrap" style="margin-bottom:0">
+      <div class="table-head"><h3>🪵 Wood / Plywood Machines</h3></div>
+      <div style="padding:16px">
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Beam Saw Machine</span><span class="pct">85%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:85%;background:linear-gradient(90deg,#ef4444,#f97316)">85%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Wood Sawing Machine</span><span class="pct">70%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:70%;background:linear-gradient(90deg,#f97316,#eab308)">70%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Auto Cut Saw</span><span class="pct">60%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:60%;background:linear-gradient(90deg,#eab308,#22c55e)">60%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Wood Planing Machine</span><span class="pct">45%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:45%;background:linear-gradient(90deg,#22c55e,#0ea5e9)">45%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Pneumatic Nailing</span><span class="pct">75%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:75%;background:linear-gradient(90deg,#f97316,#eab308)">75%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">CNC Routing Machine</span><span class="pct">55%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:55%;background:linear-gradient(90deg,#a855f7,#6366f1)">55%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">ISPM-15 Chamber</span><span class="pct">30%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:30%;background:linear-gradient(90deg,#ef4444,#f97316)">30%</div></div></div>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-bottom:0">
+      <div class="table-head"><h3>📦 Corrugation Machines</h3></div>
+      <div style="padding:16px">
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Table Cutters</span><span class="pct">90%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:90%;background:linear-gradient(90deg,#ef4444,#f97316)">90%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Two Color Printing</span><span class="pct">40%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:40%;background:linear-gradient(90deg,#22c55e,#0ea5e9)">40%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Strapping Machine</span><span class="pct">65%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:65%;background:linear-gradient(90deg,#eab308,#22c55e)">65%</div></div></div>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-bottom:0">
+      <div class="table-head"><h3>🔩 Nail-less Machines</h3></div>
+      <div style="padding:16px">
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Auto Strip Making</span><span class="pct">80%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:80%;background:linear-gradient(90deg,#f97316,#eab308)">80%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Tongue/Lock Machine</span><span class="pct">75%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:75%;background:linear-gradient(90deg,#f97316,#eab308)">75%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Hydraulic Presses</span><span class="pct">70%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:70%;background:linear-gradient(90deg,#f97316,#eab308)">70%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Folding Box Making Line</span><span class="pct">55%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:55%;background:linear-gradient(90deg,#22c55e,#0ea5e9)">55%</div></div></div>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-bottom:0">
+      <div class="table-head"><h3>🔧 Steel Fabrication Machines</h3></div>
+      <div style="padding:16px">
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Shearing Machine</span><span class="pct">75%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:75%;background:linear-gradient(90deg,#f97316,#eab308)">75%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">CNC Hydraulic Press Brake</span><span class="pct">60%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:60%;background:linear-gradient(90deg,#eab308,#22c55e)">60%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">CO2 MIG/MAG Welding</span><span class="pct">70%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:70%;background:linear-gradient(90deg,#f97316,#eab308)">70%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Robotic Welding</span><span class="pct">50%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:50%;background:linear-gradient(90deg,#a855f7,#6366f1)">50%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Laser Cutting 1.5 KW</span><span class="pct">35%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:35%;background:linear-gradient(90deg,#eab308,#22c55e)">35%</div></div></div>
+        <div class="loading-bar-wrap"><div class="loading-bar-label"><span class="name">Power Presses 10T-50T</span><span class="pct">45%</span></div><div class="loading-bar"><div class="loading-bar-fill" style="width:45%;background:linear-gradient(90deg,#22c55e,#0ea5e9)">45%</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ EMPLOYEES ═══════════════ -->
+<div class="section" id="employees">
+  <div class="sec-header"><h2>👷 Employee — Manpower Deployment</h2><p>21 Active Employees · SSPI Bhiwadi</p></div>
+  <div class="table-wrap">
+    <div class="table-head"><h3>Manpower Register</h3></div>
+    <table>
+      <thead><tr><th>Emp Code</th><th>Name</th><th>Dept / Role</th><th>Category</th><th>Machine Assignment</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>EMP-001</td><td>Raj Kumar Paswan</td><td>🪵 Wood — Dept Head</td><td><span class="tag green">ESI</span></td><td>All Wood Machines (Supervise)</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-002</td><td>Sunil</td><td>🪵 Wood — Operator</td><td><span class="tag green">ESI</span></td><td>Beam Saw, Auto Cut Saw, Pneumatic Nailer</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-003</td><td>May Pet</td><td>🪵 Wood — Operator</td><td><span class="tag green">ESI</span></td><td>Wood Planing, Sawing, Pneumatic Nailer</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-004</td><td>Raj Kumar (Corrugation)</td><td>📦 Corrugation — Head</td><td><span class="tag green">ESI</span></td><td>Table Cutters, Beam Saw (Shared)</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-005</td><td>Manjeet</td><td>📦 Corrugation — Operator</td><td><span class="tag green">ESI</span></td><td>Table Cutters, Printing Machine, Strapping</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-006</td><td>Sanjay</td><td>🔩 Nailless — Dept Head</td><td><span class="tag green">ESI</span></td><td>Tongue/Lock Machine, Hydraulic Press</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-007</td><td>Ladies Team (Lead)</td><td>🔩 Nailless — Assembly</td><td><span class="tag green">ESI</span></td><td>Auto Strip Making, Hydraulic Press, Folding Line</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-008</td><td>Ranjeet Singh</td><td>🔧 Steel — Dept Head</td><td><span class="tag green">ESI</span></td><td>Robotic Welding (Certified), CNC Press Brake</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-009</td><td>Hari Shankar</td><td>🔧 Steel — Welder/Fabricator</td><td><span class="tag green">ESI</span></td><td>CO2 MIG/MAG, Laser Cutting (Certified)</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-010</td><td>Lokesh</td><td>🔧 Steel — Press/Weld</td><td><span class="tag green">ESI</span></td><td>NC Press Brake, Spot Welding, Power Presses</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-011</td><td>Store Incharge</td><td>🏪 Stores — Incharge</td><td><span class="tag blue">Staff</span></td><td>RM Issue, Finished Goods</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-012</td><td>QC Inspector</td><td>🔍 Quality — Inspector</td><td><span class="tag blue">Staff</span></td><td>All Departments (Roving)</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-013</td><td>Production Head</td><td>🏭 Production — Head</td><td><span class="tag blue">Management</span></td><td>All Departments (Authorizer)</td><td><span class="tag green">Active</span></td></tr>
+        <tr><td>EMP-014 to 021</td><td>Helper / Unskilled (8 nos)</td><td>All Departments — Helper</td><td><span class="tag yellow">Contract</span></td><td>Material Handling, Assembly Support</td><td><span class="tag green">Active</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ APPROVAL CHANNELS ═══════════════ -->
+<div class="section" id="approval">
+  <div class="sec-header"><h2>✅ Approval Channels — Accountability Matrix</h2><p>No operation proceeds without the required authorization</p></div>
+  
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-bottom:20px">
+    <div class="approval-box">
+      <h4>🆕 New Job Card Creation</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Raise</div><div class="action">Dept Head</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">RM Check</div><div class="action">Store Incharge</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Authorize</div><div class="action">Prod Head</div></div>
+      </div>
+    </div>
+    <div class="approval-box">
+      <h4>⭐ Special Process Activation</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Request</div><div class="action">Operator</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Review</div><div class="action">Dept Head</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Authorize</div><div class="action">Prod Head / Owner</div></div>
+      </div>
+    </div>
+    <div class="approval-box">
+      <h4>🚢 Export / ISPM-15</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Request</div><div class="action">Dept Head</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Verify</div><div class="action">QC Inspector</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Authorize</div><div class="action">Owner / MD</div></div>
+      </div>
+    </div>
+    <div class="approval-box">
+      <h4>📤 Dispatch / Gate Pass</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">QC Pass</div><div class="action">QC Inspector</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Dispatch</div><div class="action">Store Incharge</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Gate Pass</div><div class="action">Security / Admin</div></div>
+      </div>
+    </div>
+    <div class="approval-box">
+      <h4>⚠️ Scrap / Rejection Reporting</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Raise</div><div class="action">Operator</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Verify</div><div class="action">QC Inspector</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Authorize</div><div class="action">Dept Head</div></div>
+      </div>
+    </div>
+    <div class="approval-box">
+      <h4>🔧 Machine Breakdown / Stoppage</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Report</div><div class="action">Operator</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Assess</div><div class="action">Dept Head</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Approve Repair</div><div class="action">Prod Head / Admin</div></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="table-wrap">
+    <div class="table-head"><h3>RACI Matrix — Manufacturing Operations</h3></div>
+    <table>
+      <thead><tr><th>Activity</th><th>Operator</th><th>Dept Head</th><th>Prod Head</th><th>QC Inspector</th><th>Store Incharge</th><th>Owner/MD</th></tr></thead>
+      <tbody>
+        <tr><td>Issue Job Card</td><td>I</td><td><span class="tag orange">A</span></td><td><span class="tag green">R</span></td><td>I</td><td>C</td><td>I</td></tr>
+        <tr><td>RM Requisition</td><td>C</td><td><span class="tag orange">A</span></td><td>C</td><td>I</td><td><span class="tag green">R</span></td><td>I</td></tr>
+        <tr><td>Machine Operation</td><td><span class="tag green">R</span></td><td><span class="tag orange">A</span></td><td>I</td><td>C</td><td>I</td><td>I</td></tr>
+        <tr><td>First-Piece Approval</td><td>C</td><td><span class="tag green">R</span></td><td>C</td><td><span class="tag orange">A</span></td><td>I</td><td>I</td></tr>
+        <tr><td>Special Process Auth</td><td>I</td><td>C</td><td><span class="tag orange">A/<span class="tag green">R</span></span></td><td>I</td><td>I</td><td>C</td></tr>
+        <tr><td>ISPM-15 Authorization</td><td>I</td><td>C</td><td>C</td><td><span class="tag green">R</span></td><td>I</td><td><span class="tag orange">A</span></td></tr>
+        <tr><td>QC Final Inspection</td><td>I</td><td>C</td><td>I</td><td><span class="tag green">R</span>/<span class="tag orange">A</span></td><td>I</td><td>I</td></tr>
+        <tr><td>Dispatch Gate Pass</td><td>I</td><td>I</td><td>I</td><td>C</td><td><span class="tag green">R</span></td><td>I</td></tr>
+        <tr><td>Scrap Authorization</td><td>C</td><td><span class="tag orange">A</span></td><td>C</td><td><span class="tag green">R</span></td><td>I</td><td>I</td></tr>
+        <tr><td>Overtime Authorization</td><td>I</td><td>C</td><td><span class="tag green">R</span></td><td>I</td><td>I</td><td><span class="tag orange">A</span></td></tr>
+      </tbody>
+    </table>
+    <div style="padding:10px 18px;font-size:11px;color:var(--text2)">R = Responsible · A = Accountable · C = Consulted · I = Informed</div>
+  </div>
+</div>
+
+<!-- ═══════════════ REPORTS ═══════════════ -->
+<div class="section" id="reports">
+  <div class="sec-header"><h2>📑 Manufacturing Reports</h2><p>Production summaries and analysis</p></div>
+  <div class="cards">
+    <div class="card green"><div class="card-icon">✅</div><div class="card-value">47</div><div class="card-label">Units Completed (This Week)</div></div>
+    <div class="card orange"><div class="card-icon">📋</div><div class="card-value">10</div><div class="card-label">Active Job Cards</div></div>
+    <div class="card blue"><div class="card-icon">⭐</div><div class="card-value">5</div><div class="card-label">Special Process Requests</div></div>
+    <div class="card red"><div class="card-icon">⚠️</div><div class="card-value">2</div><div class="card-label">Delayed Orders</div></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-head"><h3>Weekly Production Report — June 2026</h3></div>
+    <table>
+      <thead><tr><th>Dept</th><th>Orders In</th><th>Completed</th><th>In Progress</th><th>Delayed</th><th>Rejection %</th><th>Efficiency</th></tr></thead>
+      <tbody>
+        <tr><td>🪵 Wood/Plywood</td><td>6</td><td>2</td><td>4</td><td>1</td><td>1.2%</td><td><span class="tag yellow">82%</span></td></tr>
+        <tr><td>📦 Corrugation</td><td>4</td><td>3</td><td>3</td><td>0</td><td>0.5%</td><td><span class="tag green">94%</span></td></tr>
+        <tr><td>🔩 Nail-less</td><td>5</td><td>1</td><td>3</td><td>1</td><td>2.1%</td><td><span class="tag yellow">78%</span></td></tr>
+        <tr><td>🔧 Steel Fab</td><td>4</td><td>1</td><td>2</td><td>0</td><td>0.8%</td><td><span class="tag green">91%</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+</div><!-- /content -->
+
+<!-- MODALS -->
+<div class="modal-overlay" id="jobModal">
+  <div class="modal" style="max-width:920px">
+    <button class="modal-close" onclick="closeModal('jobModal')">✕</button>
+    <h3>📋 New Job Card</h3>
+    <!-- Row 1: JC No, Date, SO Ref, Priority -->
+    <div class="form-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="form-group"><label>JC Number (Auto)</label><input type="text" id="jc_no" value="JC-2026-011" readonly></div>
+      <div class="form-group"><label>Date</label><div class="date-wrap"><input type="text" id="jc_date" placeholder="Select date..." readonly><span class="cal-icon">📅</span></div></div>
+      <div class="form-group">
+        <label>Sales Order Ref <span id="so_load_status" style="font-size:10px;color:var(--secondary);font-weight:400;"></span></label>
+        <input type="text" id="jc_so" list="so_datalist" placeholder="Type or select SO number..." oninput="onSOSelected()" autocomplete="off">
+        <datalist id="so_datalist"></datalist>
+      </div>
+      <div class="form-group"><label>Priority</label>
+        <select id="jc_priority" style="border-radius:6px">
+          <option value="Normal">Normal</option>
+          <option value="High">High</option>
+          <option value="Urgent">Urgent</option>
+        </select>
+      </div>
+    </div>
+    <!-- Row 2: Customer, Product, Drawing No, Qty -->
+    <div class="form-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="form-group">
+        <label>Customer Name <span id="cust_auto_hint" style="font-size:10px;color:var(--success);font-weight:400;display:none;">✓ auto-filled</span></label>
+        <input type="text" id="jc_cust" list="cust_datalist" placeholder="Customer name (auto-fills from SO)" autocomplete="off">
+        <datalist id="cust_datalist"></datalist>
+      </div>
+      <div class="form-group"><label>Product *</label>
+        <select id="jc_prod" onchange="jcProductChanged()"><option>W-001 Wooden Pallets</option><option>W-002 Wooden Boxes</option><option>W-003 Special Packing (CNC)</option><option>W-004 Jumbo Box</option><option>W-005 Wooden Crate</option><option>W-006 Heavy Duty Plywood Box</option><option>C-001 Corrugation Packaging</option><option>C-002 Hybrid Packaging</option><option>C-003 Half Fold Box</option><option>C-004 Box with Paper Pallet</option><option>C-005 Paper Pallet</option><option>N-001 Nailless Box</option><option>N-002 Nailless S Type</option><option>N-003 Pallet Collar</option><option>N-004 Nailless Folding Box</option><option>N-005 Small Nailless Box</option><option>N-006 Nailless Without Frame</option><option>S-001 Open Steel Crate</option><option>S-002 Heavy Duty Steel Crate</option><option>S-003 Medium Steel Crate</option><option>S-004 Steel Crate Equipment</option><option>S-005 Steel Crate Heavy Machinery</option><option>S-006 Collapsible Steel Pallet</option></select>
+      </div>
+      <div class="form-group"><label>Drawing No</label><input type="text" id="jc_drg" placeholder="e.g. DRG-2026-GEA-001"></div>
+      <div class="form-group"><label>Qty to Produce (Nos) *</label><input type="number" id="jc_qty" placeholder="e.g. 100" oninput="loadJCBom()"></div>
+    </div>
+    <!-- Row 3: Machine, Operator, Start Date/Time, Due Date/Time -->
+    <div class="form-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="form-group"><label>Machine Assigned</label><select id="jc_machine"></select></div>
+      <div class="form-group"><label>Operator Assigned *</label>
+        <select id="jc_op"><option>Raj Kumar Paswan</option><option>Sunil</option><option>May Pet</option><option>Manjeet</option><option>Sanjay</option><option>Ladies Team</option><option>Ranjeet Singh</option><option>Hari Shankar</option><option>Lokesh</option></select>
+      </div>
+      <div class="form-group"><label>Start Date / Time</label><div class="date-wrap"><input type="text" id="jc_start" placeholder="Select date &amp; time..." readonly><span class="cal-icon">📅</span></div></div>
+      <div class="form-group"><label>Due Date / Time</label><div class="date-wrap"><input type="text" id="jc_due" placeholder="Select date &amp; time..." readonly><span class="cal-icon">📅</span></div></div>
+    </div>
+
+    <!-- BOM -->
+    <div style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:8px">📦 Bill of Materials (BOM) — Auto-loaded for selected product</div>
+      <table style="width:100%;font-size:11px"><thead><tr><th>Item</th><th>Qty/Unit</th><th>Unit</th><th>Req. Qty</th><th>Available</th><th>Status</th></tr></thead>
+      <tbody id="jcBomBody"></tbody></table>
+    </div>
+
+    <!-- Route Card -->
+    <div id="jcRoutePanel" style="display:none;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--success);margin-bottom:8px">🗺️ Route Card — Process Steps for selected product</div>
+      <table style="width:100%;font-size:11px"><thead><tr><th>Step</th><th>Operation</th><th>Machine</th><th>Operator</th><th>Check Point</th><th>Approval</th></tr></thead>
+      <tbody id="jcRouteBody"></tbody></table>
+    </div>
+
+    <!-- Special Process Alert -->
+    <div id="jcSPAlert" style="display:none;border-radius:8px;padding:12px;margin-bottom:12px"></div>
+
+    <!-- Drawing Upload + Production Instructions -->
+    <div class="form-row" style="grid-template-columns:1fr 1fr">
+      <div class="form-group">
+        <label>📐 Product Drawing / Design (Upload JPG/PNG/PDF)</label>
+        <div onclick="document.getElementById('jc_drg_file').click()" style="border:2px dashed var(--border);border-radius:6px;padding:14px;text-align:center;cursor:pointer;font-size:11px;color:var(--text2)">
+          🖼 Click to upload drawing / sketch<br><span style="font-size:10px">JPG, PNG, PDF accepted</span>
+          <input type="file" id="jc_drg_file" style="display:none" accept=".jpg,.jpeg,.png,.pdf" onchange="previewJCDrawing(event)">
+        </div>
+        <div id="jcDrgPreview" style="margin-top:6px;display:none;font-size:11px;color:var(--success)"></div>
+      </div>
+      <div class="form-group">
+        <label>📝 Production Instructions for Supervisor</label>
+        <textarea id="jc_instr" rows="5" placeholder="e.g.
+1. Check raw material dimensions before starting
+2. Follow drawing/route card sequence
+3. Do in-process inspection every 10 pieces
+4. Mark rejected pieces with RED tag immediately"></textarea>
+      </div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr">
+      <div class="form-group"><label>🔍 Quality Inspection Points</label><textarea id="jc_qc" rows="3" placeholder="e.g. Dimension check, Surface finish, Squareness, Visual inspection"></textarea></div>
+      <div class="form-group"><label>🦺 Safety Instructions</label><textarea id="jc_safety" rows="3" placeholder="e.g. Use PPE — gloves, goggles, helmet. Machine guard checks before start. No loose clothing near rotating parts."></textarea></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label>Dept Head Approval *</label><input type="text" id="jc_depthead" placeholder="Name + Signature date"></div>
+      <div class="form-group"><label>Prod Head Authorization PIN</label><input type="password" id="jc_pin" placeholder="Enter PIN to authorize"></div>
+      <div class="form-group"><label>Special Process?</label>
+        <select id="jc_sp"><option>None</option><option>SP-01 CNC Routing</option><option>SP-02 ISPM-15 Heat Treatment</option><option>SP-03 Robotic Welding</option><option>SP-04 Laser Cutting</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" onclick="submitJobCardMfg()">✅ Create Job Card</button>
+      <button class="btn btn-secondary" onclick="printJobCardMfg()">🖨 Print Job Card</button>
+      <button class="btn btn-secondary" onclick="closeModal('jobModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="spModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('spModal')">✕</button>
+    <h3>⭐ Special Process Request</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Request No. (Auto)</label><input type="text" value="SP-REQ-006" readonly></div>
+      <div class="form-group"><label>Date</label><input type="date" value="2026-06-16"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Special Process *</label>
+        <select><option>SP-01 CNC Routing (Prod Head approval)</option><option>SP-02 ISPM-15 Heat Treatment (Owner/MD approval)</option><option>SP-03 Robotic Welding (Prod Head approval)</option><option>SP-04 Laser Cutting (Prod Head approval)</option></select>
+      </div>
+      <div class="form-group"><label>Linked Job Card</label><input type="text" placeholder="JC-2026-XXX"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Product</label><input type="text" placeholder="Product code & name"></div>
+      <div class="form-group"><label>Requested By</label><input type="text" placeholder="Employee name"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label>Technical Justification</label><textarea rows="3" placeholder="Why is this special process required for this order?"></textarea></div>
+    <div style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2)">
+      ⚠️ This request will be sent to <strong style="color:var(--purple)">Production Head</strong> for approval (or <strong style="color:var(--danger)">Owner/MD</strong> for ISPM-15). No special process may begin without written/signed authorization.
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="alert('Special Process Request SP-REQ-006 submitted! Approval notification sent.');closeModal('spModal')">📤 Submit Request</button>
+      <button class="btn btn-secondary" onclick="closeModal('spModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const VALID_PINS = ['PROD@2026','OWNER@2026','CEO@2026','VC-ADMIN-2026','VC-HEAD-2026','VC@2026'];
+let authenticated = false;
+
+window.onload = function(){
+  document.getElementById('pinOverlay').classList.add('open');
+  document.getElementById('pinInput').focus();
+};
+
+function verifyPin(){
+  const pin = document.getElementById('pinInput').value.trim();
+  if(VALID_PINS.includes(pin)){
+    authenticated = true;
+    document.getElementById('pinOverlay').classList.remove('open');
+  } else {
+    document.getElementById('pinError').style.display='block';
+    document.getElementById('pinInput').value='';
+    document.getElementById('pinInput').focus();
+  }
+}
+
+function goBack(){
+  window.location.href = 'SSPI_COMBINED_DASHBOARD_V4.html';
+}
+
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.classList.remove('active');
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
+  });
+  document.getElementById(id).classList.add('active');
+  if (id === 'prodplan') { ppProductChanged(); }
+}
+
+function filterProducts(dept, btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const rows = document.querySelectorAll('#productTable tbody tr');
+  rows.forEach(r=>{
+    r.style.display = (dept==='all' || r.dataset.dept===dept) ? '' : 'none';
+  });
+}
+
+function searchProducts(q){
+  const rows = document.querySelectorAll('#productTable tbody tr');
+  rows.forEach(r=>{
+    r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function searchJobCards(q){
+  const rows = document.querySelectorAll('#jobCardTable tbody tr');
+  rows.forEach(r=>{
+    r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// ── GAS backend — cross-device sync ───────────────────────────────
+const GS_URL   = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_TOKEN = 'SSPI-VC-2026-SECURE';
+let _gsQueue = JSON.parse(localStorage.getItem('_sspi_mfg_gsq')||'[]');
+function gsPost(payload){
+  payload.authToken = GS_TOKEN;
+  payload._ts = new Date().toISOString();
+  _gsQueue.push(payload);
+  localStorage.setItem('_sspi_mfg_gsq', JSON.stringify(_gsQueue));
+  _gsDrain();
+}
+function _gsDrain(){
+  if(!_gsQueue.length) return;
+  const item = _gsQueue[0];
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(()=>{ _gsQueue.shift(); localStorage.setItem('_sspi_mfg_gsq',JSON.stringify(_gsQueue)); if(_gsQueue.length) setTimeout(_gsDrain,500); })
+    .catch(()=>{ setTimeout(_gsDrain,30000); });
+}
+setTimeout(_gsDrain, 3000);
+
+// ── SO / Customer live lookup ──────────────────────────────────────
+const GAS_SO_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+let soCustomerMap = {};   // { 'SO-xxx': { customer:'...', product:'...', qty:'...' } }
+let soListLoaded  = false;
+
+function gasGetSO(){
+  return new Promise(function(resolve){
+    var cb = '_soJP_' + Date.now();
+    var sc = document.createElement('script');
+    var done = false;
+    var timer = setTimeout(function(){ if(!done){ done=true; delete window[cb]; if(sc.parentNode)sc.parentNode.removeChild(sc); resolve([]); }}, 6000);
+    window[cb] = function(d){ done=true; clearTimeout(timer); delete window[cb]; if(sc.parentNode)sc.parentNode.removeChild(sc); resolve((d&&d.data)?d.data:[]); };
+    sc.src = GAS_SO_URL + '?type=sales&limit=200&callback=' + cb;
+    document.head.appendChild(sc);
+  });
+}
+
+async function loadSOList(){
+  if(soListLoaded) return;
+  const lbl = document.getElementById('so_load_status');
+  if(lbl) lbl.textContent = '⏳ Loading...';
+  try {
+    const orders = await gasGetSO();
+    soCustomerMap = {};
+    const custSet = new Set();
+    const dlSO   = document.getElementById('so_datalist');
+    const dlCust = document.getElementById('cust_datalist');
+    if(dlSO)  dlSO.innerHTML  = '';
+    if(dlCust) dlCust.innerHTML = '';
+    orders.forEach(function(o){
+      const soNo = o['SO No'] || o['soNo'] || o['so_no'] || '';
+      const cust = o['Customer'] || o['customer'] || '';
+      if(!soNo) return;
+      soCustomerMap[soNo] = { customer: cust, product: o['Product']||'', qty: o['Qty']||'' };
+      if(dlSO){ var opt=document.createElement('option'); opt.value=soNo; opt.label=soNo+(cust?' — '+cust:''); dlSO.appendChild(opt); }
+      if(cust && !custSet.has(cust)){ custSet.add(cust); if(dlCust){ var oc=document.createElement('option'); oc.value=cust; dlCust.appendChild(oc); } }
+    });
+    soListLoaded = true;
+    if(lbl) lbl.textContent = orders.length ? '✓ ' + orders.length + ' SOs loaded' : '(no orders yet)';
+  } catch(e) {
+    if(lbl) lbl.textContent = '(offline)';
+  }
+}
+
+function onSOSelected(){
+  const soVal  = (document.getElementById('jc_so').value||'').trim();
+  const custEl = document.getElementById('jc_cust');
+  const hint   = document.getElementById('cust_auto_hint');
+  const match  = soCustomerMap[soVal];
+  if(match && match.customer){
+    custEl.value = match.customer;
+    if(hint) hint.style.display = 'inline';
+  } else {
+    if(hint) hint.style.display = 'none';
+  }
+}
+
+let _fpDate, _fpStart, _fpDue;
+function openNewJobModal(){
+  document.getElementById('jobModal').classList.add('open');
+  jcProductChanged();
+  loadSOList();
+  // Initialize Flatpickr date pickers (dark theme)
+  if(!_fpDate){
+    _fpDate = flatpickr('#jc_date',{
+      dateFormat:'Y-m-d', defaultDate:'today',
+      theme:'dark', allowInput:false
+    });
+  }
+  if(!_fpStart){
+    _fpStart = flatpickr('#jc_start',{
+      enableTime:true, dateFormat:'Y-m-dTH:i',
+      time_24hr:true, theme:'dark', allowInput:false,
+      onReady:function(sel,str,fp){ fp.calendarContainer.style.zIndex='9999'; }
+    });
+  }
+  if(!_fpDue){
+    _fpDue = flatpickr('#jc_due',{
+      enableTime:true, dateFormat:'Y-m-dTH:i',
+      time_24hr:true, theme:'dark', allowInput:false,
+      onReady:function(sel,str,fp){ fp.calendarContainer.style.zIndex='9999'; }
+    });
+  }
+}
+function openSpReqModal(){document.getElementById('spModal').classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BOM + ROUTE CARD + SPECIAL PROCESS ENGINE — Job Card & Production Planning
+// (mirrors the logic used in SSPI_COMBINED_DASHBOARD_V4.html so both dashboards
+//  show the same BOM / Route Card / Special Process behaviour)
+// ═══════════════════════════════════════════════════════════════════════════
+const mfgMachinesByDept = {
+  Wood: ['Beam Saw Machine','Wood Sawing Machine','Auto Cut Saw','Wood Planing Machine','Notching/Drilling Machine','Pneumatic Nailing Machine','CNC Routing Machine','ISPM-15 Heat Treatment Chamber'],
+  Corrugation: ['Table Cutters','Two Color Printing Machine','Strapping Machine'],
+  Nailless: ['Auto Strip Making Machine','Auto Tongue/Lock Machine','Hydraulic Presses','Folding Box Making Line'],
+  Steel: ['Shearing Machine','CNC Hydraulic Press Brake','CO2 MIG/MAG Welding','Robotic Welding Machine','Laser Cutting Machine 1.5KW','Power Presses 10T-50T'],
+};
+
+const mfgBomByDept = {
+  Wood: [['Wood Planks/Battens','0.08','cft','420'],['Plywood Sheet (12mm)','0.05','sheet','60'],['Pneumatic Nails','0.04','kg','350'],['PU Wood Coating','0.02','ltr','40']],
+  Corrugation: [['3-Ply Corrugated Sheet','0.6','sq.ft','900'],['BOPP Tape','0.01','roll','25'],['Strapping Roll','0.005','roll','15'],['Stitching Wire','0.02','kg','30']],
+  Nailless: [['Plywood/Hardwood Sheet','0.45','sq.ft','500'],['Steel Lock Clips','4','pcs','800'],['Corner Plates','4','pcs','600']],
+  Steel: [['MS Sheet (2mm)','1.2','kg','900'],['Welding Rod','0.15','kg','120'],['Primer/Paint','0.05','ltr','45'],['MS Angle 25x25','0.8','mtr','300']],
+};
+
+const mfgRouteSteps = {
+  Wood: [
+    ['1','RM Inspection & Grading','Manual / Visual','Supervisor','Species, Size, Moisture','Store Incharge sign-off',''],
+    ['2','Sawing / Cross Cutting','Beam Saw / Wood Sawing','Sunil / May Pet','Dimension tolerance ±2mm','Operator self-check',''],
+    ['3','Planing / Dressing','Wood Planing Machine','May Pet','Surface finish, thickness','Operator self-check',''],
+    ['4','Notching / Drilling','Notching / Drilling Machine','Sunil','Notch depth, hole centers','Operator self-check',''],
+    ['5*','CNC Routing (if special)','CNC Routing Machine','Raj Kumar','Profile match to drawing','Prod Head Approval','SP-01'],
+    ['6','Assembly / Nailing','Pneumatic Nailing Machine','All operators','Squareness, nail spacing','Dept Head check',''],
+    ['7*','ISPM-15 Heat Treatment (export)','Heat Treatment Chamber','Specialist','Core temp 56°C for 30 min','Owner/MD Approval','SP-02'],
+    ['8','QC Final Inspection','Manual / Gauge','QC Inspector','Dimension, strength, mark','QC sign-off required',''],
+    ['9','Marking & Dispatch','Manual','Store Incharge','Customer label, count','Dispatch gate pass',''],
+  ],
+  Corrugation: [
+    ['1','RM Inspection (Corrugated Sheets)','Manual / Visual','Supervisor','GSM, ply, dimensions','Store Incharge sign-off',''],
+    ['2','Sheet Cutting / Scoring','Table Cutters','Manjeet','Cut size tolerance ±1mm','Operator self-check',''],
+    ['3','Printing (if required)','Two Color Printing Machine','Manjeet','Color registration, text','Dept Head approval for logo',''],
+    ['4','Box Making / Folding','Table Cutters / Manual','Manjeet / Raj Kumar','Fold lines, glue joints','Operator self-check',''],
+    ['5','Strapping / Bundling','Strapping Machine','Manjeet','Strap tension, bundle count','Operator self-check',''],
+    ['6','QC Final Inspection','Manual','QC Inspector','Dimensions, print quality','QC sign-off required',''],
+    ['7','Dispatch','Manual','Store Incharge','Packing list verification','Dispatch gate pass',''],
+  ],
+  Nailless: [
+    ['1','RM Inspection (Plywood/Hardwood)','Manual','Sanjay','Thickness, grade, moisture','Store Incharge sign-off',''],
+    ['2','Sheet / Plank Cutting','Auto Strip Making Machine','Ladies Team','Strip width tolerance ±0.5mm','Operator self-check',''],
+    ['3','Tongue & Lock Making/Fixing','Auto Tongue/Lock Machine','Sanjay','Lock engagement strength','Dept Head first-piece check',''],
+    ['4','Hydraulic Pressing','Hydraulic Presses','Ladies Team / Sanjay','Press pressure, dwell time','Operator self-check',''],
+    ['5','Folding / Assembly','Folding Box Making Line','Ladies Team','Fold accuracy, locking','First-piece approval Dept Head',''],
+    ['6','QC Final Inspection','Manual','QC Inspector','Load test, fold/unfold','QC sign-off required',''],
+    ['7','Dispatch','Manual','Store Incharge','Count, packing','Dispatch gate pass',''],
+  ],
+  Steel: [
+    ['1','RM Inspection (MS Sheets/Sections)','Manual / Gauge','Ranjeet Singh','Grade, thickness, flatness','Store Incharge sign-off',''],
+    ['2','Marking & Layout','Manual','Ranjeet Singh','Drawing compliance','Dept Head drawing approval',''],
+    ['3','Shearing / Laser Cutting','Shearing / Laser 1.5KW','Hari Shankar','Cut dimensions ±0.5mm','Prod Head Approval','SP-04'],
+    ['4','Bending / Forming','CNC/NC Press Brake / Power Press','Lokesh','Angle tolerance ±1°','First-piece approval',''],
+    ['5','Welding (MIG/Spot/Projection)','CO2 MIG / Spot / Projection','Hari Shankar / Lokesh','Weld quality visual + gauge','Dept Head weld check',''],
+    ['6*','Robotic Welding (if special)','Robotic Welding Machine','Ranjeet Singh','Program verified, bead quality','Prod Head Approval','SP-03'],
+    ['7','Surface Treatment / Painting','Manual / Spray','All operators','DFT (dry film thickness)','Customer spec compliance',''],
+    ['8','QC Final Inspection','Manual / Load Test','QC Inspector','All dimensions, load rating','QC sign-off required',''],
+    ['9','Dispatch','Manual','Store Incharge','Packing, marking','Dispatch gate pass',''],
+  ],
+};
+
+const mfgSpMap = [
+  { match:['W-003','SPECIAL PACKING','CNC'],          sp:'SP-01',       name:'CNC Routing',                       approval:'Production Head',          color:'#a855f7', bg:'rgba(168,85,247,.12)', border:'rgba(168,85,247,.4)' },
+  { match:['W-001','WOODEN PALLET'],                   sp:'SP-02',       name:'ISPM-15 Heat Treatment (Export lots)', approval:'OWNER / MD — MANDATORY', color:'#ef4444', bg:'rgba(239,68,68,.12)',  border:'rgba(239,68,68,.4)' },
+  { match:['S-001','OPEN STEEL CRATE'],                sp:'SP-03',       name:'Robotic Welding',                   approval:'Production Head',          color:'#a855f7', bg:'rgba(168,85,247,.12)', border:'rgba(168,85,247,.4)' },
+  { match:['S-002','HEAVY DUTY STEEL CRATE'],          sp:'SP-03',       name:'Robotic Welding',                   approval:'Production Head',          color:'#a855f7', bg:'rgba(168,85,247,.12)', border:'rgba(168,85,247,.4)' },
+  { match:['S-004','STEEL CRATE EQUIPMENT'],           sp:'SP-03+SP-04', name:'Robotic Welding + Laser Cutting',   approval:'Production Head',          color:'#ef4444', bg:'rgba(239,68,68,.12)',  border:'rgba(239,68,68,.4)' },
+  { match:['S-005','HEAVY MACHINERY'],                 sp:'SP-03',       name:'Robotic Welding',                   approval:'Production Head',          color:'#a855f7', bg:'rgba(168,85,247,.12)', border:'rgba(168,85,247,.4)' },
+];
+
+function getMfgDept(prodStr){
+  const p = (prodStr||'').toUpperCase();
+  if (p.startsWith('W-')) return 'Wood';
+  if (p.startsWith('C-')) return 'Corrugation';
+  if (p.startsWith('N-')) return 'Nailless';
+  if (p.startsWith('S-')) return 'Steel';
+  return null;
+}
+
+function detectMfgSP(prodStr){
+  const u = (prodStr||'').toUpperCase();
+  return mfgSpMap.find(s => s.match.some(m => u.includes(m))) || null;
+}
+
+function populateMachineSelect(selectId, dept){
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const list = (dept && mfgMachinesByDept[dept]) ? mfgMachinesByDept[dept] : Object.values(mfgMachinesByDept).flat();
+  sel.innerHTML = list.map(m => `<option>${m}</option>`).join('');
+}
+
+function renderBomRows(dept, qty){
+  const items = (dept && mfgBomByDept[dept]) || [];
+  return items.map(([item, perUnit, unit, avail]) => {
+    const req = (parseFloat(perUnit) * qty).toFixed(2);
+    const status = parseFloat(req) <= parseFloat(avail)
+      ? '<span class="tag green">Available</span>'
+      : '<span class="tag red">Shortage</span>';
+    return `<tr><td>${item}</td><td>${perUnit}</td><td>${unit}</td><td>${req}</td><td>${avail}</td><td>${status}</td></tr>`;
+  }).join('');
+}
+
+function renderRouteRows(dept){
+  const steps = (dept && mfgRouteSteps[dept]) || [];
+  return steps.map(([step,op,machine,operator,check,approval,sp]) => {
+    const isSP = !!sp;
+    return `<tr${isSP?' style="background:rgba(168,85,247,.08)"':''}>
+      <td style="text-align:center;font-weight:700">${step}</td>
+      <td style="font-size:11px">${op}</td>
+      <td style="font-size:10px">${machine}</td>
+      <td style="font-size:10px">${operator}</td>
+      <td style="font-size:10px">${check}</td>
+      <td style="font-size:10px${isSP?';color:#a855f7;font-weight:700':''}">${approval}${isSP?' ⭐':''}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSPAlert(sp){
+  if (!sp) return '';
+  return `<div style="display:flex;gap:10px;align-items:flex-start">
+    <span style="font-size:20px">⭐</span>
+    <div>
+      <div style="font-weight:700;color:${sp.color};font-size:13px">Special Process Required — ${sp.sp}: ${sp.name}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">Execution cannot begin until written approval is obtained.<br><strong>Approval required from: <span style="color:${sp.color}">${sp.approval}</span></strong></div>
+    </div>
+  </div>`;
+}
+
+// ── Job Card form wiring ────────────────────────────────────────────────────
+function loadJCBom(){
+  const prod = document.getElementById('jc_prod')?.value;
+  const qty  = parseFloat(document.getElementById('jc_qty')?.value) || 0;
+  const body = document.getElementById('jcBomBody');
+  if (!body) return;
+  body.innerHTML = renderBomRows(getMfgDept(prod), qty);
+}
+
+function loadJCRoute(){
+  const prod  = document.getElementById('jc_prod')?.value;
+  const dept  = getMfgDept(prod);
+  const panel = document.getElementById('jcRoutePanel');
+  const body  = document.getElementById('jcRouteBody');
+  if (!panel || !body) return;
+  const steps = (dept && mfgRouteSteps[dept]) || [];
+  panel.style.display = steps.length ? 'block' : 'none';
+  body.innerHTML = renderRouteRows(dept);
+}
+
+function loadJCSPAlert(){
+  const prod = document.getElementById('jc_prod')?.value;
+  const el   = document.getElementById('jcSPAlert');
+  if (!el) return;
+  const sp = detectMfgSP(prod);
+  if (!sp) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.style.background = sp.bg;
+  el.style.border = '1px solid ' + sp.border;
+  el.innerHTML = renderSPAlert(sp);
+}
+
+function jcProductChanged(){
+  const prod = document.getElementById('jc_prod')?.value;
+  populateMachineSelect('jc_machine', getMfgDept(prod));
+  loadJCBom();
+  loadJCRoute();
+  loadJCSPAlert();
+}
+
+let jcDrawingName = '';
+function previewJCDrawing(e){
+  const file = e.target.files[0];
+  if (!file) return;
+  jcDrawingName = file.name;
+  const prev = document.getElementById('jcDrgPreview');
+  prev.style.display = 'block';
+  prev.textContent = '📐 ' + file.name + ' attached';
+}
+
+let _jcList = JSON.parse(localStorage.getItem('sspi_jc')||'[]');
+let jcCounterMfg = _jcList.length > 0 ? (parseInt(_jcList[_jcList.length-1].jcNo.split('-')[2]||10)+1) : 11;
+const jcExtraData = {};
+
+// ── Known JC numbers set — populated from GAS on load to prevent cross-device duplicates ──
+const _knownJCNos = new Set(_jcList.map(j => j.jcNo));
+
+function _syncJCNosFromGAS() {
+  const cbName = '_jcSyncCB_' + Date.now();
+  window[cbName] = function(res) {
+    try { delete window[cbName]; } catch(e) {}
+    if (!res || res.status !== 'ok') return;
+    const rows = res.data || [];
+    rows.forEach(function(r) {
+      const no = r['JC No'] || r.jcNo || r.no || '';
+      if (!no) return;
+      _knownJCNos.add(String(no).trim());
+      // Sync counter: if GAS has a higher number, update local counter
+      const parts = String(no).split('-');
+      const num = parseInt(parts[parts.length - 1]) || 0;
+      if (num >= jcCounterMfg) {
+        jcCounterMfg = num + 1;
+        localStorage.setItem('sspi_jc_counter', jcCounterMfg);
+        // Update the JC No field if visible
+        const jcNoEl = document.getElementById('jc_no');
+        if (jcNoEl) jcNoEl.value = 'JC-2026-' + String(jcCounterMfg).padStart(3,'0');
+      }
+    });
+    console.log('[JC Sync] Known JC numbers loaded from GAS:', _knownJCNos.size);
+  };
+  const s = document.createElement('script');
+  s.src = GAS_URL + '?type=jobCards&limit=500&token=' + GS_AUTH + '&callback=' + cbName;
+  s.onerror = function() { try { delete window[cbName]; } catch(e) {} };
+  document.head.appendChild(s);
+  setTimeout(function() { try { if(window[cbName]) { delete window[cbName]; } } catch(e) {} }, 15000);
+}
+// Run sync when page loads (with a short delay to avoid blocking render)
+setTimeout(_syncJCNosFromGAS, 2000);
+
+function _renderJcRow(jc){
+  const dept = jc.dept||'';
+  const deptIcon = dept==='Wood'?'🪵':dept==='Corrugation'?'📦':dept==='Nailless'?'🔩':dept==='Steel'?'🔧':'📦';
+  const soTag  = jc.so   ? `<span class="tag green" style="margin-bottom:3px;display:inline-block">${jc.so}</span><br>` : '';
+  const custTag = jc.cust ? `<span class="tag blue" style="display:inline-block">${jc.cust}</span>` : '<span style="color:#aaa;font-size:10px">—</span>';
+  return `<td>${jc.jcNo}</td><td>${jc.prod}</td><td>${deptIcon} ${dept||'—'}</td><td>${jc.qty} Nos</td><td style="white-space:nowrap">${soTag}${custTag}</td><td>${jc.op||'—'}</td><td>${jc.date||'Today'}</td><td>${jc.due||'—'}</td><td>RM Inspection</td><td><span class="tag blue">Pending Start</span></td><td><button class="btn btn-secondary" style="padding:3px 10px;font-size:11px" onclick="showJobDetail('${jc.jcNo}')">View</button></td>`;
+}
+
+function _loadSavedJcRows(){
+  const tbody = document.querySelector('#jobCardTable tbody');
+  if(!tbody) return;
+  _jcList.slice().reverse().forEach(jc=>{
+    jcExtraData[jc.jcNo] = { drawing:jc.drawing||'—', instructions:jc.instr||'—', qc:jc.qc||'—', safety:jc.safety||'—', machine:jc.machine||'—', dept:jc.dept||'—', so:jc.so||'—', cust:jc.cust||'—' };
+    const tr = document.createElement('tr');
+    tr.innerHTML = _renderJcRow(jc);
+    tbody.appendChild(tr);
+  });
+}
+
+function submitJobCardMfg(){
+  const prod    = document.getElementById('jc_prod').value;
+  const qty     = document.getElementById('jc_qty').value || '0';
+  const cust    = document.getElementById('jc_cust').value || '';
+  const so      = document.getElementById('jc_so').value || '';
+  const op      = document.getElementById('jc_op').value;
+  const machine = document.getElementById('jc_machine').value;
+  const due     = document.getElementById('jc_due').value || '—';
+  const date    = document.getElementById('jc_date').value || new Date().toLocaleDateString('en-GB');
+  const dept    = getMfgDept(prod);
+  const deptIcon = dept==='Wood'?'🪵':dept==='Corrugation'?'📦':dept==='Nailless'?'🔩':dept==='Steel'?'🔧':'📦';
+  // ── Duplicate prevention: auto-skip any JC numbers already used ──
+  let jcNoCandidate = 'JC-2026-' + String(jcCounterMfg).padStart(3,'0');
+  let attempts = 0;
+  while ((_knownJCNos.has(jcNoCandidate) || _jcList.some(function(j){ return j.jcNo === jcNoCandidate; })) && attempts < 100) {
+    jcCounterMfg++;
+    attempts++;
+    jcNoCandidate = 'JC-2026-' + String(jcCounterMfg).padStart(3,'0');
+  }
+  const jcNo = jcNoCandidate;
+  _knownJCNos.add(jcNo); // Mark as used immediately so next submit won't reuse it
+  jcCounterMfg++;
+  localStorage.setItem('sspi_jc_counter', jcCounterMfg);
+
+  const jcData = {
+    jcNo, prod, qty, cust, so, op, machine, due, date, dept,
+    drawing: jcDrawingName || 'No drawing uploaded',
+    instr: document.getElementById('jc_instr').value || '—',
+    qc: document.getElementById('jc_qc').value || '—',
+    safety: document.getElementById('jc_safety').value || '—',
+    status: 'Pending Start'
+  };
+
+  // Save to localStorage
+  _jcList.push(jcData);
+  localStorage.setItem('sspi_jc', JSON.stringify(_jcList));
+  localStorage.setItem('sspi_jc_counter', jcCounterMfg);
+
+  // Post to GAS for cross-device sync (field names mapped to GAS schema)
+  gsPost({ type:'jobCards', no:jcNo, date:jcData.date, customer:cust, product:prod, qty,
+            machine, operator:op, start:jcData.date, due, drawing:jcData.drawing,
+            priority:'Normal', instructions:jcData.instr, qcPoints:jcData.qc,
+            safety:jcData.safety, linkedSO:so, dept });
+
+  // Update extra data map for View button
+  jcExtraData[jcNo] = { drawing:jcData.drawing, instructions:jcData.instr, qc:jcData.qc, safety:jcData.safety, machine, dept, so, cust };
+
+  // Add row to table
+  const tbody = document.querySelector('#jobCardTable tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = _renderJcRow(jcData);
+  tbody.prepend(tr);
+  document.getElementById('jc_no').value = 'JC-2026-' + String(jcCounterMfg).padStart(3,'0');
+  alert('✅ Job Card saved — ' + jcNo);
+}
+
+function printJobCardMfg(){
+  const jcNo    = document.getElementById('jc_no').value    || ('JC-2026-' + String(jcCounterMfg).padStart(3,'0'));
+  const prod    = document.getElementById('jc_prod').value  || '—';
+  const qty     = document.getElementById('jc_qty').value   || '—';
+  const cust    = document.getElementById('jc_cust').value  || '—';
+  const so      = document.getElementById('jc_so').value    || '—';
+  const drg     = document.getElementById('jc_drg').value   || '—';
+  const op      = document.getElementById('jc_op').value    || '—';
+  const machine = document.getElementById('jc_machine').value || '—';
+  const start   = document.getElementById('jc_start').value || '—';
+  const due     = document.getElementById('jc_due').value   || '—';
+  const instr   = (document.getElementById('jc_instr').value  || '—').replace(/\n/g,'<br>');
+  const qc      = (document.getElementById('jc_qc').value     || '—').replace(/\n/g,'<br>');
+  const safety  = (document.getElementById('jc_safety').value || '—').replace(/\n/g,'<br>');
+  const deptHead= document.getElementById('jc_depthead').value || '—';
+  const sp      = document.getElementById('jc_sp').value    || 'None';
+  const priority= document.getElementById('jc_priority').value || 'Normal';
+  const dept    = getMfgDept(prod);
+  const today   = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+  // Collect BOM rows
+  let bomHtml = '';
+  const bomRows = document.querySelectorAll('#jcBomBody tr');
+  bomRows.forEach(r => { bomHtml += '<tr>' + r.innerHTML + '</tr>'; });
+  if(!bomHtml) bomHtml = '<tr><td colspan="6" style="text-align:center;color:#888">No BOM loaded</td></tr>';
+
+  // Collect Route Card rows
+  let routeHtml = '';
+  const routeRows = document.querySelectorAll('#jcRouteBody tr');
+  routeRows.forEach(r => { routeHtml += '<tr>' + r.innerHTML + '</tr>'; });
+  if(!routeHtml) routeHtml = '<tr><td colspan="6" style="text-align:center;color:#888">No route card loaded</td></tr>';
+
+  const spBadge = sp!=='None'
+    ? '<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:6px;padding:8px 12px;margin-bottom:14px;font-size:12px;font-weight:700;color:#dc2626">'
+      + '⚠ Special Process Required: ' + sp + ' — Written approval mandatory before execution</div>'
+    : '';
+  const priColor = priority==='Urgent'?'#dc2626':priority==='High'?'#ea580c':'#2563eb';
+
+  const styles = [
+    '*{margin:0;padding:0;box-sizing:border-box;}',
+    'body{font-family:Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:20px;}',
+    '.header{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #1E3A5F;padding-bottom:10px;margin-bottom:14px;}',
+    '.co-name{font-size:18px;font-weight:700;color:#1E3A5F;}',
+    '.co-sub{font-size:11px;color:#555;margin-top:2px;}',
+    '.jc-badge{font-size:22px;font-weight:700;color:#1E3A5F;text-align:right;}',
+    '.jc-date{font-size:11px;color:#555;text-align:right;}',
+    '.section-title{background:#1E3A5F;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;margin:12px 0 6px;}',
+    '.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}',
+    '.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;}',
+    '.field{border:1px solid #ddd;border-radius:4px;padding:6px 8px;}',
+    '.field label{display:block;font-size:9px;font-weight:700;color:#555;margin-bottom:2px;text-transform:uppercase;}',
+    '.field span{font-size:12px;font-weight:600;color:#111;}',
+    'table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px;}',
+    'th{background:#1E3A5F;color:#fff;padding:5px 8px;text-align:left;font-size:10px;}',
+    'td{border:1px solid #ddd;padding:5px 8px;}',
+    'tr:nth-child(even) td{background:#f8f9fa;}',
+    '.box{border:1px solid #ddd;border-radius:4px;padding:8px;margin-bottom:8px;min-height:40px;}',
+    '.box-title{font-size:10px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:4px;}',
+    '.sig-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px;}',
+    '.sig-box{border-top:2px solid #111;padding-top:6px;text-align:center;font-size:10px;color:#555;}',
+    '.pri-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:10px;font-weight:700;color:#fff;background:'+priColor+';}',
+    '@media print{body{padding:10px;}}'
+  ].join('');
+
+  const drgInfo = (typeof jcDrawingName !== 'undefined' && jcDrawingName) ? ('Attached: ' + jcDrawingName) : 'No drawing uploaded';
+
+  const html =
+    '<!DOCTYPE html><html><head><title>Job Card — ' + jcNo + '</title>' +
+    '<style>' + styles + '</style></head><body>' +
+    '<div class="header">' +
+      '<div><div class="co-name">Shree Shyam Packaging Industries</div>' +
+      '<div class="co-sub">Plot No. 12, Industrial Area, Bhiwadi, Rajasthan — ISO 9001:2015 Certified</div></div>' +
+      '<div><div class="jc-badge">JOB CARD: ' + jcNo + '</div>' +
+      '<div class="jc-date">Printed: ' + today + ' &nbsp;|&nbsp; Priority: <span class="pri-badge">' + priority + '</span></div></div>' +
+    '</div>' +
+    spBadge +
+    '<div class="section-title">📋 Order Details</div>' +
+    '<div class="grid4">' +
+      '<div class="field"><label>Job Card No</label><span>' + jcNo + '</span></div>' +
+      '<div class="field"><label>Sales Order No</label><span>' + so + '</span></div>' +
+      '<div class="field"><label>Customer</label><span>' + cust + '</span></div>' +
+      '<div class="field"><label>Drawing No</label><span>' + drg + '</span></div>' +
+    '</div>' +
+    '<div class="grid4">' +
+      '<div class="field"><label>Product</label><span>' + prod + '</span></div>' +
+      '<div class="field"><label>Department</label><span>' + (dept||'—') + '</span></div>' +
+      '<div class="field"><label>Qty to Produce</label><span>' + qty + ' Nos</span></div>' +
+      '<div class="field"><label>Special Process</label><span>' + sp + '</span></div>' +
+    '</div>' +
+    '<div class="grid4">' +
+      '<div class="field"><label>Machine Assigned</label><span>' + machine + '</span></div>' +
+      '<div class="field"><label>Operator Assigned</label><span>' + op + '</span></div>' +
+      '<div class="field"><label>Start Date / Time</label><span>' + start + '</span></div>' +
+      '<div class="field"><label>Due Date / Time</label><span>' + due + '</span></div>' +
+    '</div>' +
+    '<div class="section-title">📦 Bill of Materials</div>' +
+    '<table><thead><tr><th>Item</th><th>Qty/Unit</th><th>Unit</th><th>Req. Qty</th><th>Available</th><th>Status</th></tr></thead>' +
+    '<tbody>' + bomHtml + '</tbody></table>' +
+    '<div class="section-title">🗺 Route Card — Process Steps</div>' +
+    '<table><thead><tr><th>Step</th><th>Operation</th><th>Machine</th><th>Operator</th><th>Check Point</th><th>Approval</th></tr></thead>' +
+    '<tbody>' + routeHtml + '</tbody></table>' +
+    '<div class="grid2">' +
+      '<div>' +
+        '<div class="section-title">📝 Production Instructions</div>' +
+        '<div class="box">' + instr + '</div>' +
+        '<div class="section-title">🔍 Quality Inspection Points</div>' +
+        '<div class="box">' + qc + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="section-title">🦺 Safety Instructions</div>' +
+        '<div class="box">' + safety + '</div>' +
+        '<div class="section-title">📐 Drawing / Sketch</div>' +
+        '<div class="box" style="font-size:11px;color:#555">' + drgInfo + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="section-title">✍ Approvals &amp; Authorization</div>' +
+    '<div class="sig-row">' +
+      '<div class="sig-box"><div style="font-size:13px;font-weight:700;margin-bottom:20px">' + deptHead + '</div>Dept Head Approval</div>' +
+      '<div class="sig-box"><div style="height:30px"></div>Production Head / PIN Authorized</div>' +
+      '<div class="sig-box"><div style="height:30px"></div>Quality Inspector Sign-off</div>' +
+    '</div>' +
+    '<div style="margin-top:18px;font-size:10px;color:#888;border-top:1px solid #ddd;padding-top:6px;display:flex;justify-content:space-between;">' +
+      '<span>SSPI Operations Dashboard V4 &mdash; Confidential</span>' +
+      '<span>Auth: SSPI-VC-2026-SECURE</span>' +
+      '<span>' + jcNo + ' | ' + today + '</span>' +
+    '</div>' +
+    '<scr'+'ipt>window.onload=function(){window.print();}<'+'/scr'+'ipt>' +
+    '</body></html>';
+
+  const w = window.open('','_blank','width=900,height=700');
+  if(w){ w.document.write(html); w.document.close(); }
+  else { alert('Pop-up blocked — please allow pop-ups for this page and try again.'); }
+}
+</script>
+<script>
+function openBot(url){
+  if(!url||url==='#')return false;
+  if(window.location.protocol==='file:'){
+    window.location.href=url;
+    return false;
+  }
+  try{
+    var w=window.open(url,'_blank');
+    if(!w||w.closed||typeof w.closed==='undefined'){window.location.href=url;}
+  }catch(e){window.location.href=url;}
+  return false;
+}
+</script>
+</body></html>

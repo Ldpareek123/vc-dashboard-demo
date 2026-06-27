@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Tally / Busy Export — V4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1F3864,#0E6F56);padding:16px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid #0E6F56}
+.header h1{font-size:22px;font-weight:700;color:#fff}
+.badge{background:#0E6F56;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px}
+.btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:.2s}
+.btn-primary{background:#2E75B6;color:#fff}.btn-primary:hover{background:#1F3864}
+.btn-success{background:#0E6F56;color:#fff}
+.btn-warn{background:#C65911;color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+.main{max-width:1100px;margin:24px auto;padding:0 20px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:20px}
+.card h2{font-size:15px;font-weight:700;color:#0E6F56;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #334155}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.controls input,.controls select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 12px;border-radius:6px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#1F3864;color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:700}
+td{padding:7px 10px;border-bottom:1px solid #334155}
+tr:nth-child(even) td{background:#1a2540}
+.export-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:24px}
+.export-card{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:16px;text-align:center}
+.export-card .ec-icon{font-size:32px;margin-bottom:8px}
+.export-card h3{font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:4px}
+.export-card p{font-size:11px;color:#64748b;margin-bottom:12px}
+.format-tabs{display:flex;gap:0;margin-bottom:16px;border:1px solid #334155;border-radius:6px;overflow:hidden}
+.format-tab{flex:1;padding:8px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:#94a3b8;transition:.2s}
+.format-tab.active{background:#2E75B6;color:#fff}
+.xml-preview{background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;font-family:monospace;font-size:11px;color:#86efac;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>📤 Tally / Busy Export <span class="badge">V4</span></h1>
+    <p>Export vouchers, GRN, and sales data to Tally XML or Busy CSV — eliminate double-entry</p>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'" style="margin-left:auto">← Dashboard</button>
+</div>
+
+<div class="main">
+  <div class="export-grid">
+    <div class="export-card">
+      <div class="ec-icon">📄</div>
+      <h3>Voucher Export</h3>
+      <p>Accounting Voucher Bot entries → Tally XML / Busy CSV</p>
+      <div class="format-tabs">
+        <div class="format-tab active" onclick="setFormat(this,'voucher','xml')">Tally XML</div>
+        <div class="format-tab" onclick="setFormat(this,'voucher','csv')">Busy CSV</div>
+      </div>
+      <button class="btn btn-success" style="width:100%" onclick="exportVouchers()">⬇️ Export Vouchers</button>
+    </div>
+    <div class="export-card">
+      <div class="ec-icon">📦</div>
+      <h3>GRN / Purchase Export</h3>
+      <p>Materials GRN + Bills entries → Tally Purchase Vouchers</p>
+      <div class="format-tabs">
+        <div class="format-tab active" onclick="setFormat(this,'grn','xml')">Tally XML</div>
+        <div class="format-tab" onclick="setFormat(this,'grn','csv')">Busy CSV</div>
+      </div>
+      <button class="btn btn-success" style="width:100%" onclick="exportGRN()">⬇️ Export GRN</button>
+    </div>
+    <div class="export-card">
+      <div class="ec-icon">🛒</div>
+      <h3>Sales Order Export</h3>
+      <p>Sales Orders → Tally Sales Vouchers + Customer ledger</p>
+      <div class="format-tabs">
+        <div class="format-tab active" onclick="setFormat(this,'sales','xml')">Tally XML</div>
+        <div class="format-tab" onclick="setFormat(this,'sales','csv')">Busy CSV</div>
+      </div>
+      <button class="btn btn-success" style="width:100%" onclick="exportSales()">⬇️ Export Sales</button>
+    </div>
+    <div class="export-card">
+      <div class="ec-icon">💸</div>
+      <h3>Salary Journal Export</h3>
+      <p>Payroll entries → Tally Payroll Vouchers with PF/ESI</p>
+      <div class="format-tabs">
+        <div class="format-tab active" onclick="setFormat(this,'salary','xml')">Tally XML</div>
+        <div class="format-tab" onclick="setFormat(this,'salary','csv')">Busy CSV</div>
+      </div>
+      <button class="btn btn-success" style="width:100%" onclick="exportSalary()">⬇️ Export Payroll</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚙️ Export Settings</h2>
+    <div class="controls">
+      <div>
+        <label style="font-size:11px;color:#94a3b8;display:block;margin-bottom:3px">COMPANY NAME (as in Tally/Busy)</label>
+        <input type="text" id="company-name" value="Shree Shyam Packaging Industries" style="width:320px">
+      </div>
+      <div>
+        <label style="font-size:11px;color:#94a3b8;display:block;margin-bottom:3px">DATE RANGE — FROM</label>
+        <input type="date" id="from-date">
+      </div>
+      <div>
+        <label style="font-size:11px;color:#94a3b8;display:block;margin-bottom:3px">TO</label>
+        <input type="date" id="to-date">
+      </div>
+      <div>
+        <label style="font-size:11px;color:#94a3b8;display:block;margin-bottom:3px">SOFTWARE</label>
+        <select id="target-sw"><option>Tally Prime</option><option>Tally ERP 9</option><option>Busy 21</option><option>Busy 17</option></select>
+      </div>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:14px;font-size:12px;color:#94a3b8;line-height:1.8">
+      <strong style="color:#22c55e">How to import in Tally Prime:</strong><br>
+      1. Export XML from above → save file to computer<br>
+      2. Open Tally Prime → Gateway of Tally → Import<br>
+      3. Select "Data" → choose the downloaded XML file<br>
+      4. Review import summary → Accept<br>
+      <br><strong style="color:#22c55e">How to import in Busy:</strong><br>
+      1. Export CSV → save file<br>
+      2. Busy → Administration → Import Data → Vouchers<br>
+      3. Choose CSV file → Map columns → Import
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔍 XML Preview</h2>
+    <div class="xml-preview" id="xml-preview">Click any Export button above to preview the generated XML/CSV here before downloading...</div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const formats = {};
+
+function setFormat(el, type, fmt) {
+  const tabs = el.parentElement.querySelectorAll('.format-tab');
+  tabs.forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  formats[type] = fmt;
+}
+
+function getCompany() { return document.getElementById('company-name').value; }
+
+function generateTallyXML(type, entries) {
+  const co = getCompany();
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+  <HEADER>
+    <TALLYREQUEST>Import Data</TALLYREQUEST>
+  </HEADER>
+  <BODY>
+    <IMPORTDATA>
+      <REQUESTDESC>
+        <REPORTNAME>Vouchers</REPORTNAME>
+        <STATICVARIABLES>
+          <SVCURRENTCOMPANY>${co}</SVCURRENTCOMPANY>
+        </STATICVARIABLES>
+      </REQUESTDESC>
+      <REQUESTDATA>
+${entries.map(e=>`        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="${e.type}" ACTION="Create">
+            <DATE>${e.date}</DATE>
+            <NARRATION>${e.narration}</NARRATION>
+            <VOUCHERTYPENAME>${e.type}</VOUCHERTYPENAME>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>${e.debit}</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-${e.amount}</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>${e.credit}</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>${e.amount}</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>`).join('\n')}
+      </REQUESTDATA>
+    </IMPORTDATA>
+  </BODY>
+</ENVELOPE>`;
+}
+
+const DEMO_VOUCHERS = [
+  {type:'Payment',date:'20260620',narration:'Supplier payment — PP Granules',debit:'PP Granule Supplier',credit:'HDFC Bank',amount:'48200'},
+  {type:'Receipt',date:'20260621',narration:'Customer receipt — Maruti',debit:'HDFC Bank',credit:'Maruti Suzuki India Ltd',amount:'125000'},
+  {type:'Journal',date:'20260621',narration:'Depreciation entry — Machines',debit:'Depreciation A/c',credit:'Accumulated Depreciation',amount:'12500'},
+];
+
+function exportVouchers() {
+  const xml = generateTallyXML('Journal', DEMO_VOUCHERS);
+  document.getElementById('xml-preview').textContent = xml;
+  downloadFile(xml, 'SSPI_Vouchers_' + new Date().toISOString().split('T')[0] + '.xml', 'text/xml');
+}
+
+function exportGRN() {
+  const entries = [
+    {type:'Purchase',date:'20260619',narration:'GRN-2026-0089 PP Granules from M/s Shree Polymers',debit:'PP Granules Stock',credit:'M/s Shree Polymers',amount:'38400'},
+    {type:'Purchase',date:'20260620',narration:'GRN-2026-0090 HDPE from Sai Plastics',debit:'HDPE Stock',credit:'Sai Plastics',amount:'22800'},
+  ];
+  const xml = generateTallyXML('Purchase', entries);
+  document.getElementById('xml-preview').textContent = xml;
+  downloadFile(xml, 'SSPI_GRN_Purchase_' + new Date().toISOString().split('T')[0] + '.xml', 'text/xml');
+}
+
+function exportSales() {
+  const csv = 'Date,Customer,Invoice No,Amount,GST,Total\n20260618,Maruti Suzuki,INV-2026-142,125000,22500,147500\n20260619,Hero MotoCorp,INV-2026-143,98000,17640,115640\n';
+  document.getElementById('xml-preview').textContent = csv;
+  downloadFile(csv, 'SSPI_Sales_' + new Date().toISOString().split('T')[0] + '.csv', 'text/csv');
+}
+
+function exportSalary() {
+  const entries = [
+    {type:'Journal',date:'20260630',narration:'June 2026 Salary — Production Dept',debit:'Salary Expense',credit:'Salary Payable',amount:'285000'},
+    {type:'Journal',date:'20260630',narration:'June 2026 PF Contribution',debit:'PF Expense',credit:'PF Payable',amount:'34200'},
+  ];
+  const xml = generateTallyXML('Journal', entries);
+  document.getElementById('xml-preview').textContent = xml;
+  downloadFile(xml, 'SSPI_Payroll_' + new Date().toISOString().split('T')[0] + '.xml', 'text/xml');
+}
+
+function downloadFile(content, filename, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type}));
+  a.download = filename;
+  a.click();
+}
+
+// Set default dates
+const d = new Date();
+document.getElementById('to-date').value = d.toISOString().split('T')[0];
+d.setDate(1);
+document.getElementById('from-date').value = d.toISOString().split('T')[0];
+</script>
+</body>
+</html>

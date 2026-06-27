@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Preventive Maintenance Calendar — V4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1F3864,#0E6F56);padding:16px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid #0E6F56}
+.header h1{font-size:22px;font-weight:700;color:#fff}
+.header p{font-size:12px;color:#94a3b8;margin-top:2px}
+.badge{background:#0E6F56;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px}
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.2s}
+.btn-primary{background:#2E75B6;color:#fff}.btn-primary:hover{background:#1F3864}
+.btn-success{background:#0E6F56;color:#fff}.btn-success:hover{background:#0a5a45}
+.btn-warn{background:#C65911;color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+.main{padding:20px;max-width:1500px;margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:20px}
+@media(max-width:900px){.main{grid-template-columns:1fr}}
+
+/* Calendar */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-header h2{font-size:18px;font-weight:700;color:#e2e8f0}
+.cal-grid{background:#1e293b;border-radius:12px;overflow:hidden;border:1px solid #334155}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);background:#1F3864}
+.cal-weekday{padding:8px;text-align:center;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day{min-height:90px;padding:6px;border-right:1px solid #334155;border-bottom:1px solid #334155;cursor:pointer;transition:.2s;position:relative}
+.cal-day:hover{background:#334155}
+.cal-day.today{background:#1F386440}
+.cal-day.today .day-num{background:#2E75B6;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cal-day.other-month{opacity:.3}
+.day-num{font-size:12px;color:#94a3b8;margin-bottom:4px}
+.pm-event{font-size:9px;padding:2px 5px;border-radius:3px;margin-bottom:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.pm-event:hover{opacity:.8}
+.pm-overdue{background:#8B000033;color:#f87171;border-left:2px solid #f87171}
+.pm-today{background:#C6591133;color:#fbbf24;border-left:2px solid #fbbf24}
+.pm-upcoming{background:#0E6F5633;color:#6ee7b7;border-left:2px solid #0E6F56}
+.pm-done{background:#37562333;color:#86efac;border-left:2px solid #375623;text-decoration:line-through}
+.pm-scheduled{background:#2E75B633;color:#93c5fd;border-left:2px solid #2E75B6}
+
+/* Side panel */
+.side{display:flex;flex-direction:column;gap:14px}
+.side-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px}
+.side-card h3{font-size:13px;font-weight:700;color:#2E75B6;margin-bottom:12px}
+.machine-list{max-height:300px;overflow-y:auto}
+.machine-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #334155;cursor:pointer;font-size:12px}
+.machine-row:last-child{border:none}
+.machine-row:hover{color:#2E75B6}
+.m-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.status-badge{margin-left:auto;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:700}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-box{background:#0f172a;border-radius:6px;padding:10px;text-align:center}
+.stat-box .sv{font-size:22px;font-weight:700}
+.stat-box .sl{font-size:10px;color:#64748b;margin-top:2px}
+.upcoming-list{max-height:280px;overflow-y:auto}
+.upcoming-item{padding:8px 0;border-bottom:1px solid #334155;font-size:12px}
+.upcoming-item:last-child{border:none}
+.upcoming-item strong{color:#e2e8f0;display:block;margin-bottom:2px}
+.upcoming-item span{color:#64748b}
+
+/* Modal */
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#00000088;z-index:1000;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal-content{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+.modal-content h3{font-size:16px;font-weight:700;color:#2E75B6;margin-bottom:16px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;color:#94a3b8;margin-bottom:4px;text-transform:uppercase}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:8px 10px;border-radius:6px;font-size:13px}
+.form-group textarea{height:70px;resize:vertical}
+.modal-btns{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>🔧 Preventive Maintenance Calendar <span class="badge">V4</span></h1>
+    <p>Auto-scheduled PM tasks for all 26 machines • Overdue alerts • Log completion</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-success btn-sm" onclick="showAddModal()">+ Add PM Task</button>
+    <button class="btn btn-primary btn-sm" onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'">← Dashboard</button>
+  </div>
+</div>
+
+<div class="main">
+  <div>
+    <div class="cal-header">
+      <button class="btn btn-primary btn-sm" onclick="changeMonth(-1)">◀</button>
+      <h2 id="cal-title"></h2>
+      <button class="btn btn-primary btn-sm" onclick="changeMonth(1)">▶</button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-weekdays">
+        <div class="cal-weekday">Sun</div><div class="cal-weekday">Mon</div>
+        <div class="cal-weekday">Tue</div><div class="cal-weekday">Wed</div>
+        <div class="cal-weekday">Thu</div><div class="cal-weekday">Fri</div>
+        <div class="cal-weekday">Sat</div>
+      </div>
+      <div class="cal-days" id="cal-days"></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+      <span style="font-size:11px;color:#f87171">■ Overdue</span>
+      <span style="font-size:11px;color:#fbbf24">■ Due Today</span>
+      <span style="font-size:11px;color:#6ee7b7">■ Upcoming</span>
+      <span style="font-size:11px;color:#93c5fd">■ Scheduled</span>
+      <span style="font-size:11px;color:#86efac">■ Completed</span>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="side-card">
+      <h3>📊 PM Status Overview</h3>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="sv" style="color:#f87171" id="stat-overdue">0</div><div class="sl">Overdue</div></div>
+        <div class="stat-box"><div class="sv" style="color:#fbbf24" id="stat-today">0</div><div class="sl">Due Today</div></div>
+        <div class="stat-box"><div class="sv" style="color:#6ee7b7" id="stat-week">0</div><div class="sl">This Week</div></div>
+        <div class="stat-box"><div class="sv" style="color:#86efac" id="stat-done">0</div><div class="sl">Done MTD</div></div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <h3>⚙️ Machine Status</h3>
+      <div class="machine-list" id="machine-list"></div>
+    </div>
+
+    <div class="side-card">
+      <h3>📋 Upcoming PM (Next 7 Days)</h3>
+      <div class="upcoming-list" id="upcoming-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add PM Modal -->
+<div class="modal" id="pm-modal">
+  <div class="modal-content">
+    <h3>➕ Add / Schedule PM Task</h3>
+    <div class="form-group"><label>Machine</label>
+      <select id="pm-machine">
+        <option>PP Corrugation Machine 1</option><option>PP Corrugation Machine 2</option>
+        <option>PP Lamination Machine 1</option><option>Slitter Machine 1</option>
+        <option>Bag Making Machine 1</option><option>Printing Machine 1</option>
+        <option>Sealing Machine 1</option><option>Compressor 1</option>
+        <option>Boiler</option><option>DG Set 1</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Task Type</label>
+      <select id="pm-type">
+        <option>Daily Inspection</option><option>Weekly Lubrication</option>
+        <option>Monthly Service</option><option>Quarterly Overhaul</option>
+        <option>Belt Replacement</option><option>Filter Change</option>
+        <option>Oil Change</option><option>Calibration</option><option>Custom</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Scheduled Date</label>
+      <input type="date" id="pm-date">
+    </div>
+    <div class="form-group"><label>Frequency</label>
+      <select id="pm-freq">
+        <option>One-time</option><option>Daily</option><option>Weekly</option>
+        <option>Fortnightly</option><option>Monthly</option><option>Quarterly</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Assigned To</label>
+      <input type="text" id="pm-assign" placeholder="Technician name">
+    </div>
+    <div class="form-group"><label>Notes</label>
+      <textarea id="pm-notes" placeholder="Special instructions, spare parts needed..."></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="document.getElementById('pm-modal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-success" onclick="savePMTask()">Save PM Task</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+
+let currentDate = new Date();
+let pmTasks = JSON.parse(localStorage.getItem('sspi-pm-tasks') || '[]');
+
+const MACHINES = [
+  'PP Corrugation Machine 1','PP Corrugation Machine 2','PP Corrugation Machine 3',
+  'PP Lamination Machine 1','PP Lamination Machine 2','Slitter Machine 1',
+  'Slitter Machine 2','Bag Making Machine 1','Bag Making Machine 2',
+  'Printing Machine 1','Printing Machine 2','Sealing Machine 1',
+  'Compressor 1','Compressor 2','Boiler','DG Set 1'
+];
+
+// Generate default PM schedule
+function generateDefaultPM() {
+  if (pmTasks.length > 0) return;
+  const today = new Date();
+  const tasks = [];
+  MACHINES.forEach((m, i) => {
+    // Weekly lubrication
+    tasks.push({id:Date.now()+i*10, machine:m, type:'Weekly Lubrication',
+      date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + (i%7) - 3).toISOString().split('T')[0],
+      freq:'Weekly', assign:'Maintenance Team', status:'scheduled', notes:''});
+    // Monthly service
+    tasks.push({id:Date.now()+i*10+1, machine:m, type:'Monthly Service',
+      date: new Date(today.getFullYear(), today.getMonth(), 15+i%10).toISOString().split('T')[0],
+      freq:'Monthly', assign:'Senior Technician', status:i%5===0?'overdue':'scheduled', notes:''});
+    // Daily inspection for critical machines
+    if (i < 6) tasks.push({id:Date.now()+i*10+2, machine:m, type:'Daily Inspection',
+      date: new Date(today).toISOString().split('T')[0],
+      freq:'Daily', assign:'Operator', status:'scheduled', notes:''});
+  });
+  pmTasks = tasks;
+  localStorage.setItem('sspi-pm-tasks', JSON.stringify(pmTasks));
+}
+
+function renderCalendar() {
+  const year = currentDate.getFullYear(), month = currentDate.getMonth();
+  document.getElementById('cal-title').textContent = currentDate.toLocaleString('default',{month:'long',year:'numeric'});
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const today = new Date();
+
+  let html = '';
+  let dayCount = 1;
+  for (let i = 0; i < 42; i++) {
+    const dayNum = i - firstDay + 1;
+    const isCurrentMonth = dayNum >= 1 && dayNum <= daysInMonth;
+    const isToday = isCurrentMonth && dayNum === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+
+    const dayTasks = isCurrentMonth ? pmTasks.filter(t => t.date === dateStr) : [];
+    const taskHtml = dayTasks.slice(0,3).map(t => {
+      const cls = t.status==='done'?'pm-done':t.status==='overdue'?'pm-overdue':
+                  isToday?'pm-today':t.status==='upcoming'?'pm-upcoming':'pm-scheduled';
+      return `<div class="pm-event ${cls}" title="${t.machine} — ${t.type}" onclick="showTaskDetail(${t.id})">${t.machine.substring(0,10)} ${t.type.substring(0,8)}</div>`;
+    }).join('') + (dayTasks.length > 3 ? `<div style="font-size:9px;color:#64748b">+${dayTasks.length-3} more</div>` : '');
+
+    html += `<div class="cal-day ${isToday?'today':''} ${!isCurrentMonth?'other-month':''}"
+      onclick="dayClick('${dateStr}')">
+      <div class="day-num">${isCurrentMonth?dayNum:''}</div>
+      ${taskHtml}
+    </div>`;
+  }
+  document.getElementById('cal-days').innerHTML = html;
+  updateStats();
+  renderMachineList();
+  renderUpcoming();
+}
+
+function updateStats() {
+  const today = new Date().toISOString().split('T')[0];
+  const nextWeek = new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0];
+  document.getElementById('stat-overdue').textContent = pmTasks.filter(t=>t.status==='overdue').length;
+  document.getElementById('stat-today').textContent = pmTasks.filter(t=>t.date===today&&t.status!=='done').length;
+  document.getElementById('stat-week').textContent = pmTasks.filter(t=>t.date>today&&t.date<=nextWeek).length;
+  document.getElementById('stat-done').textContent = pmTasks.filter(t=>t.status==='done').length;
+}
+
+function renderMachineList() {
+  const list = document.getElementById('machine-list');
+  const machineStatus = {};
+  MACHINES.forEach(m => {
+    const tasks = pmTasks.filter(t=>t.machine===m);
+    const hasOverdue = tasks.some(t=>t.status==='overdue');
+    const hasToday = tasks.some(t=>t.date===new Date().toISOString().split('T')[0]);
+    machineStatus[m] = hasOverdue?'overdue':hasToday?'today':'ok';
+  });
+  list.innerHTML = MACHINES.map(m => {
+    const st = machineStatus[m];
+    const clr = st==='overdue'?'#f87171':st==='today'?'#fbbf24':'#22c55e';
+    const lbl = st==='overdue'?'OVERDUE':st==='today'?'TODAY':'OK';
+    return `<div class="machine-row"><div class="m-dot" style="background:${clr}"></div>${m}
+      <span class="status-badge" style="background:${clr}22;color:${clr}">${lbl}</span></div>`;
+  }).join('');
+}
+
+function renderUpcoming() {
+  const today = new Date().toISOString().split('T')[0];
+  const next7 = new Date(Date.now()+7*24*60*60*1000).toISOString().split('T')[0];
+  const items = pmTasks.filter(t=>t.date>=today&&t.date<=next7&&t.status!=='done')
+    .sort((a,b)=>a.date.localeCompare(b.date)).slice(0,10);
+  document.getElementById('upcoming-list').innerHTML = items.map(t=>`
+    <div class="upcoming-item">
+      <strong>${t.machine}</strong>
+      <span>${t.type} • ${t.date} • ${t.assign||'Unassigned'}</span>
+    </div>`).join('') || '<div style="font-size:12px;color:#64748b;text-align:center;padding:20px">No tasks in next 7 days</div>';
+}
+
+function changeMonth(dir) {
+  currentDate.setMonth(currentDate.getMonth()+dir);
+  renderCalendar();
+}
+
+function dayClick(date) {
+  const tasks = pmTasks.filter(t=>t.date===date);
+  if (tasks.length === 0) {
+    document.getElementById('pm-date').value = date;
+    showAddModal();
+  }
+}
+
+function showAddModal() {
+  document.getElementById('pm-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('pm-modal').classList.add('show');
+}
+
+function showTaskDetail(id) {
+  const task = pmTasks.find(t=>t.id===id);
+  if (!task) return;
+  if (confirm(`Mark "${task.type}" for ${task.machine} as COMPLETED?`)) {
+    task.status = 'done';
+    localStorage.setItem('sspi-pm-tasks', JSON.stringify(pmTasks));
+    renderCalendar();
+  }
+}
+
+function savePMTask() {
+  const task = {
+    id: Date.now(),
+    machine: document.getElementById('pm-machine').value,
+    type: document.getElementById('pm-type').value,
+    date: document.getElementById('pm-date').value,
+    freq: document.getElementById('pm-freq').value,
+    assign: document.getElementById('pm-assign').value,
+    notes: document.getElementById('pm-notes').value,
+    status: 'scheduled'
+  };
+  pmTasks.push(task);
+  // Auto-generate recurrences
+  if (task.freq !== 'One-time') {
+    const gaps = {Daily:1,Weekly:7,Fortnightly:14,Monthly:30,Quarterly:90};
+    const gap = gaps[task.freq]||7;
+    let d = new Date(task.date);
+    for (let i=1;i<=6;i++) {
+      d.setDate(d.getDate()+gap);
+      pmTasks.push({...task, id:Date.now()+i, date:d.toISOString().split('T')[0]});
+    }
+  }
+  localStorage.setItem('sspi-pm-tasks', JSON.stringify(pmTasks));
+  document.getElementById('pm-modal').classList.remove('show');
+  renderCalendar();
+  alert('PM task scheduled! Recurring tasks auto-generated.');
+}
+
+generateDefaultPM();
+renderCalendar();
+</script>
+</body>
+</html>

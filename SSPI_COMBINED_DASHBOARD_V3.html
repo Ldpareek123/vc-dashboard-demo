@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SSPI — Live Operations Dashboard</title>
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS — Corporate Light Theme
+═══════════════════════════════════════════════ */
+:root{
+  --navy:#1E3A5F; --navy-dark:#142947; --navy-light:#2A4F7E;
+  --accent:#D97706; --accent-light:#FEF3C7;
+  --bg:#F1F5F9; --card:#FFFFFF; --border:#E2E8F0;
+  --text:#1E293B; --text2:#475569; --text3:#94A3B8;
+  --green:#166534; --green-bg:#DCFCE7; --green-lt:#F0FDF4;
+  --red:#B91C1C; --red-bg:#FEE2E2; --red-lt:#FFF1F2;
+  --orange:#92400E; --orange-bg:#FEF3C7; --orange-lt:#FFFBEB;
+  --teal:#0E7490; --teal-bg:#E0F2FE; --teal-lt:#F0F9FF;
+  --purple:#6D28D9; --purple-bg:#EDE9FE;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 12px rgba(0,0,0,.10);
+  --radius:8px; --radius-lg:12px;
+  --sidebar:240px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;}
+a{text-decoration:none;color:inherit;}
+
+/* ── HEADER ─────────────────────────────────── */
+.hdr{
+  background:var(--navy);color:#fff;
+  height:54px;padding:0 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.hdr-brand{display:flex;align-items:center;gap:12px;}
+.hdr-logo{width:36px;height:36px;border-radius:8px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:900;color:var(--navy-dark);}
+.hdr-title{line-height:1.2;}
+.hdr-title b{font-size:14px;font-weight:700;display:block;}
+.hdr-title small{font-size:10px;opacity:.65;}
+.hdr-right{display:flex;align-items:center;gap:14px;}
+.sync-pill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  border-radius:20px;padding:4px 10px;font-size:10px;color:rgba(255,255,255,.85);
+  cursor:pointer;
+}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.hdr-clock{font-size:11px;text-align:right;opacity:.8;line-height:1.4;}
+.user-chip{
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+  color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;gap:5px;
+}
+.user-chip:hover{background:rgba(255,255,255,.25);}
+
+/* ── ROLE NAV BAR ───────────────────────────── */
+.role-nav{
+  background:#fff;border-bottom:2px solid var(--border);
+  display:flex;padding:0 24px;overflow-x:auto;
+  -ms-overflow-style:none;scrollbar-width:none;
+}
+.role-nav::-webkit-scrollbar{display:none;}
+.rnav-tab{
+  padding:13px 20px;font-size:12px;font-weight:600;color:var(--text2);
+  cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;
+  white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:6px;
+}
+.rnav-tab:hover{color:var(--navy);}
+.rnav-tab.active{color:var(--navy);border-bottom-color:var(--accent);font-weight:700;}
+.rnav-badge{
+  background:var(--red);color:#fff;border-radius:10px;
+  font-size:9px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;
+}
+
+/* ── ACTION TOOLBAR ─────────────────────────── */
+.action-bar{
+  background:#fff;border-bottom:1px solid var(--border);
+  padding:8px 24px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+}
+.action-bar-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.alink{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;
+  border:1px solid var(--border);background:#F8FAFC;color:var(--navy);
+  cursor:pointer;white-space:nowrap;transition:all .12s;
+}
+.alink:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+.alink.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.alink.green{background:#166534;color:#fff;border-color:#166534;}
+.alink.orange{background:#b45309;color:#fff;border-color:#b45309;}
+.alink.teal{background:#0e7490;color:#fff;border-color:#0e7490;}
+.sep{width:1px;height:22px;background:var(--border);}
+
+/* ── MAIN LAYOUT ────────────────────────────── */
+.main{padding:18px 24px;max-width:1480px;margin:0 auto;}
+.view{display:none;} .view.active{display:block;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.g2-1{display:grid;grid-template-columns:2fr 1fr;gap:14px;}
+
+/* ── KPI TILES ──────────────────────────────── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin-bottom:16px;}
+.kpi{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:4px;height:100%;background:var(--border);}
+.kpi.k-green::after{background:var(--green);}  .kpi.k-red::after{background:var(--red);}
+.kpi.k-orange::after{background:var(--accent);} .kpi.k-blue::after{background:var(--teal);}
+.kpi.k-purple::after{background:var(--purple);}
+.kpi-val{font-size:24px;font-weight:800;color:var(--navy);line-height:1;}
+.kpi-lbl{font-size:10px;color:var(--text2);margin-top:5px;line-height:1.3;}
+.kpi-trend{font-size:10px;font-weight:700;margin-top:3px;}
+.kpi-trend.up{color:var(--green);} .kpi-trend.dn{color:var(--red);}
+.kpi-icon{position:absolute;top:12px;right:14px;font-size:20px;opacity:.18;}
+
+/* ── CARDS ──────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;}
+.card-hdr{
+  padding:13px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:#FAFBFC;
+}
+.card-hdr-title{font-size:13px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px;}
+.card-hdr-actions{display:flex;gap:6px;align-items:center;}
+.card-body{padding:16px;}
+.card-body.no-pad{padding:0;}
+.stag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--teal-bg);color:var(--teal);}
+.stag.green{background:var(--green-bg);color:var(--green);}
+.stag.orange{background:var(--orange-bg);color:var(--orange);}
+.stag.red{background:var(--red-bg);color:var(--red);}
+
+/* ── TABLES ─────────────────────────────────── */
+.tbl-wrap{overflow:auto;max-height:280px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;white-space:nowrap;position:sticky;top:0;font-size:11px;font-weight:600;}
+td{border-bottom:1px solid var(--border);padding:7px 10px;vertical-align:middle;color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:#F8FAFC;}
+.empty-row{text-align:center;color:var(--text3);padding:20px;font-size:12px;}
+
+/* ── BADGES ─────────────────────────────────── */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;}
+.b-green{background:var(--green-bg);color:var(--green);}
+.b-red{background:var(--red-bg);color:var(--red);}
+.b-orange{background:var(--orange-bg);color:var(--orange);}
+.b-blue{background:var(--teal-bg);color:var(--teal);}
+.b-purple{background:var(--purple-bg);color:var(--purple);}
+.b-gray{background:#F1F5F9;color:var(--text2);}
+.b-crit{background:var(--red);color:#fff;}
+
+/* ── ALERTS ─────────────────────────────────── */
+.alert{
+  display:flex;gap:10px;padding:10px 14px;border-radius:7px;
+  margin-bottom:8px;font-size:12px;align-items:flex-start;
+  border:1px solid transparent;
+}
+.alert.crit{background:var(--red-lt);border-color:#FCA5A5;}
+.alert.warn{background:var(--orange-lt);border-color:#FCD34D;}
+.alert.info{background:var(--teal-lt);border-color:#BAE6FD;}
+.alert.ok{background:var(--green-lt);border-color:#BBF7D0;}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.alert b{display:block;font-weight:700;margin-bottom:2px;}
+.alert span{color:var(--text2);}
+
+/* ── BOT LAUNCHER ───────────────────────────── */
+.bot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;}
+.bot-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:14px 8px;border:1.5px solid var(--border);border-radius:10px;
+  background:#fff;cursor:pointer;transition:all .15s;text-align:center;
+  text-decoration:none;color:var(--text);gap:6px;
+}
+.bot-card:hover{border-color:var(--navy);box-shadow:0 4px 12px rgba(30,58,95,.15);transform:translateY(-2px);}
+.bot-card:hover .bot-icon{background:var(--navy);}
+.bot-icon{
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;background:var(--teal-bg);transition:background .15s;
+}
+.bot-label{font-size:10px;font-weight:700;color:var(--navy);line-height:1.3;}
+.bot-sub{font-size:9px;color:var(--text3);}
+.bot-card.live::before{
+  content:'LIVE';font-size:8px;font-weight:900;color:var(--green);
+  background:var(--green-bg);padding:1px 4px;border-radius:4px;
+  align-self:flex-end;margin-bottom:-4px;
+}
+
+/* ── ACTIVITY FEED ──────────────────────────── */
+.feed-item{
+  display:flex;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--border);align-items:flex-start;
+}
+.feed-item:last-child{border-bottom:none;}
+.feed-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.fd-grn{background:var(--green);} .fd-org{background:var(--accent);} .fd-blu{background:var(--teal);} .fd-red{background:var(--red);}
+.feed-body{flex:1;font-size:12px;}
+.feed-body b{font-weight:600;color:var(--text);}
+.feed-body span{color:var(--text2);}
+.feed-time{font-size:10px;color:var(--text3);white-space:nowrap;margin-top:2px;}
+
+/* ── STAT ROW ───────────────────────────────── */
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.stat-row:last-child{border-bottom:none;}
+.stat-lbl{color:var(--text2);}
+.stat-val{font-weight:700;color:var(--navy);}
+
+/* ── PROGRESS ───────────────────────────────── */
+.prog{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px;}
+.prog-bar{height:100%;border-radius:3px;transition:width .4s;}
+.pg-green{background:var(--green);} .pg-orange{background:var(--accent);} .pg-red{background:var(--red);}
+
+/* ── COMPLIANCE CARD ────────────────────────── */
+.comp-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 12px;border-radius:7px;border:1px solid var(--border);
+  margin-bottom:6px;background:#FAFBFC;font-size:12px;
+}
+.comp-item.due{background:var(--orange-lt);border-color:#FCD34D;}
+.comp-item.overdue{background:var(--red-lt);border-color:#FCA5A5;}
+.comp-days{font-size:13px;font-weight:800;color:var(--navy);}
+.comp-days.warn{color:var(--orange);} .comp-days.crit{color:var(--red);}
+
+/* ── REMOTE LOCATION BANNER ─────────────────── */
+.loc-banner{
+  background:linear-gradient(135deg,var(--navy-dark),var(--navy-light));
+  color:#fff;border-radius:var(--radius-lg);padding:16px 20px;
+  margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+.loc-banner-title{font-size:14px;font-weight:700;margin-bottom:3px;}
+.loc-banner-sub{font-size:11px;opacity:.75;}
+.loc-links{display:flex;gap:8px;flex-wrap:wrap;}
+.loc-link{
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;
+  text-decoration:none;display:flex;align-items:center;gap:4px;
+}
+.loc-link:hover{background:rgba(255,255,255,.3);}
+
+/* ── FORM ELEMENTS ──────────────────────────── */
+.form-group{margin-bottom:10px;}
+.form-group label{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:3px;display:block;}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:5px;
+  font-size:12px;color:var(--text);background:#fff;
+}
+.form-group input:focus,.form-group select:focus{outline:2px solid var(--accent);border-color:var(--accent);}
+.btn{padding:8px 16px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;display:inline-flex;align-items:center;gap:5px;}
+.btn-navy{background:var(--navy);} .btn-green{background:var(--green);}
+.btn-orange{background:#b45309;} .btn-teal{background:var(--teal);}
+.btn-red{background:var(--red);}
+.btn:hover{opacity:.9;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+
+/* ── LOGIN ──────────────────────────────────── */
+#login_overlay{
+  position:fixed;inset:0;background:rgba(15,23,42,.88);
+  z-index:9999;display:flex;align-items:center;justify-content:center;
+}
+.login-box{
+  background:#fff;border-radius:16px;padding:36px;max-width:360px;width:92%;
+  box-shadow:0 24px 64px rgba(0,0,0,.4);
+}
+.login-logo{text-align:center;margin-bottom:22px;}
+.login-logo-icon{width:64px;height:64px;background:var(--navy);border-radius:16px;
+  display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;
+  color:var(--accent);margin:0 auto 12px;}
+.login-logo h2{font-size:17px;color:var(--navy);}
+.login-logo p{font-size:11px;color:var(--text2);margin-top:3px;}
+.login-box .form-group{margin-bottom:14px;}
+.login-err{color:var(--red);font-size:11px;text-align:center;margin-top:6px;}
+.login-pins{margin-top:10px;padding:10px;background:var(--teal-lt);border-radius:7px;font-size:10px;color:var(--text2);text-align:center;line-height:1.7;}
+
+/* ── SCROLLBAR ──────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px;}
+
+/* ── PRINT ──────────────────────────────────── */
+@media print{
+  .hdr,.role-nav,.action-bar,.btn,.bot-grid,.loc-banner,.alink{display:none!important;}
+  .view{display:block!important;} .card{box-shadow:none!important;border:1px solid #ccc!important;}
+}
+
+/* ── RESPONSIVE ─────────────────────────────── */
+@media(max-width:900px){
+  .g2,.g3,.g4,.g2-1{grid-template-columns:1fr 1fr;}
+  .main{padding:12px 14px;}
+  .hdr{padding:0 14px;}
+}
+@media(max-width:600px){
+  .g2,.g3,.g4,.g2-1,.kpi-row{grid-template-columns:1fr 1fr;}
+  .rnav-tab .r-lbl{display:none;}
+}
+</style>
+</head>
+<body><div style="background:#1a3a2a;color:#4ade80;font-size:11px;font-weight:700;text-align:center;padding:4px 8px;letter-spacing:.5px;border-bottom:1px solid #2d6a4f;">&#9889; SSPI SYSTEM V3 &nbsp;|&nbsp; Updated: 26 Jun 2026 &nbsp;|&nbsp; 30 Modules Active &nbsp;|&nbsp; GAS Live &#10003; &nbsp;|&nbsp; Auth: SSPI-VC-2026-SECURE</div>
+
+<!-- ════════════════ LOGIN OVERLAY ════════════════ -->
+<div id="login_overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">SS</div>
+      <h2>SSPI Live Operations</h2>
+      <p>Shree Shyam Packaging Industries, Bhiwadi</p>
+    </div>
+    <div class="form-group">
+      <label>Select Your Role</label>
+      <select id="login_role">
+        <option value="">— Choose Role —</option>
+        <option value="owner">👑 Owner / MD</option>
+        <option value="ceo">📊 CEO / Director</option>
+        <option value="production">🏭 Production &amp; Store Manager</option>
+        <option value="hr">👥 HR &amp; Accounts</option>
+        <option value="sales">📦 Sales &amp; Dispatch</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Access PIN</label>
+      <input type="password" id="login_pin" placeholder="Enter your PIN" maxlength="6"
+        style="letter-spacing:4px;font-size:16px;text-align:center;"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-navy" onclick="doLogin()" style="width:100%;padding:12px;font-size:13px;border-radius:8px;">🔓 Enter Dashboard</button>
+    <div class="login-err" id="login_err"></div>
+    <div class="login-pins">Default PINs: Owner=1234 · CEO=0000 · Production=2345 · HR=4567 · Sales=5678</div>
+  </div>
+</div>
+
+<!-- ════════════════ HEADER ════════════════ -->
+<div class="hdr" id="main_hdr" style="display:none">
+  <div class="hdr-brand">
+    <div class="hdr-logo">SS</div>
+    <div class="hdr-title">
+      <b>Shree Shyam Packaging Industries</b>
+      <small>Live Operations Dashboard &nbsp;·&nbsp; Bhiwadi, Rajasthan</small>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="sync-pill" onclick="fullSync()" title="Click to sync now">
+      <div class="sync-dot" id="sync_dot"></div>
+      <span id="sync_lbl">Syncing…</span>
+    </div>
+    <div class="hdr-clock" id="hdr_clock">
+      <div id="hdr_time">—</div>
+      <div id="hdr_date" style="font-size:9px;"></div>
+    </div>
+    <div class="user-chip" onclick="showLogin()">
+      <span id="user_role_icon">👤</span>
+      <span id="user_role_lbl">Login</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ ROLE NAVIGATION ════════════════ -->
+<div class="role-nav" id="role_nav" style="display:none">
+  <div class="rnav-tab" id="rt_owner"      onclick="switchRole('owner',this)">👑 <span class="r-lbl">Owner / MD</span></div>
+  <div class="rnav-tab" id="rt_ceo"        onclick="switchRole('ceo',this)">📊 <span class="r-lbl">CEO / Director</span></div>
+  <div class="rnav-tab" id="rt_production" onclick="switchRole('production',this)">🏭 <span class="r-lbl">Production &amp; Stores</span></div>
+  <div class="rnav-tab" id="rt_hr"         onclick="switchRole('hr',this)">👥 <span class="r-lbl">HR &amp; Accounts</span></div>
+  <div class="rnav-tab" id="rt_sales"      onclick="switchRole('sales',this)">📦 <span class="r-lbl">Sales &amp; Dispatch</span></div>
+  <div class="rnav-tab" id="rt_all"        onclick="switchRole('all',this)" style="border-left:2px solid rgba(255,255,255,.2);margin-left:4px;">📱 <span class="r-lbl">All Modules</span></div>
+</div>
+
+<!-- ════════════════ ACTION BAR ════════════════ -->
+<div class="action-bar" id="action_bar" style="display:none">
+  <span class="action-bar-label">Quick Entry:</span>
+  <span id="action_bar_links"></span>
+  <div class="sep"></div>
+  <a class="alink" onclick="fullSync()">🔄 Sync Now</a>
+  <a class="alink" href="SSPI_Status.html" onclick="openBot(this.href);return false;">📡 System Status</a>
+  <a class="alink" onclick="window.print()">🖨️ Print</a>
+</div>
+
+<!-- ════════════════ MAIN CONTENT ════════════════ -->
+<div id="main_content" style="display:none">
+<div class="main">
+
+<!-- ══════════════════════════════════════════
+     OWNER / MD VIEW
+══════════════════════════════════════════ -->
+<div class="view" id="view_owner">
+
+  <!-- Remote Entry Banner -->
+  <div class="loc-banner">
+    <div>
+      <div class="loc-banner-title">🏭 Factory Operations — Live Feed</div>
+      <div class="loc-banner-sub">Data entered from any location appears here in real time · Last sync: <span id="owner_sync_time">—</span></div>
+    </div>
+    <div class="loc-links">
+      <a class="loc-link" href="SSPI_Manufacturing_Dashboard.html" onclick="openBot(this.href);return false;">🔧 Job Card</a>
+      <a class="loc-link" href="SSPI_Materials_Bot.html" onclick="openBot(this.href);return false;">📦 GRN / PO</a>
+      <a class="loc-link" href="SSPI_Approvals_Inbox.html" onclick="openBot(this.href);return false;">✅ Approvals <span class="rnav-badge" id="appr_badge" style="display:none">0</span></a>
+      <a class="loc-link" href="SSPI_Owner_Daily_Report.html" onclick="openBot(this.href);return false;">📊 Daily Report</a>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi k-blue"><div class="kpi-icon">📋</div><div class="kpi-val" id="o_jc">—</div><div class="kpi-lbl">Active Job Cards</div></div>
+    <div class="kpi k-green"><div class="kpi-icon">📦</div><div class="kpi-val" id="o_so">—</div><div class="kpi-lbl">Open Sales Orders</div></div>
+    <div class="kpi k-orange"><div class="kpi-icon">📥</div><div class="kpi-val" id="o_grn">—</div><div class="kpi-lbl">GRNs This Month</div></div>
+    <div class="kpi k-purple"><div class="kpi-icon">🛒</div><div class="kpi-val" id="o_po">—</div><div class="kpi-lbl">Open POs</div></div>
+    <div class="kpi k-green"><div class="kpi-icon">👥</div><div class="kpi-val" id="o_present">—</div><div class="kpi-lbl">Staff Present Today</div></div>
+    <div class="kpi k-red"><div class="kpi-icon">⚠️</div><div class="kpi-val" id="o_low_stock">—</div><div class="kpi-lbl">Low Stock Items</div></div>
+    <div class="kpi k-blue"><div class="kpi-icon">💰</div><div class="kpi-val" id="o_debtors">—</div><div class="kpi-lbl">Debtors Outstanding</div></div>
+    <div class="kpi k-orange"><div class="kpi-icon">✅</div><div class="kpi-val" id="o_pending_appr">—</div><div class="kpi-lbl">Pending Approvals</div></div>
+  </div>
+
+  <div class="g2-1">
+    <div>
+      <!-- Alerts -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-hdr-title">🔔 Alerts &amp; Actions Required</div>
+          <span class="stag" onclick="buildAlerts()" style="cursor:pointer">Refresh</span>
+        </div>
+        <div class="card-body" id="owner_alerts"><div style="color:var(--text3);text-align:center;padding:20px">Calculating alerts…</div></div>
+      </div>
+
+      <!-- Today's Activity Feed -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-hdr-title">📡 Live Activity — All Locations</div>
+          <span class="stag">Auto-refresh 60s</span>
+        </div>
+        <div class="card-body no-pad" style="padding:0 16px;">
+          <div id="owner_feed" style="max-height:260px;overflow-y:auto;padding:4px 0;">
+            <div style="color:var(--text3);text-align:center;padding:20px">Loading activity…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales Order Pipeline -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-hdr-title">📋 Open Sales Order Pipeline</div>
+          <a class="alink" href="SSPI_Sales_Order_Bot.html" onclick="openBot(this.href);return false;">+ New SO</a>
+        </div>
+        <div class="card-body no-pad">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>SO No</th><th>Customer</th><th>Product</th><th>Qty</th><th>Delivery</th><th>Status</th></tr></thead>
+              <tbody id="owner_so_tbl"><tr><td colspan="6" class="empty-row">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div>
+      <!-- Month Stats -->
+      <div class="card">
+        <div class="card-hdr"><div class="card-hdr-title">📈 Month Summary</div></div>
+        <div class="card-body">
+          <div class="stat-row"><span class="stat-lbl">GRNs received</span><span class="stat-val" id="ms_grn">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">POs created</span><span class="stat-val" id="ms_po">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">SO dispatched</span><span class="stat-val" id="ms_so_disp">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Staff attendance avg</span><span class="stat-val" id="ms_att">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Approvals cleared</span><span class="stat-val" id="ms_appr">—</span></div>
+        </div>
+      </div>
+
+      <!-- Compliance Countdown -->
+      <div class="card">
+        <div class="card-hdr"><div class="card-hdr-title">📅 Compliance Due Dates</div></div>
+        <div class="card-body" id="owner_comp"></div>
+      </div>
+
+      <!-- Quick Bot Launcher -->
+      <div class="card">
+        <div class="card-hdr"><div class="card-hdr-title">⚡ Module Quick Launch</div></div>
+        <div class="card-body" style="padding:12px;">
+          <div class="bot-grid">
+            <a class="bot-card" href="SSPI_Manufacturing_Dashboard.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🏭</div><div class="bot-label">Job Cards</div><div class="bot-sub">Manufacturing</div></a>
+            <a class="bot-card" href="SSPI_Materials_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📦</div><div class="bot-label">Materials</div><div class="bot-sub">GRN / PO / Issues</div></a>
+            <a class="bot-card" href="SSPI_HR_Admin_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">👥</div><div class="bot-label">HR Module</div><div class="bot-sub">Attendance / Payroll</div></a>
+            <a class="bot-card" href="SSPI_Finance_Accounts_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💰</div><div class="bot-label">Finance</div><div class="bot-sub">Accounts / GST</div></a>
+            <a class="bot-card" href="SSPI_Approvals_Inbox.html" onclick="openBot(this.href);return false;"><div class="bot-icon">✅</div><div class="bot-label">Approvals</div><div class="bot-sub">Inbox</div></a>
+            <a class="bot-card" href="SSPI_Machine_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">⚙️</div><div class="bot-label">Machines</div><div class="bot-sub">Maintenance</div></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /view_owner -->
+
+<!-- ══════════════════════════════════════════
+     CEO / DIRECTOR VIEW
+══════════════════════════════════════════ -->
+<div class="view" id="view_ceo">
+  <div class="kpi-row">
+    <div class="kpi k-green"><div class="kpi-icon">💰</div><div class="kpi-val" id="c_revenue">—</div><div class="kpi-lbl">Revenue This Month (₹)</div></div>
+    <div class="kpi k-blue"><div class="kpi-icon">📋</div><div class="kpi-val" id="c_so_val">—</div><div class="kpi-lbl">Open SO Value (₹)</div></div>
+    <div class="kpi k-orange"><div class="kpi-icon">🔴</div><div class="kpi-val" id="c_debtors">—</div><div class="kpi-lbl">Total Debtors (₹)</div></div>
+    <div class="kpi k-red"><div class="kpi-icon">⏰</div><div class="kpi-val" id="c_overdue">—</div><div class="kpi-lbl">Overdue &gt;30 Days</div></div>
+    <div class="kpi k-purple"><div class="kpi-icon">🛒</div><div class="kpi-val" id="c_po_val">—</div><div class="kpi-lbl">PO Commitments (₹)</div></div>
+    <div class="kpi k-green"><div class="kpi-icon">🏭</div><div class="kpi-val" id="c_prod">—</div><div class="kpi-lbl">Units in Production</div></div>
+  </div>
+
+  <div class="g2">
+    <!-- Business KPIs -->
+    <div class="card">
+      <div class="card-hdr"><div class="card-hdr-title">📊 Business Performance — Current Month</div></div>
+      <div class="card-body">
+        <div class="stat-row"><span class="stat-lbl">Sales Orders (month)</span><span class="stat-val" id="bp_so_count">—</span></div>
+        <div class="stat-row"><span class="stat-lbl">Total SO Value</span><span class="stat-val" id="bp_so_val">—</span></div>
+        <div class="stat-row"><span class="stat-lbl">GRNs Received</span><span class="stat-val" id="bp_grn">—</span></div>
+        <div class="stat-row"><span class="stat-lbl">POs Issued</span><span class="stat-val" id="bp_po">—</span></div>
+        <div class="stat-row"><span class="stat-lbl">Material Issued (items)</span><span class="stat-val" id="bp_issue">—</span></div>
+        <div class="stat-row"><span class="stat-lbl">Employees Present (avg)</span><span class="stat-val" id="bp_att">—</span></div>
+        <div class="stat-row"><span class="stat-lbl">Pending Approvals</span><span class="stat-val" id="bp_appr">—</span></div>
+        <div class="stat-row"><span class="stat-lbl">Active Job Cards</span><span class="stat-val" id="bp_jc">—</span></div>
+      </div>
+    </div>
+
+    <!-- Debtor Summary -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">💳 Debtor &amp; Receivables</div>
+        <a class="alink teal" href="Debtors_Control_Bot.html" onclick="openBot(this.href);return false;">Manage →</a>
+      </div>
+      <div class="card-body no-pad">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Customer</th><th>Amount (₹)</th><th>Due Date</th><th>Status</th></tr></thead>
+            <tbody id="ceo_debtors_tbl"><tr><td colspan="4" class="empty-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Pipeline -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">📦 Sales Pipeline</div>
+        <a class="alink green" href="SSPI_Sales_Order_Bot.html" onclick="openBot(this.href);return false;">+ New SO</a>
+      </div>
+      <div class="card-body no-pad">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>SO No</th><th>Customer</th><th>Value (₹)</th><th>Delivery</th><th>Status</th></tr></thead>
+            <tbody id="ceo_so_tbl"><tr><td colspan="5" class="empty-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compliance + Modules -->
+    <div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-hdr-title">📅 Statutory Compliance</div></div>
+        <div class="card-body" id="ceo_comp"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-hdr-title">🔗 Executive Modules</div></div>
+        <div class="card-body" style="padding:12px;">
+          <div class="bot-grid">
+            <a class="bot-card" href="SSPI_Finance_Accounts_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💰</div><div class="bot-label">Finance</div></a>
+            <a class="bot-card" href="SSPI_Owner_Daily_Report.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📊</div><div class="bot-label">Daily Report</div></a>
+            <a class="bot-card" href="Debtors_Control_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💳</div><div class="bot-label">Debtors</div></a>
+            <a class="bot-card" href="SSPI_Approvals_Inbox.html" onclick="openBot(this.href);return false;"><div class="bot-icon">✅</div><div class="bot-label">Approvals</div></a>
+            <a class="bot-card" href="ESIC_EPF_Compliance_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📋</div><div class="bot-label">ESIC/EPF</div></a>
+            <a class="bot-card" href="GST_Recon_DataEntry_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🧾</div><div class="bot-label">GST</div></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /view_ceo -->
+
+<!-- ══════════════════════════════════════════
+     PRODUCTION & STORE MANAGER VIEW
+══════════════════════════════════════════ -->
+<div class="view" id="view_production">
+
+  <!-- Remote Data Entry Banner -->
+  <div class="loc-banner">
+    <div>
+      <div class="loc-banner-title">📡 Remote Data Entry — Production &amp; Stores</div>
+      <div class="loc-banner-sub">Open any bot on your phone or tablet from any location — data syncs here automatically</div>
+    </div>
+    <div class="loc-links">
+      <a class="loc-link" href="SSPI_Manufacturing_Dashboard.html" onclick="openBot(this.href);return false;">🏭 Job Card</a>
+      <a class="loc-link" href="SSPI_Materials_Bot.html#grn" onclick="openBot(this.href);return false;">📥 New GRN</a>
+      <a class="loc-link" href="SSPI_Materials_Bot.html#issue" onclick="openBot(this.href);return false;">📤 Issue Material</a>
+      <a class="loc-link" href="SSPI_RM_Bot.html" onclick="openBot(this.href);return false;">🌲 RM Entry</a>
+      <a class="loc-link" href="Stores_Inventory_Bot.html" onclick="openBot(this.href);return false;">🏪 Stores</a>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi k-blue"><div class="kpi-icon">📋</div><div class="kpi-val" id="p_jc_open">—</div><div class="kpi-lbl">Open Job Cards</div></div>
+    <div class="kpi k-orange"><div class="kpi-icon">⏰</div><div class="kpi-val" id="p_jc_overdue">—</div><div class="kpi-lbl">Overdue JCs</div></div>
+    <div class="kpi k-green"><div class="kpi-icon">📥</div><div class="kpi-val" id="p_grn_today">—</div><div class="kpi-lbl">GRNs Today</div></div>
+    <div class="kpi k-red"><div class="kpi-icon">⚠️</div><div class="kpi-val" id="p_low_stock">—</div><div class="kpi-lbl">Low Stock Alerts</div></div>
+    <div class="kpi k-purple"><div class="kpi-icon">🛒</div><div class="kpi-val" id="p_open_po">—</div><div class="kpi-lbl">POs Awaiting GRN</div></div>
+    <div class="kpi k-green"><div class="kpi-icon">👥</div><div class="kpi-val" id="p_workers">—</div><div class="kpi-lbl">Workers Present</div></div>
+  </div>
+
+  <div class="g2">
+    <!-- Active Job Cards -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">📋 Active Job Cards</div>
+        <a class="alink green" href="SSPI_Manufacturing_Dashboard.html" onclick="openBot(this.href);return false;">+ New Job Card</a>
+      </div>
+      <div class="card-body no-pad">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>JC No</th><th>Product</th><th>Customer</th><th>Target Qty</th><th>Done</th><th>Status</th></tr></thead>
+            <tbody id="prod_jc_tbl"><tr><td colspan="6" class="empty-row">Loading job cards…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRN Register -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">📥 GRN Register — Recent</div>
+        <a class="alink" href="SSPI_Materials_Bot.html" onclick="openBot(this.href);return false;">Open Materials Bot →</a>
+      </div>
+      <div class="card-body no-pad">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>GRN No</th><th>Date</th><th>Supplier</th><th>Material</th><th>Qty</th></tr></thead>
+            <tbody id="prod_grn_tbl"><tr><td colspan="5" class="empty-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Open POs -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">🛒 Open Purchase Orders</div>
+        <a class="alink orange" href="SSPI_Materials_Bot.html#po" onclick="openBot(this.href);return false;">+ New PO</a>
+      </div>
+      <div class="card-body no-pad">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>PO No</th><th>Supplier</th><th>Value (₹)</th><th>Exp. Delivery</th><th>Status</th></tr></thead>
+            <tbody id="prod_po_tbl"><tr><td colspan="5" class="empty-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Data Entry Bots -->
+    <div class="card">
+      <div class="card-hdr"><div class="card-hdr-title">🔗 Production &amp; Stores Bots</div></div>
+      <div class="card-body" style="padding:12px;">
+        <div class="bot-grid">
+          <a class="bot-card live" href="SSPI_Manufacturing_Dashboard.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🏭</div><div class="bot-label">Job Cards</div><div class="bot-sub">Manufacturing</div></a>
+          <a class="bot-card live" href="SSPI_Materials_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📦</div><div class="bot-label">Materials Bot</div><div class="bot-sub">GRN / PO / Issues</div></a>
+          <a class="bot-card live" href="SSPI_RM_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🌲</div><div class="bot-label">RM Bot</div><div class="bot-sub">Raw Materials</div></a>
+          <a class="bot-card live" href="Stores_Inventory_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🏪</div><div class="bot-label">Stores Bot</div><div class="bot-sub">Inventory</div></a>
+          <a class="bot-card" href="SSPI_RM_Dashboard.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📊</div><div class="bot-label">RM Dashboard</div><div class="bot-sub">Stock view</div></a>
+          <a class="bot-card" href="SSPI_Machine_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">⚙️</div><div class="bot-label">Machines</div><div class="bot-sub">Maintenance</div></a>
+          <a class="bot-card" href="SSPI_Master_Machine_Flow_Chart.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🗺️</div><div class="bot-label">Flow Chart</div><div class="bot-sub">Process map</div></a>
+          <a class="bot-card" href="SSPI_Approvals_Inbox.html" onclick="openBot(this.href);return false;"><div class="bot-icon">✅</div><div class="bot-label">Approvals</div><div class="bot-sub">Pending actions</div></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /view_production -->
+
+<!-- ══════════════════════════════════════════
+     HR & ACCOUNTS VIEW
+══════════════════════════════════════════ -->
+<div class="view" id="view_hr">
+
+  <div class="loc-banner">
+    <div>
+      <div class="loc-banner-title">👥 HR, Payroll &amp; Accounts — Live Entry</div>
+      <div class="loc-banner-sub">Mark attendance, process payroll, post vouchers — from any device, any location</div>
+    </div>
+    <div class="loc-links">
+      <a class="loc-link" href="SSPI_Daily_Attendance_Bot.html" onclick="openBot(this.href);return false;">📅 Mark Attendance</a>
+      <a class="loc-link" href="SSPI_Monthly_Payroll_Bot.html" onclick="openBot(this.href);return false;">💸 Run Payroll</a>
+      <a class="loc-link" href="Accounting_Voucher_Bot.html" onclick="openBot(this.href);return false;">📒 Post Voucher</a>
+      <a class="loc-link" href="SSPI_Salary_Data_Entry_Bot.html" onclick="openBot(this.href);return false;">💰 Salary Entry</a>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi k-green"><div class="kpi-icon">👥</div><div class="kpi-val" id="h_present">—</div><div class="kpi-lbl">Present Today</div></div>
+    <div class="kpi k-red"><div class="kpi-icon">❌</div><div class="kpi-val" id="h_absent">—</div><div class="kpi-lbl">Absent Today</div></div>
+    <div class="kpi k-orange"><div class="kpi-icon">💸</div><div class="kpi-val" id="h_salary_due">—</div><div class="kpi-lbl">Salary Due (₹)</div></div>
+    <div class="kpi k-blue"><div class="kpi-icon">📋</div><div class="kpi-val" id="h_pending_claims">—</div><div class="kpi-lbl">Advance Requests</div></div>
+    <div class="kpi k-purple"><div class="kpi-icon">🧾</div><div class="kpi-val" id="h_gst_days">—</div><div class="kpi-lbl">Days to GST Filing</div></div>
+    <div class="kpi k-orange"><div class="kpi-icon">📅</div><div class="kpi-val" id="h_esi_days">—</div><div class="kpi-lbl">Days to ESIC Due</div></div>
+  </div>
+
+  <div class="g2">
+    <!-- Attendance Today -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">📅 Attendance — Today</div>
+        <a class="alink green" href="SSPI_Daily_Attendance_Bot.html" onclick="openBot(this.href);return false;">✏️ Mark Attendance</a>
+      </div>
+      <div class="card-body no-pad">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Employee</th><th>Department</th><th>Status</th><th>Working Days (Month)</th></tr></thead>
+            <tbody id="hr_att_tbl"><tr><td colspan="4" class="empty-row">Loading attendance…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payroll Status -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">💸 Payroll &amp; Compliance Status</div>
+        <a class="alink teal" href="SSPI_Monthly_Payroll_Bot.html" onclick="openBot(this.href);return false;">Run Payroll →</a>
+      </div>
+      <div class="card-body">
+        <div class="stat-row"><span class="stat-lbl">Total Employees</span><span class="stat-val">15</span></div>
+        <div class="stat-row"><span class="stat-lbl">Bank Transfer</span><span class="stat-val">8 employees</span></div>
+        <div class="stat-row"><span class="stat-lbl">Cash Payment</span><span class="stat-val">7 employees</span></div>
+        <div class="stat-row"><span class="stat-lbl">Gross Payroll (Month)</span><span class="stat-val" id="hr_gross_pay">₹—</span></div>
+        <div class="stat-row"><span class="stat-lbl">ESIC Contribution</span><span class="stat-val" id="hr_esic">₹—</span></div>
+        <div class="stat-row"><span class="stat-lbl">EPF Contribution</span><span class="stat-val" id="hr_epf">₹—</span></div>
+        <div class="btn-row">
+          <a class="btn btn-teal" href="SSPI_Monthly_Payroll_Bot.html" onclick="openBot(this.href);return false;">⚡ Generate Salary Slips</a>
+          <a class="btn btn-navy" href="ESIC_EPF_Compliance_Bot.html" onclick="openBot(this.href);return false;">📋 ESIC/EPF Filing</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compliance Dues -->
+    <div class="card">
+      <div class="card-hdr"><div class="card-hdr-title">📅 Statutory Due Dates</div></div>
+      <div class="card-body" id="hr_comp"></div>
+    </div>
+
+    <!-- Recent Vouchers -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">📒 Recent Vouchers &amp; Bills</div>
+        <a class="alink" href="Accounting_Voucher_Bot.html" onclick="openBot(this.href);return false;">+ Post Voucher</a>
+      </div>
+      <div class="card-body">
+        <div class="alert info">
+          <div class="alert-icon">ℹ️</div>
+          <div><b>Accounting Bot — Live</b><span>Post payment, receipt, journal, or contra entries from any location. All vouchers sync to Google Sheets instantly.</span></div>
+        </div>
+        <div class="btn-row">
+          <a class="btn btn-navy" href="Accounting_Voucher_Bot.html" onclick="openBot(this.href);return false;">📒 Post Voucher</a>
+          <a class="btn btn-orange" href="Bills_Data_Entry_Bot.html" onclick="openBot(this.href);return false;">📄 Bills Entry</a>
+          <a class="btn btn-teal" href="GST_Recon_DataEntry_Bot.html" onclick="openBot(this.href);return false;">🧾 GST Recon</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HR Bots Grid -->
+  <div class="card">
+    <div class="card-hdr"><div class="card-hdr-title">🔗 All HR &amp; Accounts Bots — Remote Data Entry</div></div>
+    <div class="card-body" style="padding:12px;">
+      <div class="bot-grid">
+        <a class="bot-card live" href="SSPI_Daily_Attendance_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📅</div><div class="bot-label">Daily Attendance</div><div class="bot-sub">P/A/HD/Leave</div></a>
+        <a class="bot-card live" href="SSPI_Monthly_Payroll_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💸</div><div class="bot-label">Payroll Bot</div><div class="bot-sub">Salary slips</div></a>
+        <a class="bot-card live" href="SSPI_Salary_Data_Entry_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💰</div><div class="bot-label">Salary Entry</div><div class="bot-sub">Wage register</div></a>
+        <a class="bot-card live" href="Accounting_Voucher_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📒</div><div class="bot-label">Voucher Bot</div><div class="bot-sub">Payment / Receipt</div></a>
+        <a class="bot-card live" href="Bills_Data_Entry_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📄</div><div class="bot-label">Bills Bot</div><div class="bot-sub">Vendor bills</div></a>
+        <a class="bot-card live" href="GST_Recon_DataEntry_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🧾</div><div class="bot-label">GST Recon</div><div class="bot-sub">GSTR matching</div></a>
+        <a class="bot-card live" href="ESIC_EPF_Compliance_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📋</div><div class="bot-label">ESIC / EPF</div><div class="bot-sub">Compliance filing</div></a>
+        <a class="bot-card live" href="Advance_Against_Salary_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🤝</div><div class="bot-label">Advance Bot</div><div class="bot-sub">Salary advances</div></a>
+        <a class="bot-card" href="Attendance_Punch_Correction_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🕐</div><div class="bot-label">Punch Correction</div><div class="bot-sub">Biometric fix</div></a>
+        <a class="bot-card" href="SSPI_HR_Admin_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🏢</div><div class="bot-label">HR Module</div><div class="bot-sub">Full HR view</div></a>
+      </div>
+    </div>
+  </div>
+</div><!-- /view_hr -->
+
+<!-- ══════════════════════════════════════════
+     SALES & DISPATCH VIEW
+══════════════════════════════════════════ -->
+<div class="view" id="view_sales">
+
+  <div class="loc-banner">
+    <div>
+      <div class="loc-banner-title">📦 Sales, Dispatch &amp; Debtors — Live</div>
+      <div class="loc-banner-sub">Create SOs, track dispatch, manage debtors — from field or office</div>
+    </div>
+    <div class="loc-links">
+      <a class="loc-link" href="SSPI_Sales_Order_Bot.html" onclick="openBot(this.href);return false;">📄 New Sales Order</a>
+      <a class="loc-link" href="Debtors_Control_Bot.html" onclick="openBot(this.href);return false;">💳 Manage Debtors</a>
+      <a class="loc-link" href="SSPI_Finance_Accounts_Module.html" onclick="openBot(this.href);return false;">💰 Finance View</a>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi k-blue"><div class="kpi-icon">📋</div><div class="kpi-val" id="s_so_open">—</div><div class="kpi-lbl">Open Sales Orders</div></div>
+    <div class="kpi k-green"><div class="kpi-icon">💰</div><div class="kpi-val" id="s_so_val">—</div><div class="kpi-lbl">Open SO Value (₹)</div></div>
+    <div class="kpi k-orange"><div class="kpi-icon">🚛</div><div class="kpi-val" id="s_dispatched">—</div><div class="kpi-lbl">Dispatched (Month)</div></div>
+    <div class="kpi k-red"><div class="kpi-icon">💳</div><div class="kpi-val" id="s_debtors">—</div><div class="kpi-lbl">Total Debtors (₹)</div></div>
+    <div class="kpi k-red"><div class="kpi-icon">⏰</div><div class="kpi-val" id="s_overdue">—</div><div class="kpi-lbl">Overdue Amount (₹)</div></div>
+    <div class="kpi k-purple"><div class="kpi-icon">📅</div><div class="kpi-val" id="s_delivery_due">—</div><div class="kpi-lbl">Deliveries Due Today</div></div>
+  </div>
+
+  <div class="g2">
+    <!-- Open Sales Orders -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">📋 Open Sales Orders</div>
+        <a class="alink green" href="SSPI_Sales_Order_Bot.html" onclick="openBot(this.href);return false;">+ Create SO</a>
+      </div>
+      <div class="card-body no-pad">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>SO No</th><th>Customer</th><th>Product</th><th>Qty</th><th>Value (₹)</th><th>Delivery</th><th>Status</th></tr></thead>
+            <tbody id="sales_so_tbl"><tr><td colspan="7" class="empty-row">Loading sales orders…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debtors -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">💳 Debtors &amp; Receivables</div>
+        <a class="alink teal" href="Debtors_Control_Bot.html" onclick="openBot(this.href);return false;">Manage →</a>
+      </div>
+      <div class="card-body no-pad">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Customer</th><th>Invoice</th><th>Amount (₹)</th><th>Due Date</th><th>Status</th></tr></thead>
+            <tbody id="sales_debtors_tbl"><tr><td colspan="5" class="empty-row">Loading debtors…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dispatch log -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-title">🚛 Recent Dispatches</div>
+        <a class="alink" href="SSPI_Finance_Accounts_Module.html" onclick="openBot(this.href);return false;">Finance Module</a>
+      </div>
+      <div class="card-body">
+        <div class="alert info">
+          <div class="alert-icon">📡</div>
+          <div><b>Dispatch linked to Sales Orders</b><span>When a Sales Order status changes to "Dispatched" in the Sales Order Bot, it appears here automatically.</span></div>
+        </div>
+        <div id="dispatch_list">
+          <div id="dispatch_tbl_wrap" class="tbl-wrap">
+            <table>
+              <thead><tr><th>SO No</th><th>Customer</th><th>Product</th><th>Qty</th><th>Dispatch Date</th></tr></thead>
+              <tbody id="sales_dispatch_tbl"><tr><td colspan="5" class="empty-row">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Bots -->
+    <div class="card">
+      <div class="card-hdr"><div class="card-hdr-title">🔗 Sales &amp; Finance Bots</div></div>
+      <div class="card-body" style="padding:12px;">
+        <div class="bot-grid">
+          <a class="bot-card live" href="SSPI_Sales_Order_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📄</div><div class="bot-label">Sales Order</div><div class="bot-sub">Create / Track</div></a>
+          <a class="bot-card live" href="Debtors_Control_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💳</div><div class="bot-label">Debtors Bot</div><div class="bot-sub">Receivables</div></a>
+          <a class="bot-card live" href="Accounting_Voucher_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📒</div><div class="bot-label">Voucher Bot</div><div class="bot-sub">Receipts</div></a>
+          <a class="bot-card live" href="Bills_Data_Entry_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📄</div><div class="bot-label">Bills Bot</div><div class="bot-sub">Customer bills</div></a>
+          <a class="bot-card" href="SSPI_Finance_Accounts_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💰</div><div class="bot-label">Finance Module</div><div class="bot-sub">P&L / Ledgers</div></a>
+          <a class="bot-card" href="GST_Recon_DataEntry_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🧾</div><div class="bot-label">GST Recon</div><div class="bot-sub">GSTR-1</div></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /view_sales -->
+
+</div><!-- /main -->
+
+<!-- ══════════════════════════════════════════
+     ALL MODULES — COMPLETE BOT LAUNCHER
+══════════════════════════════════════════ -->
+<div class="view" id="view_all">
+  <div class="loc-banner">
+    <div>
+      <div class="loc-banner-title">📱 All Modules — Complete Bot Launcher (23 Modules)</div>
+      <div class="loc-banner-sub">Click any tile to open that module · Data from all bots syncs to this dashboard automatically</div>
+    </div>
+  </div>
+
+  <!-- PRODUCTION & STORES -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-hdr"><div class="card-hdr-title">🏭 Production &amp; Stores</div></div>
+    <div class="card-body" style="padding:12px;">
+      <div class="bot-grid">
+        <a class="bot-card live" href="SSPI_Manufacturing_Dashboard.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🏭</div><div class="bot-label">Manufacturing Dashboard</div><div class="bot-sub">Job Cards &amp; Production</div></a>
+        <a class="bot-card live" href="SSPI_Machine_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">⚙️</div><div class="bot-label">Machine Module</div><div class="bot-sub">Maintenance &amp; Performance</div></a>
+        <a class="bot-card live" href="SSPI_Master_Machine_Flow_Chart.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🗺️</div><div class="bot-label">Machine Flow Chart</div><div class="bot-sub">Process Map</div></a>
+        <a class="bot-card live" href="SSPI_Materials_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📦</div><div class="bot-label">Materials Bot</div><div class="bot-sub">GRN / PO / Issues</div></a>
+        <a class="bot-card live" href="SSPI_RM_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🌲</div><div class="bot-label">RM Bot</div><div class="bot-sub">Raw Materials Entry</div></a>
+        <a class="bot-card live" href="SSPI_RM_Dashboard.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📊</div><div class="bot-label">RM Dashboard</div><div class="bot-sub">Stock Levels &amp; Alerts</div></a>
+        <a class="bot-card live" href="Stores_Inventory_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🏪</div><div class="bot-label">Stores Inventory Bot</div><div class="bot-sub">Item-wise Stock</div></a>
+        <a class="bot-card live" href="SSPI_Approvals_Inbox.html" onclick="openBot(this.href);return false;"><div class="bot-icon">✅</div><div class="bot-label">Approvals Inbox</div><div class="bot-sub">Pending Actions</div></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HR & PAYROLL -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-hdr"><div class="card-hdr-title">👥 HR, Attendance &amp; Payroll</div></div>
+    <div class="card-body" style="padding:12px;">
+      <div class="bot-grid">
+        <a class="bot-card live" href="SSPI_HR_Admin_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🏢</div><div class="bot-label">HR &amp; Admin Module</div><div class="bot-sub">Full HR Dashboard</div></a>
+        <a class="bot-card live" href="SSPI_Daily_Attendance_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📅</div><div class="bot-label">Daily Attendance Bot</div><div class="bot-sub">P / A / HD / Leave</div></a>
+        <a class="bot-card live" href="SSPI_Monthly_Payroll_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💸</div><div class="bot-label">Monthly Payroll Bot</div><div class="bot-sub">Salary Slips</div></a>
+        <a class="bot-card live" href="SSPI_Salary_Data_Entry_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💰</div><div class="bot-label">Salary Data Entry Bot</div><div class="bot-sub">Wage Register</div></a>
+        <a class="bot-card live" href="Advance_Against_Salary_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🤝</div><div class="bot-label">Advance Against Salary</div><div class="bot-sub">Advance Requests</div></a>
+        <a class="bot-card live" href="Attendance_Punch_Correction_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🕐</div><div class="bot-label">Punch Correction Bot</div><div class="bot-sub">Biometric Fix</div></a>
+        <a class="bot-card live" href="ESIC_EPF_Compliance_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📋</div><div class="bot-label">ESIC / EPF Compliance</div><div class="bot-sub">Statutory Filing</div></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINANCE & ACCOUNTS -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-hdr"><div class="card-hdr-title">💰 Finance, Accounts &amp; GST</div></div>
+    <div class="card-body" style="padding:12px;">
+      <div class="bot-grid">
+        <a class="bot-card live" href="SSPI_Finance_Accounts_Module.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💰</div><div class="bot-label">Finance &amp; Accounts Module</div><div class="bot-sub">Full Finance Dashboard</div></a>
+        <a class="bot-card live" href="Accounting_Voucher_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📒</div><div class="bot-label">Accounting Voucher Bot</div><div class="bot-sub">Payment / Receipt</div></a>
+        <a class="bot-card live" href="Bills_Data_Entry_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📄</div><div class="bot-label">Bills Data Entry Bot</div><div class="bot-sub">Vendor Bills</div></a>
+        <a class="bot-card live" href="GST_Recon_DataEntry_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">🧾</div><div class="bot-label">GST Reconciliation Bot</div><div class="bot-sub">GSTR Matching</div></a>
+        <a class="bot-card live" href="Debtors_Control_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">💳</div><div class="bot-label">Debtors Control Bot</div><div class="bot-sub">Receivables Aging</div></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SALES & MANAGEMENT -->
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-hdr"><div class="card-hdr-title">📦 Sales, Dispatch &amp; Management</div></div>
+    <div class="card-body" style="padding:12px;">
+      <div class="bot-grid">
+        <a class="bot-card live" href="SSPI_Sales_Order_Bot.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📄</div><div class="bot-label">Sales Order Bot</div><div class="bot-sub">Create &amp; Track SO</div></a>
+        <a class="bot-card live" href="SSPI_Owner_Daily_Report.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📊</div><div class="bot-label">Owner Daily Report</div><div class="bot-sub">Business Summary</div></a>
+        <a class="bot-card" href="SSPI_Status.html" onclick="openBot(this.href);return false;"><div class="bot-icon">📡</div><div class="bot-label">System Status</div><div class="bot-sub">GAS Connectivity</div></a>
+      </div>
+    </div>
+  </div>
+</div><!-- /view_all -->
+
+</div><!-- /main_content -->
+
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG — ALL DATA COMES FROM GAS (CENTRALIZED)
+// Remote bots post → GAS Google Sheet
+// Dashboard pulls from GAS → live for all devices
+// Auto-refresh every 30 seconds
+// ═══════════════════════════════════════════════
+const GS_URL   = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_TOKEN = 'SSPI-VC-2026-SECURE';
+const REFRESH_INTERVAL = 30000; // 30 seconds
+
+// ── Live data cache (populated from GAS, NOT device localStorage) ──
+const GAS_CACHE = {
+  sales:[], purchase:[], stores:[], attendance:[],
+  maintenance:[], approvals:[], debtors:[], vouchers:[],
+  _lastSync: null
+};
+
+const PINS = {owner:'1234',ceo:'0000',production:'2345',hr:'4567',sales:'5678'};
+const ROLE_LABELS = {owner:'👑 Owner / MD',ceo:'📊 CEO / Director',production:'🏭 Production & Stores',hr:'👥 HR & Accounts',sales:'📦 Sales & Dispatch'};
+const ACTION_LINKS = {
+  owner: [
+    {label:'📋 New Job Card', href:'SSPI_Manufacturing_Dashboard.html'},
+    {label:'📥 New GRN', href:'SSPI_Materials_Bot.html'},
+    {label:'📄 New SO', href:'SSPI_Sales_Order_Bot.html'},
+    {label:'✅ Approvals', href:'SSPI_Approvals_Inbox.html'},
+  ],
+  ceo:[
+    {label:'📊 Daily Report', href:'SSPI_Owner_Daily_Report.html'},
+    {label:'💳 Debtors', href:'Debtors_Control_Bot.html'},
+    {label:'✅ Approvals', href:'SSPI_Approvals_Inbox.html'},
+  ],
+  production:[
+    {label:'🏭 Job Card', href:'SSPI_Manufacturing_Dashboard.html'},
+    {label:'📥 GRN Entry', href:'SSPI_Materials_Bot.html'},
+    {label:'📤 Issue RM', href:'SSPI_Materials_Bot.html'},
+    {label:'🛒 New PO', href:'SSPI_Materials_Bot.html'},
+    {label:'⚙️ Maintenance', href:'SSPI_Machine_Module.html'},
+  ],
+  hr:[
+    {label:'📅 Attendance', href:'SSPI_Daily_Attendance_Bot.html'},
+    {label:'💸 Payroll', href:'SSPI_Monthly_Payroll_Bot.html'},
+    {label:'📒 Voucher', href:'Accounting_Voucher_Bot.html'},
+    {label:'🤝 Advance', href:'Advance_Against_Salary_Bot.html'},
+    {label:'🧾 GST', href:'GST_Recon_DataEntry_Bot.html'},
+  ],
+  sales:[
+    {label:'📄 New SO', href:'SSPI_Sales_Order_Bot.html'},
+    {label:'💳 Debtors', href:'Debtors_Control_Bot.html'},
+    {label:'📒 Receipt', href:'Accounting_Voucher_Bot.html'},
+  ],
+  all:[
+    {label:'📋 Job Card', href:'SSPI_Manufacturing_Dashboard.html'},
+    {label:'📅 Attendance', href:'SSPI_Daily_Attendance_Bot.html'},
+    {label:'📄 New SO', href:'SSPI_Sales_Order_Bot.html'},
+    {label:'✅ Approvals', href:'SSPI_Approvals_Inbox.html'},
+  ]
+};
+
+let currentRole = '';
+let lastSyncTime = null;
+let syncTimer = null;
+
+// ─── Helpers ─────────────────────────────────
+// Note: Dashboard reads ONLY from GAS_CACHE — not from device localStorage.
+// localStorage is used by bots for offline queue only, not for display here.
+const fmt = n=>{ if(n===undefined||n===null||n==='—')return'—'; const v=parseFloat(n); if(isNaN(v))return'—'; if(v>=10000000)return'₹'+(v/10000000).toFixed(1)+'Cr'; if(v>=100000)return'₹'+(v/100000).toFixed(1)+'L'; return '₹'+Math.round(v).toLocaleString('en-IN'); };
+const today=()=>new Date().toISOString().split('T')[0];
+const thisMonth=()=>{ const n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0'); };
+
+function statusBadge(s){
+  if(!s)return'<span class="badge b-gray">—</span>';
+  const m={'Open':'b-blue','In Progress':'b-orange','Dispatched':'b-green','Completed':'b-green',
+    'Closed':'b-gray','GRN Done':'b-green','Pending':'b-orange','Active':'b-blue',
+    'Overdue':'b-red','Cancelled':'b-gray','P':'b-green','A':'b-red','HD':'b-orange',
+    'WO':'b-gray','L':'b-purple','H':'b-blue'};
+  const cls = m[s]||'b-gray';
+  return `<span class="badge ${cls}">${s}</span>`;
+}
+
+// ─── Clock ───────────────────────────────────
+(function tick(){
+  const n=new Date();
+  document.getElementById('hdr_time').textContent=n.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('hdr_date').textContent=n.toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  setTimeout(tick,1000);
+})();
+
+// ─── Login ───────────────────────────────────
+function showLogin(){ document.getElementById('login_overlay').style.display='flex'; }
+function doLogin(){
+  const role=document.getElementById('login_role').value;
+  const pin=document.getElementById('login_pin').value;
+  const err=document.getElementById('login_err');
+  if(!role){ err.textContent='Please select a role.'; return; }
+  if(pin && PINS[role] && pin!==PINS[role]){ err.textContent='Incorrect PIN. Try again.'; return; }
+  document.getElementById('login_overlay').style.display='none';
+  document.getElementById('main_hdr').style.display='flex';
+  document.getElementById('role_nav').style.display='flex';
+  document.getElementById('action_bar').style.display='flex';
+  document.getElementById('main_content').style.display='block';
+  document.getElementById('user_role_lbl').textContent=ROLE_LABELS[role];
+  currentRole=role;
+  switchRole(role);
+  // Start GAS sync immediately
+  fullSync();
+  // Auto-refresh every 30 seconds — picks up data from ALL remote bots
+  if(syncTimer) clearInterval(syncTimer);
+  syncTimer=setInterval(fullSync, REFRESH_INTERVAL);
+}
+
+// ─── Role Switching ──────────────────────────
+function switchRole(role, el){
+  currentRole=role;
+  document.querySelectorAll('.rnav-tab').forEach(t=>t.classList.remove('active'));
+  const tab=el||document.getElementById('rt_'+role);
+  if(tab) tab.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const view=document.getElementById('view_'+role);
+  if(view) view.classList.add('active');
+  // Update action bar
+  const links=ACTION_LINKS[role]||[];
+  document.getElementById('action_bar_links').innerHTML=links.map(l=>
+    `<a class="alink" href="${l.href}" onclick="openBot(this.href);return false;">${l.label}</a>`
+  ).join('');
+  // Render role-specific data
+  renderView(role);
+}
+
+// ─── JSONP from GAS ─────────────────────────
+function gasJSONP(type,limit,cb){
+  const cbName='_gsJP_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+  window[cbName]=function(data){
+    try{delete window[cbName];}catch(e){}
+    const el=document.getElementById('_gs_'+type);
+    if(el)el.remove();
+    cb((data&&data.rows)?data.rows:[]);
+  };
+  const s=document.createElement('script');
+  s.id='_gs_'+type;
+  s.src=GS_URL+'?type='+type+'&limit='+(limit||300)+'&callback='+cbName+'&token='+GS_TOKEN;
+  s.onerror=()=>{ try{delete window[cbName];}catch(e){} cb([]); };
+  setTimeout(()=>{ if(window[cbName]){try{delete window[cbName];}catch(e){} cb([]); }},10000);
+  document.head.appendChild(s);
+}
+
+// ─── Full Sync — pulls ALL data types from GAS ──
+// This is the ONLY source of truth for the dashboard.
+// Every remote bot posts to GAS → this dashboard reads from GAS.
+// No localStorage dependency for display data.
+function fullSync(){
+  setSyncStatus('syncing');
+  const TYPES = ['sales','purchase','grn','attendance','maintenance','approvals','debtors','vouchers'];
+  let pending = TYPES.length;
+  const done = ()=>{ if(--pending===0){ onSyncComplete(); } };
+
+  // ── Sales Orders ──────────────────────────────
+  gasJSONP('sales', 500, function(rows){
+    GAS_CACHE.sales = rows.map(r=>({
+      soNo:     r['SO No']       || r.soNo       || '',
+      date:     r['Date']        || r.date        || '',
+      customer: r['Customer']    || r.customer    || '',
+      product:  r['Product']     || r.product     || '',
+      qty:      parseFloat(r['Qty']||r.qty)||0,
+      amount:   parseFloat(r['Amount']||r.amount)||0,
+      delivery: r['Delivery Date']|| r.deliveryDate|| '',
+      status:   r['Status']      || r.status      || 'Order Received',
+      location: r['Location']    || r.location    || '',
+      jc:       r['Linked Job Card']||r.linkedJobCard||'',
+      ts:       r['Timestamp']   || r.ts          || ''
+    })).filter(s=>s.soNo);
+    done();
+  });
+
+  // ── Purchase Orders (one row per line item → group) ──
+  gasJSONP('purchase', 500, function(rows){
+    const grouped={};
+    rows.forEach(r=>{
+      const poNo=r['PO No']||r.poNo||''; if(!poNo)return;
+      if(!grouped[poNo]) grouped[poNo]={
+        poNo, date:r['Date']||r.date||'',
+        supplier:r['Supplier']||r.supplier||'',
+        status:r['Status']||r.status||'Open',
+        expDelivery:r['Delivery Date']||'',
+        location:r['Location']||'',
+        totalValue:0, lines:[]
+      };
+      const amt=parseFloat(r['Amount']||r.amount)||0;
+      grouped[poNo].totalValue+=amt;
+      grouped[poNo].lines.push({
+        item:r['Item']||'', qty:parseFloat(r['Qty']||r.qty)||0,
+        unit:r['Unit']||'', rate:parseFloat(r['Rate']||r.rate)||0, amount:amt
+      });
+    });
+    GAS_CACHE.purchase = Object.values(grouped);
+    done();
+  });
+
+  // ── Stores / GRN (unified Stores tab, Type differentiates) ──
+  gasJSONP('grn', 1000, function(rows){
+    GAS_CACHE.stores = rows.map(r=>({
+      grnNo:    r['GRN/Issue No'] || r.grnNo    || '',
+      date:     r['Date']         || r.date      || '',
+      supplier: r['Supplier/Dept']|| r.supplier  || '',
+      item:     r['Item']         || r.material  || r.item || '',
+      qty:      parseFloat(r['Qty']||r.qty)||0,
+      unit:     r['Unit']         || r.unit      || '',
+      type:     r['Type']         || r.type      || '',
+      poRef:    r['Remarks']      || r.poRef     || '',
+      location: r['Location']     || r.location  || '',
+      submittedBy: r['Submitted By']||r.submittedBy||'',
+      ts:       r['Timestamp']    || r.ts        || ''
+    })).filter(r=>r.grnNo||r.item);
+    done();
+  });
+
+  // ── Attendance ────────────────────────────────
+  gasJSONP('attendance', 1000, function(rows){
+    GAS_CACHE.attendance = rows.map(r=>({
+      date:     r['Date']       || r.date       || '',
+      employee: r['Employee']   || r.employee   || '',
+      empCode:  r['Emp Code']   || r.empCode    || '',
+      dept:     r['Department'] || r.dept       || '',
+      status:   r['Status']     || r.status     || '',
+      inTime:   r['In Time']    || r.inTime     || '',
+      outTime:  r['Out Time']   || r.outTime    || '',
+      location: r['Location']   || r.location   || '',
+      ts:       r['Timestamp']  || r.ts         || ''
+    })).filter(r=>r.date&&r.employee);
+    done();
+  });
+
+  // ── Machine Maintenance ───────────────────────
+  gasJSONP('maintenance', 300, function(rows){
+    GAS_CACHE.maintenance = rows.map(r=>({
+      date:     r['Date']          || r.date      || '',
+      machine:  r['Machine']       || r.machine   || '',
+      type:     r['Type']          || r.type      || '',
+      status:   r['Status']        || r.status    || '',
+      engineer: r['Engineer']      || r.engineer  || '',
+      location: r['Location']      || r.location  || '',
+      ts:       r['Timestamp']     || r.ts        || ''
+    }));
+    done();
+  });
+
+  // ── Approvals ────────────────────────────────
+  gasJSONP('approvals', 200, function(rows){
+    GAS_CACHE.approvals = rows.map(r=>({
+      refNo:    r['Ref No']      || r.refNo    || '',
+      type:     r['Type']        || r.type     || '',
+      amount:   parseFloat(r['Amount']||r.amount)||0,
+      status:   r['Status']      || r.status   || 'Pending',
+      requestedBy: r['Requested By']||r.requestedBy||'',
+      date:     r['Date']        || r.date     || '',
+      ts:       r['Timestamp']   || r.ts       || ''
+    }));
+    done();
+  });
+
+  // ── Debtors ──────────────────────────────────
+  gasJSONP('debtors', 300, function(rows){
+    GAS_CACHE.debtors = rows.map(r=>({
+      customer: r['Customer']    || r.customer   || '',
+      invoice:  r['Invoice No']  || r.invoice    || '',
+      amount:   parseFloat(r['Amount']||r.amount)||0,
+      dueDate:  r['Due Date']    || r.dueDate    || '',
+      status:   r['Status']      || r.status     || 'Open',
+      location: r['Location']    || r.location   || '',
+      ts:       r['Timestamp']   || r.ts         || ''
+    })).filter(r=>r.customer);
+    done();
+  });
+
+  // ── Accounting Vouchers ───────────────────────
+  gasJSONP('accounting', 300, function(rows){
+    GAS_CACHE.vouchers = rows.map(r=>({
+      date:     r['Date']        || r.date    || '',
+      type:     r['Type']        || r.type    || '',
+      amount:   parseFloat(r['Amount']||r.amount)||0,
+      party:    r['Party']       || r.party   || '',
+      narration:r['Narration']   || r.narration||'',
+      location: r['Location']    || r.location||'',
+      ts:       r['Timestamp']   || r.ts      || ''
+    }));
+    done();
+  });
+}
+
+function onSyncComplete(){
+  GAS_CACHE._lastSync = new Date();
+  setSyncStatus('ok');
+  const ts = GAS_CACHE._lastSync.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const el = document.getElementById('owner_sync_time');
+  if(el) el.textContent = ts + ' — GAS live data';
+  renderAllKPIs();
+  renderView(currentRole);
+  buildAlerts();
+  buildCompliance();
+}
+
+function setSyncStatus(state){
+  const dot=document.getElementById('sync_dot');
+  const lbl=document.getElementById('sync_lbl');
+  if(state==='syncing'){
+    dot.style.background='#FBBF24'; dot.style.animation='none';
+    lbl.textContent='Fetching from GAS…';
+  } else if(state==='ok'){
+    dot.style.background='#4ADE80'; dot.style.animation='pulse 2s infinite';
+    const ts=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    lbl.textContent='Live · '+ts;
+  } else {
+    dot.style.background='#F87171'; dot.style.animation='none';
+    lbl.textContent='GAS Offline — retrying…';
+  }
+}
+
+// ─── KPIs — all from GAS_CACHE ──────────────
+function renderAllKPIs(){
+  const td  = today();
+  const mon = thisMonth();
+  const sos = GAS_CACHE.sales;
+  const pos = GAS_CACHE.purchase;
+  const stores = GAS_CACHE.stores;
+  const att = GAS_CACHE.attendance;
+  const appr = GAS_CACHE.approvals;
+  const debtors = GAS_CACHE.debtors;
+
+  const openSOs  = sos.filter(s=>!['Dispatched','Cancelled','Closed'].includes(s.status));
+  const openPOs  = pos.filter(p=>!['Closed','Received','GRN Done'].includes(p.status));
+  const monthGRNs= stores.filter(g=>g.type==='GRN'&&g.date&&g.date.startsWith(mon));
+  const todayGRNs= stores.filter(g=>g.type==='GRN'&&g.date===td);
+  const soVal    = openSOs.reduce((s,o)=>s+(o.amount||0),0);
+  const poVal    = openPOs.reduce((s,p)=>s+(p.totalValue||0),0);
+  const debtorTotal = debtors.reduce((s,d)=>s+(d.amount||0),0);
+  const overdueDebt = debtors.filter(d=>d.dueDate&&d.dueDate<td&&d.status!=='Paid').reduce((s,d)=>s+(d.amount||0),0);
+  const dispatched  = sos.filter(s=>s.status==='Dispatched'&&s.date&&s.date.startsWith(mon));
+  const pendingAppr = appr.filter(a=>a.status==='Pending').length;
+  const monthSOs    = sos.filter(s=>s.date&&s.date.startsWith(mon));
+
+  // Attendance today from GAS
+  const todayAtt = att.filter(a=>a.date===td);
+  const presentCount = todayAtt.filter(a=>a.status==='P'||a.status==='HD').length;
+  const absentCount  = todayAtt.filter(a=>a.status==='A').length;
+
+  // Compliance
+  const now=new Date();
+  const gDays=Math.ceil((new Date(now.getFullYear(),now.getMonth()+1,11)-now)/86400000);
+  const eDays=Math.ceil((new Date(now.getFullYear(),now.getMonth()+1,15)-now)/86400000);
+
+  // ── Owner KPIs ──
+  setKPI('o_jc','—'); // Job Cards not yet in GAS scope
+  setKPI('o_so',openSOs.length);
+  setKPI('o_grn',monthGRNs.length);
+  setKPI('o_po',openPOs.length);
+  setKPI('o_present',presentCount||(todayAtt.length?presentCount:'—'));
+  setKPI('o_low_stock','—');
+  setKPI('o_debtors',debtorTotal>0?fmt(debtorTotal):'—');
+  setKPI('o_pending_appr',pendingAppr||'—');
+
+  // ── CEO KPIs ──
+  const vouTotal=GAS_CACHE.vouchers.filter(v=>v.date&&v.date.startsWith(mon)&&v.type==='Receipt')
+                 .reduce((s,v)=>s+(v.amount||0),0);
+  setKPI('c_revenue',vouTotal>0?fmt(vouTotal):'—');
+  setKPI('c_so_val',soVal>0?fmt(soVal):'—');
+  setKPI('c_debtors',debtorTotal>0?fmt(debtorTotal):'—');
+  setKPI('c_overdue',overdueDebt>0?fmt(overdueDebt):'0');
+  setKPI('c_po_val',poVal>0?fmt(poVal):'—');
+  setKPI('c_prod',openSOs.length);
+
+  // ── Production KPIs ──
+  setKPI('p_jc_open','—');
+  setKPI('p_jc_overdue','—');
+  setKPI('p_grn_today',todayGRNs.length);
+  setKPI('p_low_stock','—');
+  setKPI('p_open_po',openPOs.length);
+  setKPI('p_workers',presentCount||'—');
+
+  // ── HR KPIs ──
+  setKPI('h_present',presentCount||'—');
+  setKPI('h_absent',absentCount||'—');
+  setKPI('h_salary_due','—');
+  setKPI('h_pending_claims',pendingAppr||'—');
+  setKPI('h_gst_days',gDays);
+  setKPI('h_esi_days',eDays);
+
+  // ── Sales KPIs ──
+  setKPI('s_so_open',openSOs.length);
+  setKPI('s_so_val',soVal>0?fmt(soVal):'—');
+  setKPI('s_dispatched',dispatched.length);
+  setKPI('s_debtors',debtorTotal>0?fmt(debtorTotal):'—');
+  setKPI('s_overdue',overdueDebt>0?fmt(overdueDebt):'0');
+  setKPI('s_delivery_due',openSOs.filter(s=>s.delivery===td).length);
+
+  // ── Month stats ──
+  setEl('ms_grn',monthGRNs.length);
+  setEl('ms_po',monthSOs.length);
+  setEl('ms_so_disp',dispatched.length);
+  setEl('ms_att',presentCount?presentCount+'/15':'—');
+  setEl('ms_appr',pendingAppr);
+
+  // ── CEO business panel ──
+  setEl('bp_so_count',monthSOs.length);
+  setEl('bp_so_val',fmt(monthSOs.reduce((s,o)=>s+(o.amount||0),0)));
+  setEl('bp_grn',monthGRNs.length);
+  setEl('bp_po',openPOs.length);
+  setEl('bp_issue',stores.filter(g=>g.type==='Issue'&&g.date&&g.date.startsWith(mon)).length);
+  setEl('bp_att',presentCount?presentCount+'/15':'—');
+  setEl('bp_appr',pendingAppr);
+  setEl('bp_jc','—');
+
+  // ── HR payroll ──
+  const EMP_BASIC=[12000,9000,9000,7500,9500,7500,8500,8000,11000,11000,9000,7500,14000,12000,16000];
+  const grossTotal=EMP_BASIC.reduce((s,b)=>s+b+Math.round(b*.25)+1000,0);
+  const esic=EMP_BASIC.filter(b=>b<=21000).reduce((s,b)=>s+Math.round(b*.0175),0);
+  const epf=EMP_BASIC.filter(b=>b<=15000).reduce((s,b)=>s+Math.round(b*.12),0);
+  setEl('hr_gross_pay',fmt(grossTotal));
+  setEl('hr_esic',fmt(esic));
+  setEl('hr_epf',fmt(epf));
+
+  // Pending approvals badge
+  const badge=document.getElementById('appr_badge');
+  if(badge){ if(pendingAppr>0){badge.style.display='inline';badge.textContent=pendingAppr;}else badge.style.display='none'; }
+}
+
+function setKPI(id,val){
+  const el=document.getElementById(id);
+  if(el) el.textContent=(val===undefined||val===null||val==='—')?'—':val;
+}
+function setEl(id,val){
+  const el=document.getElementById(id);
+  if(el) el.textContent=(val===undefined||val===null||val==='—')?'—':val;
+}
+
+// ─── Render Role Views — all from GAS_CACHE ──
+function renderView(role){
+  if(role==='owner'||role==='ceo') renderOwnerCEO();
+  if(role==='production') renderProductionView();
+  if(role==='hr') renderHRView();
+  if(role==='sales') renderSalesView();
+  renderActivityFeed();
+}
+
+function renderOwnerCEO(){
+  const td=today();
+  const sos=GAS_CACHE.sales.filter(s=>!['Dispatched','Cancelled','Closed'].includes(s.status));
+
+  const fill=(id,rows,cols)=>{
+    const tb=document.getElementById(id);
+    if(!tb)return;
+    if(!rows.length){tb.innerHTML=`<tr><td colspan="${cols}" class="empty-row">No data — will appear here after GAS sync</td></tr>`;return;}
+    tb.innerHTML=rows;
+  };
+
+  fill('owner_so_tbl', sos.slice(0,20).map(s=>`<tr>
+    <td><b>${s.soNo}</b></td><td>${s.customer}</td><td>${s.product}</td>
+    <td>${s.qty}</td><td>${s.delivery||'—'}</td><td>${statusBadge(s.status)}</td>
+  </tr>`).join(''), 6);
+
+  fill('ceo_so_tbl', sos.slice(0,15).map(s=>`<tr>
+    <td><b>${s.soNo}</b></td><td>${s.customer}</td>
+    <td>${s.amount?fmt(s.amount):'—'}</td><td>${s.delivery||'—'}</td><td>${statusBadge(s.status)}</td>
+  </tr>`).join(''), 5);
+
+  // CEO debtors from GAS
+  const dbt=GAS_CACHE.debtors.slice(0,15);
+  fill('ceo_debtors_tbl', dbt.map(d=>`<tr>
+    <td><b>${d.customer}</b></td><td>${fmt(d.amount)}</td>
+    <td>${d.dueDate||'—'}</td><td>${statusBadge(d.status||'Open')}</td>
+  </tr>`).join(''), 4);
+}
+
+function renderProductionView(){
+  const td=today();
+
+  // GRNs from GAS Stores tab
+  const grns=GAS_CACHE.stores.filter(g=>g.type==='GRN').slice(-25).reverse();
+  const gTb=document.getElementById('prod_grn_tbl');
+  if(gTb){
+    if(!grns.length) gTb.innerHTML='<tr><td colspan="5" class="empty-row">No GRNs in GAS yet — enter via Materials Bot from any location</td></tr>';
+    else gTb.innerHTML=grns.map(g=>
+      `<tr><td><b>${g.grnNo||'—'}</b></td><td>${g.date||'—'}</td><td>${g.supplier||'—'}</td>
+       <td>${g.item||'—'}</td><td>${g.qty||'—'} ${g.unit||''}</td></tr>`
+    ).join('');
+  }
+
+  // POs from GAS Purchase tab
+  const pos=GAS_CACHE.purchase.filter(p=>!['Closed','Received'].includes(p.status)).slice(0,20);
+  const pTb=document.getElementById('prod_po_tbl');
+  if(pTb){
+    if(!pos.length) pTb.innerHTML='<tr><td colspan="5" class="empty-row">No open POs in GAS — create via Materials Bot</td></tr>';
+    else pTb.innerHTML=pos.map(p=>
+      `<tr><td><b>${p.poNo}</b></td><td>${p.supplier||'—'}</td>
+       <td>${p.totalValue?fmt(p.totalValue):'—'}</td>
+       <td>${p.expDelivery||'—'}</td><td>${statusBadge(p.status||'Open')}</td></tr>`
+    ).join('');
+  }
+
+  // Job Cards — from GAS manufacturing tab (if available)
+  const jcTb=document.getElementById('prod_jc_tbl');
+  if(jcTb) jcTb.innerHTML='<tr><td colspan="6" class="empty-row">Job Cards sync via Manufacturing Dashboard — open the module to view</td></tr>';
+}
+
+function renderHRView(){
+  const td=today();
+  const EMP_NAMES=[
+    {code:'EMP-001',name:'Raj Kumar Paswan',dept:'Wood'},
+    {code:'EMP-002',name:'Sunil',dept:'Wood'},
+    {code:'EMP-003',name:'May Pet',dept:'Wood'},
+    {code:'EMP-004',name:'Deepak Singh',dept:'Wood'},
+    {code:'EMP-005',name:'Manjeet',dept:'Corrugation'},
+    {code:'EMP-006',name:'Ramesh Yadav',dept:'Corrugation'},
+    {code:'EMP-007',name:'Sanjay',dept:'Nailless'},
+    {code:'EMP-008',name:'Ladies Team Lead',dept:'Nailless'},
+    {code:'EMP-009',name:'Ranjeet Singh',dept:'Steel'},
+    {code:'EMP-010',name:'Hari Shankar',dept:'Steel'},
+    {code:'EMP-011',name:'Lokesh',dept:'Steel'},
+    {code:'EMP-012',name:'Kamlesh Verma',dept:'Steel'},
+    {code:'EMP-013',name:'Amit Kumar',dept:'Admin'},
+    {code:'EMP-014',name:'Priya Sharma',dept:'HR'},
+    {code:'EMP-015',name:'Vijay Mishra',dept:'Accounts'},
+  ];
+
+  // Attendance for today from GAS
+  const todayAtt = GAS_CACHE.attendance.filter(a=>a.date===td);
+  // Build lookup by employee name (GAS stores by name, not code)
+  const attByName = {};
+  todayAtt.forEach(a=>{ attByName[a.employee]=a.status; });
+
+  // Month working days — count P + 0.5×HD per employee from GAS
+  const mon=thisMonth();
+  const monAtt=GAS_CACHE.attendance.filter(a=>a.date&&a.date.startsWith(mon));
+  const wdByName={};
+  monAtt.forEach(a=>{
+    if(!wdByName[a.employee]) wdByName[a.employee]=0;
+    if(a.status==='P') wdByName[a.employee]+=1;
+    else if(a.status==='HD') wdByName[a.employee]+=0.5;
+  });
+
+  const tb=document.getElementById('hr_att_tbl');
+  if(tb){
+    if(!todayAtt.length){
+      tb.innerHTML=EMP_NAMES.map(e=>
+        `<tr><td><b>${e.name}</b></td><td>${e.dept}</td>
+         <td><span class="badge b-gray">Not marked</span></td>
+         <td style="text-align:center;color:var(--text3)">${wdByName[e.name]||0}</td></tr>`
+      ).join('');
+    } else {
+      tb.innerHTML=EMP_NAMES.map(e=>{
+        const s=attByName[e.name]||'—';
+        const wd=wdByName[e.name]||0;
+        return `<tr><td><b>${e.name}</b></td><td>${e.dept}</td>
+          <td>${statusBadge(s)}</td>
+          <td style="text-align:center;font-weight:700;color:var(--navy)">${wd}</td></tr>`;
+      }).join('');
+    }
+  }
+}
+
+function renderSalesView(){
+  const td=today();
+  const sos=GAS_CACHE.sales;
+  const openSOs=sos.filter(s=>!['Dispatched','Cancelled','Closed'].includes(s.status));
+  const dispatched=sos.filter(s=>s.status==='Dispatched'&&s.date&&s.date.startsWith(thisMonth()));
+
+  const stb=document.getElementById('sales_so_tbl');
+  if(stb){
+    if(!openSOs.length) stb.innerHTML='<tr><td colspan="7" class="empty-row">No open SOs in GAS — <a href="SSPI_Sales_Order_Bot.html" onclick="openBot(this.href);return false;">create one</a></td></tr>';
+    else stb.innerHTML=openSOs.slice(0,25).map(s=>
+      `<tr><td><b>${s.soNo}</b></td><td>${s.customer}</td><td>${s.product}</td>
+       <td>${s.qty}</td><td>${s.amount?fmt(s.amount):'—'}</td>
+       <td>${s.delivery||'—'}</td><td>${statusBadge(s.status)}</td></tr>`
+    ).join('');
+  }
+
+  const dtb=document.getElementById('sales_dispatch_tbl');
+  if(dtb){
+    if(!dispatched.length) dtb.innerHTML='<tr><td colspan="5" class="empty-row">No dispatches this month in GAS</td></tr>';
+    else dtb.innerHTML=dispatched.map(s=>
+      `<tr><td><b>${s.soNo}</b></td><td>${s.customer}</td><td>${s.product}</td>
+       <td>${s.qty}</td><td>${s.date||'—'}</td></tr>`
+    ).join('');
+  }
+
+  // Debtors from GAS
+  const sdtb=document.getElementById('sales_debtors_tbl');
+  if(sdtb){
+    const dbt=GAS_CACHE.debtors.slice(0,20);
+    if(!dbt.length) sdtb.innerHTML='<tr><td colspan="5" class="empty-row">No debtor entries in GAS — enter via Debtors Bot</td></tr>';
+    else sdtb.innerHTML=dbt.map(d=>
+      `<tr><td><b>${d.customer}</b></td><td>${d.invoice||'—'}</td>
+       <td>${fmt(d.amount)}</td><td>${d.dueDate||'—'}</td>
+       <td>${statusBadge(d.status||'Open')}</td></tr>`
+    ).join('');
+  }
+}
+
+// ─── Activity Feed — ALL from GAS_CACHE ──────
+// Shows most recent entries across ALL data types
+// from ALL remote locations in one unified feed
+function renderActivityFeed(){
+  const feed=document.getElementById('owner_feed');
+  if(!feed) return;
+
+  const items=[];
+
+  // GRNs — most recent 8
+  GAS_CACHE.stores.filter(g=>g.type==='GRN').slice(-8).reverse().forEach(g=>{
+    items.push({
+      color:'fd-grn', sort:g.ts||g.date||'',
+      text:`<b>📥 GRN Received</b> <span>${g.grnNo||'GRN'} — ${g.item||'—'} from <b>${g.supplier||'—'}</b>${g.location?' · '+g.location:''}</span>`
+    });
+  });
+
+  // Sales Orders — most recent 5
+  GAS_CACHE.sales.slice(-5).reverse().forEach(s=>{
+    items.push({
+      color:'fd-blu', sort:s.ts||s.date||'',
+      text:`<b>📄 Sales Order</b> <span>${s.soNo} — ${s.customer} · ${s.product}${s.location?' · '+s.location:''}</span> ${statusBadge(s.status)}`
+    });
+  });
+
+  // POs — most recent 4
+  GAS_CACHE.purchase.slice(-4).reverse().forEach(p=>{
+    items.push({
+      color:'fd-org', sort:p.ts||p.date||'',
+      text:`<b>🛒 PO Created</b> <span>${p.poNo} — ${p.supplier||'—'} · ${fmt(p.totalValue)}${p.location?' · '+p.location:''}</span>`
+    });
+  });
+
+  // Attendance entries — latest 5
+  GAS_CACHE.attendance.slice(-5).reverse().forEach(a=>{
+    items.push({
+      color:'fd-grn', sort:a.ts||a.date||'',
+      text:`<b>👥 Attendance</b> <span>${a.employee} — ${a.status}${a.location?' · '+a.location:''}</span>`
+    });
+  });
+
+  // Approvals — pending ones
+  GAS_CACHE.approvals.filter(a=>a.status==='Pending').slice(0,3).forEach(a=>{
+    items.push({
+      color:'fd-red', sort:a.ts||a.date||'',
+      text:`<b>✅ Approval Pending</b> <span>${a.type||'Request'} — ${a.requestedBy||'—'} · ${a.amount?fmt(a.amount):''}</span>`
+    });
+  });
+
+  // Vouchers — latest 3
+  GAS_CACHE.vouchers.slice(-3).reverse().forEach(v=>{
+    items.push({
+      color:'fd-blu', sort:v.ts||v.date||'',
+      text:`<b>📒 Voucher Posted</b> <span>${v.type||'Entry'} — ${v.party||'—'} · ${fmt(v.amount)}${v.location?' · '+v.location:''}</span>`
+    });
+  });
+
+  // Sort by timestamp desc
+  items.sort((a,b)=>b.sort.localeCompare(a.sort));
+
+  if(!items.length){
+    feed.innerHTML='<div style="color:var(--text3);text-align:center;padding:28px;font-size:12px;">'+
+      '📡 Waiting for live data from GAS…<br><small>Bots post data → GAS Google Sheet → appears here automatically</small></div>';
+    return;
+  }
+
+  feed.innerHTML=items.slice(0,15).map(i=>`
+    <div class="feed-item">
+      <div class="feed-dot ${i.color}"></div>
+      <div class="feed-body" style="font-size:12px">${i.text}</div>
+    </div>`).join('');
+}
+
+// ─── Alerts — from GAS_CACHE ─────────────────
+function buildAlerts(){
+  const panel=document.getElementById('owner_alerts');
+  if(!panel) return;
+  const alerts=[];
+  const now=new Date();
+  const td=today();
+
+  // Compliance
+  const gstrDue=new Date(now.getFullYear(),now.getMonth()+1,11);
+  const esicDue=new Date(now.getFullYear(),now.getMonth()+1,15);
+  const gDays=Math.ceil((gstrDue-now)/86400000);
+  const eDays=Math.ceil((esicDue-now)/86400000);
+  if(gDays<=5)  alerts.push({type:'crit',icon:'🚨',title:'GSTR-1 filing due in '+gDays+' days',text:'File by '+gstrDue.toLocaleDateString('en-IN')});
+  else if(gDays<=10) alerts.push({type:'warn',icon:'⚠️',title:'GSTR-1 due in '+gDays+' days',text:'Deadline: '+gstrDue.toLocaleDateString('en-IN')});
+  if(eDays<=5)  alerts.push({type:'crit',icon:'🚨',title:'ESIC/EPF due in '+eDays+' days',text:'Deadline: '+esicDue.toLocaleDateString('en-IN')});
+
+  // Overdue SOs from GAS
+  const overdueSOs=GAS_CACHE.sales.filter(s=>s.delivery&&s.delivery<td&&!['Dispatched','Closed','Cancelled'].includes(s.status));
+  if(overdueSOs.length) alerts.push({type:'crit',icon:'📋',title:overdueSOs.length+' overdue Sales Order'+(overdueSOs.length>1?'s':''),
+    text:overdueSOs.map(s=>s.soNo+' — '+s.customer).slice(0,3).join(', ')});
+
+  // Overdue POs from GAS
+  const overduePOs=GAS_CACHE.purchase.filter(p=>p.expDelivery&&p.expDelivery<td&&p.status!=='Closed');
+  if(overduePOs.length) alerts.push({type:'warn',icon:'🛒',title:overduePOs.length+' PO delivery'+(overduePOs.length>1?'s':'')+' overdue',
+    text:overduePOs.map(p=>p.poNo+' — '+p.supplier).slice(0,2).join(', ')});
+
+  // Pending approvals from GAS
+  const pendAppr=GAS_CACHE.approvals.filter(a=>a.status==='Pending');
+  if(pendAppr.length) alerts.push({type:'warn',icon:'✅',title:pendAppr.length+' approval'+(pendAppr.length>1?'s':'')+' pending',
+    text:pendAppr.map(a=>a.type+' — '+a.requestedBy).slice(0,2).join(', ')});
+
+  // Overdue debtors from GAS
+  const overdueDebt=GAS_CACHE.debtors.filter(d=>d.dueDate&&d.dueDate<td&&d.status!=='Paid');
+  if(overdueDebt.length) alerts.push({type:'warn',icon:'💳',title:overdueDebt.length+' overdue debtor'+(overdueDebt.length>1?'s':''),
+    text:overdueDebt.map(d=>d.customer).slice(0,2).join(', ')});
+
+  // No attendance today from GAS
+  const todayAtt=GAS_CACHE.attendance.filter(a=>a.date===td);
+  if(!todayAtt.length) alerts.push({type:'warn',icon:'👥',title:'Attendance not marked today in GAS',
+    text:'Open Daily Attendance Bot → data will sync here automatically'});
+
+  // GAS sync age warning
+  if(GAS_CACHE._lastSync){
+    const minAgo=Math.floor((new Date()-GAS_CACHE._lastSync)/60000);
+    if(minAgo>5) alerts.push({type:'info',icon:'📡',title:'Last synced '+minAgo+' minutes ago',text:'Click the sync indicator to refresh now'});
+  }
+
+  if(!alerts.length) alerts.push({type:'ok',icon:'✅',title:'All clear — GAS data is live',text:'Dashboard is synced with GAS. Next auto-refresh in 30 seconds.'});
+
+  panel.innerHTML=alerts.map(a=>`
+    <div class="alert ${a.type}">
+      <div class="alert-icon">${a.icon}</div>
+      <div><b>${a.title}</b><span> ${a.text}</span></div>
+    </div>`).join('');
+}
+
+// ─── Compliance Countdown ────────────────────
+function buildCompliance(){
+  const now=new Date();
+  const m=now.getMonth(); const y=now.getFullYear();
+  const dates=[
+    {name:'GSTR-1 (Sales)',due:new Date(y,m+1,11),color:'teal'},
+    {name:'GSTR-3B (Tax Payment)',due:new Date(y,m+1,20),color:'teal'},
+    {name:'ESIC Contribution',due:new Date(y,m+1,15),color:'orange'},
+    {name:'EPF Contribution',due:new Date(y,m+1,15),color:'orange'},
+    {name:'TDS Payment',due:new Date(y,m+1,7),color:'purple'},
+    {name:'PT Payment',due:new Date(y,m+1,15),color:'purple'},
+  ];
+  const html=dates.map(d=>{
+    const days=Math.ceil((d.due-now)/86400000);
+    const cls=days<=3?'overdue':days<=7?'due':'';
+    const dcls=days<=3?'crit':days<=7?'warn':'';
+    return `<div class="comp-item ${cls}">
+      <div><div style="font-weight:600;font-size:12px">${d.name}</div>
+      <div style="font-size:10px;color:var(--text2)">${d.due.toLocaleDateString('en-IN')}</div></div>
+      <div class="comp-days ${dcls}">${days>0?days+'d':'Overdue'}</div>
+    </div>`;
+  }).join('');
+  ['owner_comp','ceo_comp','hr_comp'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=html;
+  });
+}
+
+
+// ─── openBot: works on local file:// and web ─────────────────────────────
+// Tries new tab first; if browser blocks popup, navigates in same tab.
+function openBot(url){
+  if(!url||url==='#'||url==='#all')return false;
+  // file:// protocol: window.open() returns a ref but Chrome blocks popup display
+  // Always navigate in same tab for local files
+  if(window.location.protocol==='file:'){
+    window.location.href=url;
+    return false;
+  }
+  try{
+    var w=window.open(url,'_blank');
+    if(!w||w.closed||typeof w.closed==='undefined'){
+      window.location.href=url;
+    }
+  }catch(e){ window.location.href=url; }
+  return false;
+}
+
+// ─── INIT ────────────────────────────────────
+document.addEventListener('DOMContentLoaded',function(){
+  buildCompliance();
+  // Show login
+  document.getElementById('login_overlay').style.display='flex';
+  setSyncStatus('offline');
+  // After login, fullSync() is called which starts the 30s auto-refresh
+});
+
+// doLogin triggers fullSync + setInterval(30s) — defined in switchRole above
+</script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Approvals Inbox</title>
+<style>
+  :root{
+    --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#ffffff;
+    --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --yellow:#fff7cc; --red:#b3261e; --orange:#b8860b;
+  }
+  *{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
+  body{margin:0; background:var(--bg); color:var(--text);}
+  header{background:var(--navy); color:#fff; padding:16px 24px;}
+  header h1{margin:0; font-size:20px;}
+  header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+  .tabs{display:flex; flex-wrap:wrap; background:var(--navy2); padding:0 16px;}
+  .tab{padding:10px 16px; color:#fff; cursor:pointer; font-size:13px; opacity:.8; border-bottom:3px solid transparent;}
+  .tab.active{opacity:1; border-bottom:3px solid var(--accent); font-weight:bold;}
+  .container{max-width:1300px; margin:0 auto; padding:20px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:18px;}
+  .card h2{margin-top:0; font-size:16px; color:var(--navy);}
+  .row-actions{margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;}
+  button{background:var(--accent); color:#fff; border:none; padding:9px 16px; border-radius:5px; font-size:13px; cursor:pointer; font-weight:bold;}
+  button:hover{background:var(--navy);}
+  button.approve{background:var(--green);}
+  button.reject{background:var(--red);}
+  table{width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;}
+  th, td{border:1px solid var(--border); padding:6px 7px; text-align:left; vertical-align:top;}
+  th{background:var(--navy); color:#fff; position:sticky; top:0;}
+  tr:nth-child(even){background:#fafbfc;}
+  .table-wrap{max-height:560px; overflow:auto; border:1px solid var(--border); border-radius:6px;}
+  .pill{display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;}
+  .pill.pending{background:#fff7e0; color:var(--orange);}
+  .pill.approved{background:#e3f6e9; color:var(--green);}
+  .pill.rejected{background:#fde7e7; color:var(--red);}
+  .note{background:#eef5fb; border-left:4px solid var(--accent); border-radius:0 6px 6px 0; padding:10px 14px; font-size:12px; color:#333; margin-bottom:14px; line-height:1.6;}
+  .kpi-row{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
+  .kpi{flex:1; min-width:140px; background:#fff; border:1px solid var(--border); border-radius:8px; padding:12px 16px;}
+  .kpi b{display:block; font-size:22px; color:var(--navy);}
+  .kpi span{font-size:11px; color:var(--muted);}
+  .actions-cell{display:flex; gap:6px; flex-wrap:wrap;}
+  textarea.notesbox{width:140px; font-size:11px; padding:4px;}
+  footer{text-align:center; font-size:11px; color:var(--muted); padding:16px;}
+</style>
+</head>
+<body>
+<div id="back_to_dashboard" style="background:#1E3A5F;color:#fff;padding:8px 20px;display:flex;align-items:center;gap:12px;font-size:12px;position:sticky;top:0;z-index:9999;box-shadow:0 2px 6px rgba(0,0,0,.35)">
+  <button onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">← Back to Dashboard</button>
+  <span style="opacity:.55;font-size:11px;">SSPI Operations Dashboard V4</span>
+</div>
+<!-- ACCESS CONTROL GATE -->
+<div id="accessGate" style="position:fixed;inset:0;background:#1E3A5F;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Arial,Helvetica,sans-serif">
+  <div style="background:#fff;border-radius:10px;padding:30px 36px;max-width:380px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.35)">
+    <div style="font-size:32px;margin-bottom:8px">🔐</div>
+    <h2 style="margin:0 0 6px;color:#1E3A5F;font-size:16px">Approvals Inbox — Approver Access Only</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 14px">This page can Approve or Reject real money/process actions. Enter your approver PIN.</p>
+    <input id="gatePin" type="password" placeholder="Approver PIN" autocomplete="off" style="width:100%;padding:9px;font-size:14px;border:1px solid #d6dce4;border-radius:6px;text-align:center;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkGatePin()">
+    <div id="gateErr" style="color:#b3261e;font-size:11px;margin-top:6px;min-height:14px"></div>
+    <button onclick="checkGatePin()" style="margin-top:8px;background:#2E86AB;color:#fff;border:none;border-radius:6px;padding:9px 22px;font-size:12px;font-weight:bold;cursor:pointer">Unlock</button>
+    <div style="font-size:10.5px;color:#999;margin-top:10px">Authorized: Owner, Accounts Head, MD</div>
+  </div>
+</div>
+<script>
+(function(){
+  var VALID_PINS = ['APPR-2026','OWNER@2026'];
+  var SESSION_KEY = 'sspi_gate_approvals';
+  function checkGatePin(){
+    var v=document.getElementById('gatePin').value.trim();
+    if(VALID_PINS.indexOf(v)>-1){
+      sessionStorage.setItem(SESSION_KEY,'1');
+      document.getElementById('accessGate').remove();
+    } else {
+      document.getElementById('gateErr').textContent='Incorrect PIN. Contact VC Admin.';
+    }
+  }
+  window.checkGatePin=checkGatePin;
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    var g=document.getElementById('accessGate'); if(g) g.remove();
+  }
+})();
+</script>
+<header>
+  <h1>🔐 SSPI Approvals Inbox</h1>
+  <p>Every Pending request from Advance, Debtors Escalation, Credit Limit Change, Route Card and RM Substitution lands here. Nothing in those bots takes effect until you Approve it here.</p>
+</header>
+<div class="tabs">
+  <div class="tab active" data-tab="pending">Pending Requests</div>
+  <div class="tab" data-tab="history">Decision History</div>
+</div>
+<div class="container">
+
+  <!-- PENDING -->
+  <div class="panel active" id="panel-pending">
+    <div class="note">Click <b>Approve</b> to execute the underlying action (e.g. post the Advance Ledger entry, activate the Route Card) or <b>Reject</b> to decline it. Both are final — there is no "undo", so add a note if needed.</div>
+    <div class="kpi-row" id="kpiRow"></div>
+    <div class="card">
+      <h2>Pending — Needs Your Decision</h2>
+      <div class="row-actions" style="margin-top:0;margin-bottom:10px">
+        <button onclick="loadApprovals()">🔄 Refresh</button>
+        <input id="approverName" type="text" placeholder="Your name (recorded as Decided By)" style="flex:1;min-width:200px;padding:8px;border:1px solid var(--border);border-radius:5px;font-size:12px">
+      </div>
+      <div class="table-wrap"><table id="pending_table">
+        <thead><tr><th>Request ID</th><th>Type</th><th>Reference</th><th>Summary</th><th>Requested By</th><th>Submitted</th><th>Decision Note</th><th>Action</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="panel" id="panel-history">
+    <div class="card">
+      <h2>Decision History — Approved &amp; Rejected</h2>
+      <div class="row-actions" style="margin-top:0;margin-bottom:10px">
+        <button onclick="loadApprovals()">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap"><table id="history_table">
+        <thead><tr><th>Request ID</th><th>Type</th><th>Reference</th><th>Summary</th><th>Status</th><th>Decided By</th><th>Notes</th><th>Decision Time</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+</div>
+<footer>SSPI Approvals Inbox · every decision here is logged with who decided, when, and why</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS BACKEND — same backend as all other SSPI bots
+// ═══════════════════════════════════════════════════════
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+
+function gsGet(type, limit){
+  return new Promise(function(resolve){
+    var cbName = '_gsJP_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    var script = document.createElement('script');
+    var done = false;
+    window[cbName] = function(d){
+      done = true; delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      resolve((d && d.data) ? d.data : []);
+    };
+    script.onerror = function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } }, 12000);
+    script.src = GS_URL + '?type=' + type + '&limit=' + (limit||500) + '&token=' + GS_AUTH_TOKEN + '&callback=' + cbName;
+    document.head.appendChild(script);
+  });
+}
+function gsDecide(requestId, decision, decidedBy, notes){
+  return new Promise(function(resolve){
+    var cbName = '_gsDec_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    var script = document.createElement('script');
+    var done = false;
+    window[cbName] = function(d){
+      done = true; delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      resolve(d || { status: 'error' });
+    };
+    script.onerror = function(){ if(!done){ done=true; delete window[cbName]; resolve({status:'error'}); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve({status:'error'}); } }, 15000);
+    script.src = GS_URL + '?action=decide&requestId=' + encodeURIComponent(requestId) +
+                 '&decision=' + encodeURIComponent(decision) +
+                 '&decidedBy=' + encodeURIComponent(decidedBy||'Approver') +
+                 '&notes=' + encodeURIComponent(notes||'') +
+                 '&token=' + GS_AUTH_TOKEN + '&callback=' + cbName;
+    document.head.appendChild(script);
+  });
+}
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+}));
+
+let allApprovals = [];
+async function loadApprovals(){
+  document.querySelector('#pending_table tbody').innerHTML = '<tr><td colspan="8">Loading…</td></tr>';
+  document.querySelector('#history_table tbody').innerHTML = '<tr><td colspan="8">Loading…</td></tr>';
+  allApprovals = await gsGet('approvalRequest', 500);
+  renderPending();
+  renderHistory();
+  renderKpis();
+}
+
+function renderKpis(){
+  const pending = allApprovals.filter(r => r['Status'] === 'Pending').length;
+  const approved = allApprovals.filter(r => r['Status'] === 'Approved').length;
+  const rejected = allApprovals.filter(r => r['Status'] === 'Rejected').length;
+  document.getElementById('kpiRow').innerHTML =
+    '<div class="kpi"><b>' + pending + '</b><span>Pending Now</span></div>' +
+    '<div class="kpi"><b>' + approved + '</b><span>Approved (all time)</span></div>' +
+    '<div class="kpi"><b>' + rejected + '</b><span>Rejected (all time)</span></div>';
+}
+
+function renderPending(){
+  const rows = allApprovals.filter(r => r['Status'] === 'Pending');
+  const tbody = document.querySelector('#pending_table tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8">✅ Nothing pending — all caught up.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => {
+    const reqId = r['Request ID'];
+    return '<tr>' +
+      '<td>' + reqId + '</td>' +
+      '<td><span class="pill pending">' + (r['Type']||'') + '</span></td>' +
+      '<td>' + (r['Reference']||'') + '</td>' +
+      '<td>' + (r['Summary']||'') + '</td>' +
+      '<td>' + (r['Requested By']||'') + '</td>' +
+      '<td>' + (r['Timestamp']||'') + '</td>' +
+      '<td><textarea class="notesbox" id="note_' + reqId + '" placeholder="optional note"></textarea></td>' +
+      '<td><div class="actions-cell">' +
+        '<button class="approve" onclick="decide(\'' + reqId + '\',\'Approved\')">✅ Approve</button>' +
+        '<button class="reject" onclick="decide(\'' + reqId + '\',\'Rejected\')">❌ Reject</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderHistory(){
+  const rows = allApprovals.filter(r => r['Status'] === 'Approved' || r['Status'] === 'Rejected')
+                            .sort((a,b) => (b['Decision Timestamp']||'').localeCompare(a['Decision Timestamp']||''));
+  const tbody = document.querySelector('#history_table tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8">No decisions yet.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => {
+    const pillClass = r['Status'] === 'Approved' ? 'approved' : 'rejected';
+    return '<tr>' +
+      '<td>' + (r['Request ID']||'') + '</td>' +
+      '<td>' + (r['Type']||'') + '</td>' +
+      '<td>' + (r['Reference']||'') + '</td>' +
+      '<td>' + (r['Summary']||'') + '</td>' +
+      '<td><span class="pill ' + pillClass + '">' + r['Status'] + '</span></td>' +
+      '<td>' + (r['Decided By']||'') + '</td>' +
+      '<td>' + (r['Decision Notes']||'') + '</td>' +
+      '<td>' + (r['Decision Timestamp']||'') + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+async function decide(reqId, decision){
+  const decidedBy = document.getElementById('approverName').value.trim();
+  if (!decidedBy) { alert('Enter your name in the box above before deciding.'); return; }
+  const notesEl = document.getElementById('note_' + reqId);
+  const notes = notesEl ? notesEl.value : '';
+  if (!confirm((decision === 'Approved' ? 'Approve' : 'Reject') + ' request ' + reqId + '? This cannot be undone.')) return;
+  const result = await gsDecide(reqId, decision, decidedBy, notes);
+  if (result && result.status === 'ok') {
+    alert(decision + ' — done.');
+  } else {
+    alert('Could not process decision: ' + (result && result.msg ? result.msg : 'unknown error'));
+  }
+  loadApprovals();
+}
+
+loadApprovals();
+</script>
+</body>
+</html>

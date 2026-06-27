@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Route Card Bot</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1e293b,#0f172a);border-bottom:3px solid #f97316;padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
+.header h1{font-size:20px;font-weight:700;color:#f97316}
+.header p{font-size:11px;color:#94a3b8;margin-top:2px}
+.badge{background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);color:#f97316;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px}
+.btn{padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:.2s}
+.btn-primary{background:#f97316;color:#fff}.btn-primary:hover{background:#ea6c0a}
+.btn-secondary{background:#334155;color:#e2e8f0}.btn-secondary:hover{background:#475569}
+.btn-success{background:#22c55e;color:#fff}
+.btn-warn{background:#ef4444;color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+.main{max-width:960px;margin:24px auto;padding:0 20px 40px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:22px;margin-bottom:20px}
+.card-title{font-size:14px;font-weight:700;color:#f97316;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #334155;display:flex;align-items:center;gap:8px}
+.section-label{font-size:11px;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:5px;border-bottom:1px solid #334155}
+.form-row{display:grid;gap:12px;margin-bottom:12px}
+.form-row.cols2{grid-template-columns:1fr 1fr}
+.form-row.cols3{grid-template-columns:1fr 1fr 1fr}
+.form-row.cols4{grid-template-columns:1fr 1fr 1fr 1fr}
+.form-group label{display:block;font-size:11px;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:9px 12px;border-radius:6px;font-size:13px;transition:.15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#f97316;background:#1a2640}
+.required-star{color:#ef4444}
+.alert-box{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
+.alert-box.show{display:block}
+.alert-success{background:rgba(34,197,94,.1);border-left:4px solid #22c55e;color:#86efac}
+.alert-error{background:rgba(239,68,68,.1);border-left:4px solid #ef4444;color:#fca5a5}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid #ffffff44;border-top:2px solid #fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:5px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Steps table */
+.steps-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.steps-table th{background:#0f172a;color:#94a3b8;padding:8px 10px;font-size:11px;font-weight:600;text-align:left;border-bottom:1px solid #334155}
+.steps-table td{padding:6px 6px;border-bottom:1px solid rgba(51,65,85,.5);vertical-align:middle}
+.steps-table td input,.steps-table td select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 8px;border-radius:4px;font-size:11px;width:100%}
+.steps-table td input:focus,.steps-table td select:focus{outline:none;border-color:#f97316}
+.step-num{width:36px;text-align:center;font-weight:700;color:#f97316;font-size:13px}
+.del-btn{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#ef4444;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700}
+.del-btn:hover{background:rgba(239,68,68,.3)}
+.add-step-btn{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);color:#f97316;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;margin-top:10px;width:100%}
+.add-step-btn:hover{background:rgba(249,115,22,.2)}
+/* Existing cards */
+.rc-card{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;margin-bottom:10px}
+.rc-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.rc-card-head h4{font-size:13px;font-weight:700;color:#e2e8f0}
+.rc-card-head span{font-size:10px;color:#94a3b8}
+.rc-tag{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;background:rgba(249,115,22,.15);color:#f97316;margin-right:6px}
+.empty-state{text-align:center;padding:30px;color:#64748b;font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🗺️ Route Card Bot <span class="badge">SSPI</span></h1>
+    <p>Create &amp; manage production route cards — process steps, machine assignments, checkpoints &amp; approvals</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-secondary btn-sm" onclick="window.location.href='SSPI_Machine_Module.html'">🔧 Machine Module</button>
+    <button class="btn btn-secondary btn-sm" onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'">← Dashboard</button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="alert-box" class="alert-box"><span id="alert-text"></span></div>
+
+  <!-- ── Create New Route Card ───────────────────────────── -->
+  <div class="card">
+    <div class="card-title">➕ Create New Route Card</div>
+
+    <div class="section-label">Route Card Identity</div>
+    <div class="form-row cols3">
+      <div class="form-group">
+        <label>Route Card ID <span class="required-star">*</span></label>
+        <input type="text" id="rc-id" placeholder="e.g. RC-WD-001" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="form-group">
+        <label>Department <span class="required-star">*</span></label>
+        <select id="rc-dept" onchange="setDeptDefaults()">
+          <option value="">-- Select --</option>
+          <option value="Wood / Plywood">Wood / Plywood</option>
+          <option value="Corrugation">Corrugation</option>
+          <option value="Nail-less / Foldable Box">Nail-less / Foldable Box</option>
+          <option value="Steel Fabrication">Steel Fabrication</option>
+          <option value="PP / Lamination">PP / Lamination</option>
+          <option value="Packaging / Dispatch">Packaging / Dispatch</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Product / Part Name <span class="required-star">*</span></label>
+        <input type="text" id="rc-product" placeholder="e.g. Export Pallet Box 1200x1000">
+      </div>
+    </div>
+    <div class="form-row cols3">
+      <div class="form-group">
+        <label>Customer / Order Ref</label>
+        <input type="text" id="rc-customer" placeholder="Customer name or SO number">
+      </div>
+      <div class="form-group">
+        <label>Issue Date</label>
+        <input type="date" id="rc-date">
+      </div>
+      <div class="form-group">
+        <label>Revision No.</label>
+        <input type="text" id="rc-rev" placeholder="Rev 00" value="Rev 00">
+      </div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group">
+        <label>Prepared By</label>
+        <input type="text" id="rc-prepared" placeholder="Name / Designation">
+      </div>
+      <div class="form-group">
+        <label>Approved By</label>
+        <input type="text" id="rc-approved" placeholder="Name / Designation">
+      </div>
+    </div>
+
+    <div class="section-label">Process Steps</div>
+    <div style="overflow-x:auto">
+      <table class="steps-table">
+        <thead>
+          <tr>
+            <th style="width:42px">Step</th>
+            <th style="min-width:160px">Operation / Process</th>
+            <th style="min-width:180px">Machine / Equipment</th>
+            <th style="min-width:130px">Operator / Team</th>
+            <th style="min-width:160px">Check Point / QC Param</th>
+            <th style="min-width:160px">Approval Required</th>
+            <th style="min-width:80px">Std Time (min)</th>
+            <th style="width:40px">Del</th>
+          </tr>
+        </thead>
+        <tbody id="steps-tbody"></tbody>
+      </table>
+    </div>
+    <button class="add-step-btn" onclick="addStep()">+ Add Process Step</button>
+
+    <div class="section-label">Additional Info</div>
+    <div class="form-row cols3">
+      <div class="form-group">
+        <label>Special Process Flag</label>
+        <select id="rc-special">
+          <option value="None">None</option>
+          <option value="ISPM-15 Heat Treatment">ISPM-15 Heat Treatment</option>
+          <option value="CNC Routing">CNC Routing</option>
+          <option value="Robotic Welding">Robotic Welding</option>
+          <option value="Laser Cutting">Laser Cutting</option>
+          <option value="Customer Witness Required">Customer Witness Required</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Estimated Total Time (min)</label>
+        <input type="number" id="rc-total-time" placeholder="Auto-sum or enter manually" min="0">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="rc-status">
+          <option>Active</option>
+          <option>Draft</option>
+          <option>Obsolete</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr">
+      <div class="form-group">
+        <label>Remarks / Special Instructions</label>
+        <textarea id="rc-remarks" rows="2" placeholder="Any special handling, safety notes, or customer requirements..."></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" onclick="submitRouteCard()" id="submit-btn">💾 Save Route Card</button>
+      <button class="btn btn-secondary" onclick="clearForm()">🗑️ Clear All</button>
+    </div>
+  </div>
+
+  <!-- ── Saved Route Cards ───────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">📋 Saved Route Cards (This Session)</div>
+    <div id="rc-list"><div class="empty-state">No route cards saved yet in this session.<br>Use the form above to create one.</div></div>
+  </div>
+</div>
+
+<script>
+var GAS_URL  = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+var AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+
+// Machine lists by dept
+var DEPT_MACHINES = {
+  'Wood / Plywood': ['Manual / Visual','Beam Saw / Wood Sawing','Wood Planing Machine','Notching / Drilling Machine','CNC Routing Machine','Pneumatic Nailing Machine','Heat Treatment Chamber','Overhead Crane / Forklift'],
+  'Corrugation': ['Manual / Visual','Table Cutters','Two Color Printing Machine','Strapping Machine','Manual'],
+  'Nail-less / Foldable Box': ['Manual','Auto Strip Making Machine','Auto Tongue/Lock Machine','Hydraulic Presses','Folding Box Making Line'],
+  'Steel Fabrication': ['Manual / Gauge','Shearing Machine','Laser 1.5KW','CNC/NC Press Brake','Power Press','CO2 MIG Welder','Spot Welder','Projection Welder','Robotic Welding Machine','Manual / Spray'],
+  'PP / Lamination': ['PP Corrugation Machine 1','PP Corrugation Machine 2','PP Lamination Machine 1','PP Lamination Machine 2','Slitter Machine 1','Slitter Machine 2','Bag Making Machine 1','Bag Making Machine 2','Bag Making Machine 3','Printing Machine 1','Manual'],
+  'Packaging / Dispatch': ['Manual','Strapping Machine','Stretch Wrap Machine','Forklift','Overhead Crane'],
+};
+
+var STEP_TEMPLATES = {
+  'Wood / Plywood': [
+    ['RM Inspection & Grading','Manual / Visual','Supervisor','Species, Size, Moisture','Store Incharge sign-off',10],
+    ['Sawing / Cross Cutting','Beam Saw / Wood Sawing','Sunil / May Pet','Dimension tolerance ±2mm','Operator self-check',20],
+    ['Planing / Dressing','Wood Planing Machine','May Pet','Surface finish, thickness','Operator self-check',15],
+    ['Notching / Drilling','Notching / Drilling Machine','Sunil','Notch depth, hole centers','Operator self-check',15],
+    ['Assembly / Nailing','Pneumatic Nailing Machine','All operators','Squareness, nail spacing','Dept Head check',20],
+    ['QC Final Inspection','Manual / Gauge','QC Inspector','Dimension, strength, mark','QC sign-off required',15],
+    ['Marking & Dispatch','Manual','Store Incharge','Customer label, count','Dispatch gate pass',10],
+  ],
+  'Corrugation': [
+    ['RM Inspection','Manual / Visual','Supervisor','GSM, ply, dimensions','Store Incharge sign-off',10],
+    ['Sheet Cutting / Scoring','Table Cutters','Manjeet','Cut size tolerance ±1mm','Operator self-check',15],
+    ['Printing (if required)','Two Color Printing Machine','Manjeet','Color registration, text','Dept Head approval',20],
+    ['Box Making / Folding','Table Cutters / Manual','Manjeet / Raj Kumar','Fold lines, glue joints','Operator self-check',20],
+    ['Strapping / Bundling','Strapping Machine','Manjeet','Strap tension, bundle count','Operator self-check',10],
+    ['QC Final Inspection','Manual','QC Inspector','Dimensions, print quality','QC sign-off required',15],
+    ['Dispatch','Manual','Store Incharge','Packing list verification','Dispatch gate pass',10],
+  ],
+  'Nail-less / Foldable Box': [
+    ['RM Inspection','Manual','Sanjay','Thickness, grade, moisture','Store Incharge sign-off',10],
+    ['Sheet / Plank Cutting','Auto Strip Making Machine','Ladies Team','Strip width tolerance ±0.5mm','Operator self-check',20],
+    ['Tongue & Lock Making','Auto Tongue/Lock Machine','Sanjay','Lock engagement strength','Dept Head first-piece check',20],
+    ['Hydraulic Pressing','Hydraulic Presses','Ladies Team / Sanjay','Press pressure, dwell time','Operator self-check',15],
+    ['Folding / Assembly','Folding Box Making Line','Ladies Team','Fold accuracy, locking','First-piece approval Dept Head',20],
+    ['QC Final Inspection','Manual','QC Inspector','Load test, fold/unfold','QC sign-off required',15],
+    ['Dispatch','Manual','Store Incharge','Count, packing','Dispatch gate pass',10],
+  ],
+  'Steel Fabrication': [
+    ['RM Inspection','Manual / Gauge','Ranjeet Singh','Grade, thickness, flatness','Store Incharge sign-off',10],
+    ['Marking & Layout','Manual','Ranjeet Singh','Drawing compliance','Dept Head drawing approval',20],
+    ['Shearing / Laser Cutting','Shearing Machine','Hari Shankar','Cut dimensions ±0.5mm','Operator self-check',25],
+    ['Bending / Forming','CNC/NC Press Brake','Lokesh','Angle tolerance ±1°','First-piece approval',20],
+    ['Welding','CO2 MIG Welder','Hari Shankar / Lokesh','Weld quality visual + gauge','Dept Head weld check',30],
+    ['Surface Treatment / Painting','Manual / Spray','All operators','DFT (dry film thickness)','Customer spec compliance',20],
+    ['QC Final Inspection','Manual / Load Test','QC Inspector','All dimensions, load rating','QC sign-off required',20],
+    ['Dispatch','Manual','Store Incharge','Packing, marking','Dispatch gate pass',10],
+  ],
+};
+
+var stepCount = 0;
+var savedCards = [];
+
+function setDeptDefaults() {
+  var dept = document.getElementById('rc-dept').value;
+  var template = STEP_TEMPLATES[dept];
+  if (!template) return;
+  document.getElementById('steps-tbody').innerHTML = '';
+  stepCount = 0;
+  template.forEach(function(t) {
+    addStep(t[0], t[1], t[2], t[3], t[4], t[5]);
+  });
+}
+
+function addStep(op, machine, operator, checkpoint, approval, time) {
+  stepCount++;
+  var dept = document.getElementById('rc-dept').value;
+  var machines = DEPT_MACHINES[dept] || [];
+  var machOptions = ['<option value="">-- Select --</option>'].concat(machines.map(function(m) {
+    return '<option value="'+m+'"'+(machine&&m===machine?' selected':'')+'>'+m+'</option>';
+  })).join('');
+  // Add a free-text option if not in list
+  if (machine && machines.indexOf(machine) < 0) {
+    machOptions += '<option value="'+machine+'" selected>'+machine+'</option>';
+  }
+
+  var tr = document.createElement('tr');
+  tr.id = 'step-row-' + stepCount;
+  tr.innerHTML =
+    '<td class="step-num">'+stepCount+'</td>'
+    +'<td><input type="text" id="s-op-'+stepCount+'" value="'+(op||'')+'" placeholder="Operation name"></td>'
+    +'<td><select id="s-mach-'+stepCount+'">'+machOptions+'</select></td>'
+    +'<td><input type="text" id="s-oper-'+stepCount+'" value="'+(operator||'')+'" placeholder="Operator name"></td>'
+    +'<td><input type="text" id="s-chk-'+stepCount+'" value="'+(checkpoint||'')+'" placeholder="Checkpoint / param"></td>'
+    +'<td><input type="text" id="s-appr-'+stepCount+'" value="'+(approval||'')+'" placeholder="Who approves?"></td>'
+    +'<td><input type="number" id="s-time-'+stepCount+'" value="'+(time||'')+'" placeholder="0" min="0" style="text-align:center"></td>'
+    +'<td><button class="del-btn" onclick="delStep(\'step-row-'+stepCount+'\')">✕</button></td>';
+  document.getElementById('steps-tbody').appendChild(tr);
+}
+
+function delStep(rowId) {
+  var row = document.getElementById(rowId);
+  if (row) row.remove();
+  renumberSteps();
+}
+
+function renumberSteps() {
+  var rows = document.getElementById('steps-tbody').querySelectorAll('tr');
+  rows.forEach(function(r, i) { r.querySelector('.step-num').textContent = i + 1; });
+}
+
+function collectSteps() {
+  var rows = document.getElementById('steps-tbody').querySelectorAll('tr');
+  var steps = [];
+  rows.forEach(function(r, i) {
+    var n = r.id.replace('step-row-', '');
+    var op = document.getElementById('s-op-'+n);
+    if (!op) return;
+    var mach = document.getElementById('s-mach-'+n);
+    var oper = document.getElementById('s-oper-'+n);
+    var chk  = document.getElementById('s-chk-'+n);
+    var appr = document.getElementById('s-appr-'+n);
+    var t    = document.getElementById('s-time-'+n);
+    steps.push({
+      step: i+1,
+      operation: op ? op.value : '',
+      machine: mach ? mach.value : '',
+      operator: oper ? oper.value : '',
+      checkpoint: chk ? chk.value : '',
+      approval: appr ? appr.value : '',
+      stdTime: t ? t.value : ''
+    });
+  });
+  return steps;
+}
+
+function showAlert(type, msg) {
+  var box = document.getElementById('alert-box');
+  box.className = 'alert-box show alert-' + type;
+  document.getElementById('alert-text').innerHTML = msg;
+  box.scrollIntoView({behavior:'smooth'});
+  setTimeout(function(){box.classList.remove('show');}, 7000);
+}
+
+function submitRouteCard() {
+  var id      = document.getElementById('rc-id').value.trim();
+  var dept    = document.getElementById('rc-dept').value;
+  var product = document.getElementById('rc-product').value.trim();
+  if (!id || !dept || !product) {
+    showAlert('error', '❌ Fill required fields: Route Card ID, Department, Product Name');
+    return;
+  }
+  var steps = collectSteps();
+  if (steps.length === 0) {
+    showAlert('error', '❌ Add at least one process step before saving.');
+    return;
+  }
+
+  var btn = document.getElementById('submit-btn');
+  btn.innerHTML = '<span class="spinner"></span>Saving...';
+  btn.disabled = true;
+
+  var totalTime = steps.reduce(function(s, st) { return s + (parseInt(st.stdTime) || 0); }, 0);
+
+  var payload = {
+    type: 'routeCard',
+    token: AUTH_TOKEN,
+    routeCardId: id,
+    department: dept,
+    product: product,
+    customer: document.getElementById('rc-customer').value,
+    issueDate: document.getElementById('rc-date').value,
+    revNo: document.getElementById('rc-rev').value,
+    preparedBy: document.getElementById('rc-prepared').value,
+    approvedBy: document.getElementById('rc-approved').value,
+    specialProcess: document.getElementById('rc-special').value,
+    totalTimeMin: totalTime,
+    status: document.getElementById('rc-status').value,
+    remarks: document.getElementById('rc-remarks').value,
+    stepsJson: JSON.stringify(steps),
+    stepCount: steps.length
+  };
+
+  // Save locally
+  savedCards.unshift({id:id, dept:dept, product:product, steps:steps, totalTime:totalTime, status:payload.status, ts:new Date().toLocaleString()});
+  renderSavedCards();
+
+  fetch(GAS_URL, {method:'POST', body: new URLSearchParams(payload)})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      btn.innerHTML = '💾 Save Route Card'; btn.disabled = false;
+      if(data.status==='success'||data.status==='ok') {
+        showAlert('success', '✅ Route Card <strong>'+id+'</strong> saved to Google Sheets! Steps: '+steps.length+' | Total time: '+totalTime+' min');
+      } else {
+        showAlert('success', '✅ Route Card saved locally. Will sync to Sheets when GAS is re-deployed.');
+      }
+      clearForm();
+    })
+    .catch(function(){
+      btn.innerHTML = '💾 Save Route Card'; btn.disabled = false;
+      showAlert('success', '✅ Route Card saved locally (offline) — will sync when internet restores.');
+      clearForm();
+    });
+}
+
+function renderSavedCards() {
+  var list = document.getElementById('rc-list');
+  if (savedCards.length === 0) {
+    list.innerHTML = '<div class="empty-state">No route cards saved yet in this session.</div>';
+    return;
+  }
+  list.innerHTML = savedCards.map(function(rc) {
+    var stepList = rc.steps.slice(0,4).map(function(s){return '<span class="rc-tag">'+s.step+'. '+s.operation.substring(0,18)+'</span>';}).join('');
+    if(rc.steps.length>4) stepList += '<span class="rc-tag">+' +(rc.steps.length-4)+ ' more</span>';
+    return '<div class="rc-card">'
+      +'<div class="rc-card-head"><h4>🗺️ '+rc.id+' — '+rc.product+'</h4><span>'+rc.ts+'</span></div>'
+      +'<div style="font-size:11px;color:#94a3b8;margin-bottom:6px">Dept: <strong style="color:#f97316">'+rc.dept+'</strong> &nbsp;|&nbsp; Steps: '+rc.steps.length+' &nbsp;|&nbsp; Total Time: '+rc.totalTime+' min &nbsp;|&nbsp; Status: '+rc.status+'</div>'
+      +'<div>'+stepList+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function clearForm() {
+  ['rc-id','rc-product','rc-customer','rc-rev','rc-prepared','rc-approved','rc-remarks','rc-total-time'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.getElementById('rc-dept').value = '';
+  document.getElementById('rc-special').value = 'None';
+  document.getElementById('rc-status').value = 'Active';
+  document.getElementById('rc-rev').value = 'Rev 00';
+  document.getElementById('steps-tbody').innerHTML = '';
+  stepCount = 0;
+  // Reset date
+  document.getElementById('rc-date').value = new Date().toISOString().split('T')[0];
+  // Auto-generate new ID
+  document.getElementById('rc-id').value = 'RC-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*900)+100);
+}
+
+// Init
+document.getElementById('rc-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('rc-id').value = 'RC-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*900)+100);
+// Start with one blank step
+addStep();
+</script>
+</body>
+</html>

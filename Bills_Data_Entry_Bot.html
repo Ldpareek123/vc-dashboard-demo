@@ -1,0 +1,941 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Bills Data Entry Bot — Sales / Purchase / Expenses</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<style>
+:root{
+  --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#ffffff;
+  --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --red:#b3261e;
+  --orange:#c97a1a; --lgreen:#e8f5ec; --lred:#fdeceb; --lorange:#fdf1e2;
+}
+*{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
+body{margin:0; background:var(--bg); color:var(--text);}
+header{background:var(--navy); color:#fff; padding:16px 24px;}
+header h1{margin:0; font-size:20px;}
+header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+.tabs{display:flex; flex-wrap:wrap; background:var(--navy2); padding:0 16px;}
+.tab{padding:10px 16px; color:#fff; cursor:pointer; font-size:13px; opacity:.8; border-bottom:3px solid transparent; user-select:none;}
+.tab.active{opacity:1; border-bottom:3px solid var(--accent); font-weight:bold;}
+.container{max-width:1200px; margin:0 auto; padding:20px;}
+.panel{display:none;}
+.panel.active{display:block;}
+.card{background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:18px;}
+.card h2{margin:0 0 10px; font-size:15px; color:var(--navy);}
+.card h3{margin:0 0 8px; font-size:13px; color:var(--navy);}
+.muted{color:var(--muted); font-size:12px;}
+.dropzone{border:2px dashed #C5D8EC; border-radius:8px; padding:30px; text-align:center; cursor:pointer; background:var(--bg); margin-bottom:14px;}
+.dropzone:hover{background:#eef3f9;}
+.btn{background:var(--accent); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:12px; cursor:pointer; font-weight:bold;}
+.btn:hover{opacity:.9;}
+.btn.secondary{background:var(--navy2);}
+.btn.green{background:var(--green);}
+.btn.red{background:var(--red);}
+.btn.small{padding:5px 10px; font-size:11px;}
+table{width:100%; border-collapse:collapse; font-size:11.5px;}
+th,td{border:1px solid var(--border); padding:5px 7px; text-align:left;}
+th{background:var(--bg); color:var(--navy); position:sticky; top:0;}
+.pill{display:inline-block; padding:2px 8px; border-radius:10px; font-size:10.5px; font-weight:bold;}
+.pill-green{background:var(--lgreen); color:var(--green);}
+.pill-orange{background:var(--lorange); color:var(--orange);}
+.pill-red{background:var(--lred); color:var(--red);}
+.pill-blue{background:#e3f0fb; color:var(--accent);}
+.kpi-row{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+.kpi{flex:1; min-width:150px; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px;}
+.kpi .val{font-size:20px; font-weight:bold; color:var(--navy);}
+.kpi .lbl{font-size:11px; color:var(--muted);}
+.scrollbox{max-height:440px; overflow:auto; border:1px solid var(--border); border-radius:6px;}
+select,input[type=number],input[type=text],input[type=date],textarea{padding:5px 7px; font-size:12px; border:1px solid var(--border); border-radius:4px; width:100%;}
+.formgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px;}
+.formgrid label{font-size:11px; color:var(--muted); display:block; margin-bottom:3px;}
+.banner{background:var(--navy); color:#fff; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:12px;}
+.banner b{color:#9FE1CB;}
+.billtype-row{display:flex; gap:10px; margin-bottom:14px;}
+.billtype-row button{flex:1; padding:10px; border-radius:6px; border:2px solid var(--border); background:#fff; cursor:pointer; font-weight:bold; font-size:12px;}
+.billtype-row button.active{border-color:var(--accent); background:#e3f0fb; color:var(--navy);}
+footer{text-align:center; font-size:11px; color:var(--muted); padding:18px;}
+.itemrow td{vertical-align:middle;}
+.small-input{width:90%;}
+</style>
+</head>
+<body>
+<!-- ACCESS CONTROL GATE -->
+<div id="accessGate" style="position:fixed;inset:0;background:#1E3A5F;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Arial,Helvetica,sans-serif">
+  <div style="background:#fff;border-radius:10px;padding:30px 36px;max-width:380px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.35)">
+    <div style="font-size:32px;margin-bottom:8px">🔒</div>
+    <h2 style="margin:0 0 6px;color:#1E3A5F;font-size:16px">Bills Data Entry Bot — Restricted Access</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 14px">Enter the access code provided by your supervisor / VC Admin to continue. Access is logged for your department only.</p>
+    <input id="gatePin" type="password" placeholder="Access Code" autocomplete="off" style="width:100%;padding:9px;font-size:14px;border:1px solid #d6dce4;border-radius:6px;text-align:center;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkGatePin()">
+    <div id="gateErr" style="color:#b3261e;font-size:11px;margin-top:6px;min-height:14px"></div>
+    <button onclick="checkGatePin()" style="margin-top:8px;background:#2E86AB;color:#fff;border:none;border-radius:6px;padding:9px 22px;font-size:12px;font-weight:bold;cursor:pointer">Unlock</button>
+    <div style="font-size:10.5px;color:#999;margin-top:10px">Authorized: Accounts (Head/Accountant/Billing), Sales, Purchase, Stores</div>
+  </div>
+</div>
+<script>
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS BACKEND — auto-configured
+// ═══════════════════════════════════════════════════════
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+let _botLocation = localStorage.getItem('sspi_location') || 'Bhiwadi';
+// ── OFFLINE QUEUE + AUTH TOKEN + LOCATION ───────────────────
+var _offQ = JSON.parse(localStorage.getItem('sspi_offline_q') || '[]');
+var _botOnline = navigator.onLine;
+function _saveOffQ(){ localStorage.setItem('sspi_offline_q', JSON.stringify(_offQ)); }
+function syncBotQueue(){
+  if (!_botOnline || !_offQ.length) return;
+  var item = _offQ.shift(); _saveOffQ();
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(function(){ if(_offQ.length) setTimeout(syncBotQueue,600); })
+    .catch(function(){ _offQ.unshift(item); _saveOffQ(); });
+}
+window.addEventListener('online',  function(){ _botOnline=true;  syncBotQueue(); });
+window.addEventListener('offline', function(){ _botOnline=false; });
+function gsPost(payload){
+  if (!GS_URL) return;
+  payload.authToken = GS_AUTH_TOKEN;
+  payload.location  = payload.location || _botLocation;
+  payload._ts = payload._ts || new Date().toISOString();
+  if (!_botOnline) {
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+    return;
+  }
+  fetch(GS_URL, {method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  }).catch(function(){
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+  });
+}
+(function(){
+  var VALID_PINS = ['BIL-ACC-2026','BIL-SAL-2026','BIL-PUR-2026','BIL-STR-2026'];
+  var SESSION_KEY = 'sspi_gate_bills';
+  function checkGatePin(){
+    var v=document.getElementById('gatePin').value.trim();
+    if(VALID_PINS.indexOf(v)>-1){
+      sessionStorage.setItem(SESSION_KEY,'1');
+      document.getElementById('accessGate').remove();
+    } else {
+      document.getElementById('gateErr').textContent='Incorrect code. Contact VC Admin / your supervisor.';
+    }
+  }
+  window.checkGatePin=checkGatePin;
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    var g=document.getElementById('accessGate'); if(g) g.remove();
+  }
+})();
+</script>
+<header>
+  <h1>🧾 SSPI Bills Data Entry Bot</h1>
+  <p>Upload Sales / Purchase / Expense bills (PDF, Excel, JPG/JPEG, Word) → bot reads &amp; extracts details → you confirm — or skip the upload and enter a bill directly. Either way, registers and inventory update automatically.</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('upload',this)">📂 Upload &amp; Extract</div>
+  <div class="tab" onclick="showTab('sales',this)">🟢 Sales Register</div>
+  <div class="tab" onclick="showTab('purchase',this)">🔵 Purchase Register</div>
+  <div class="tab" onclick="showTab('expense',this)">🟠 Expense Register</div>
+  <div class="tab" onclick="showTab('inventory',this)">📦 Inventory Impact</div>
+  <div class="tab" onclick="showTab('export',this)">⬇ Export</div>
+</div>
+
+<div class="container">
+
+  <!-- ===================== UPLOAD ===================== -->
+  <div class="panel active" id="p-upload">
+    <div class="banner">
+      <b>How it works:</b> pick the bill type, then either <b>upload a file</b> or <b>enter the bill manually</b> —
+      both lead to the same review form and both update the registers and inventory the same way. Excel/CSV bills are
+      parsed directly into a line-item table. PDF, Word and image (JPG/JPEG/PNG) bills are scanned for text (OCR for
+      images) and the bot tries to auto-fill Bill No, Date, Party Name, Amount and GST. <b>Always review the extracted
+      fields before saving</b> — OCR/PDF text extraction is best-effort and items may need manual correction.
+    </div>
+
+    <div class="card">
+      <h2>1. Select Bill Type</h2>
+      <div class="billtype-row" id="billTypeRow">
+        <button class="active" data-type="sales" onclick="setBillType('sales',this)">🟢 Sales Bill (Outward)</button>
+        <button data-type="purchase" onclick="setBillType('purchase',this)">🔵 Purchase Bill (Inward)</button>
+        <button data-type="expense" onclick="setBillType('expense',this)">🟠 Expense Bill</button>
+      </div>
+
+      <h2>2. Upload File <span class="muted" style="font-weight:normal">— or skip to manual entry below</span></h2>
+      <div class="dropzone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondrop="handleDrop(event)" ondragover="event.preventDefault();this.style.background='#eef3f9'" ondragleave="this.style.background='var(--bg)'">
+        <div style="font-size:30px;margin-bottom:6px">📁</div>
+        <div style="font-weight:bold;color:var(--navy)">Drop bill here or click to browse</div>
+        <div class="muted" style="margin-top:4px">Accepted: .pdf .xlsx .xls .csv .jpg .jpeg .png .docx .doc</div>
+        <input type="file" id="fileInput" accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png,.docx,.doc" style="display:none" onchange="handleFile(event.target.files[0])">
+      </div>
+      <div id="fileStatus" class="muted"></div>
+
+      <div style="display:flex; align-items:center; gap:12px; margin:16px 0">
+        <hr style="flex:1; border:none; border-top:1px solid var(--border)">
+        <span class="muted" style="font-size:11px">OR</span>
+        <hr style="flex:1; border:none; border-top:1px solid var(--border)">
+      </div>
+      <div style="text-align:center; margin-bottom:6px">
+        <button class="btn secondary" onclick="startManualEntry()">✍️ Enter Bill Details Manually (No Upload)</button>
+        <div class="muted" style="margin-top:6px">No invoice file? Open a blank form below and type in the bill — fields, line items, GST and total all work the same way.</div>
+      </div>
+    </div>
+
+    <!-- Extracted / Manual Entry Form -->
+    <div class="card" id="entryCard" style="display:none">
+      <h2>3. Review &amp; Confirm Details <span class="pill pill-blue" id="billTypeLabel">Sales Bill</span></h2>
+      <div class="formgrid">
+        <div><label>Bill / Invoice No.</label><input type="text" id="f-billno"></div>
+        <div><label>Date</label><input type="date" id="f-date"></div>
+        <div><label id="f-partylabel">Customer Name</label><input type="text" id="f-party"></div>
+        <div><label>GST %</label><input type="number" id="f-gst" value="0" step="0.5" min="0" max="28"></div>
+      </div>
+      <div class="formgrid" id="expenseOnlyFields" style="display:none">
+        <div><label>Expense Category</label>
+          <select id="f-category">
+            <option>Raw Material</option><option>Utilities (Electricity/Water)</option>
+            <option>Fuel/Transport</option><option>Repairs &amp; Maintenance</option>
+            <option>Office &amp; Admin</option><option>Salaries/Wages (Cash)</option>
+            <option>Rent</option><option>Professional Fees</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <h3 style="margin-top:14px">Line Items <span class="muted" id="itemsHint">(item name, qty, unit, rate, amount — for inventory update)</span></h3>
+      <div class="scrollbox">
+        <table id="itemsTable">
+          <thead><tr><th style="width:30%">Item / Description</th><th style="width:12%">Qty</th><th style="width:12%">Unit</th><th style="width:15%">Rate (₹)</th><th style="width:15%">Amount (₹)</th><th style="width:8%"></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button class="btn small secondary" style="margin-top:8px" onclick="addItemRow()">+ Add Line Item</button>
+
+      <div class="formgrid" style="margin-top:14px;grid-template-columns:repeat(3,1fr)">
+        <div><label>Subtotal (₹)</label><input type="number" id="f-subtotal" step="0.01" oninput="recalcTotal(true)"></div>
+        <div><label>GST Amount (₹) <span class="muted">(auto)</span></label><input type="number" id="f-gstamt" step="0.01" readonly></div>
+        <div><label>Total (₹)</label><input type="number" id="f-total" step="0.01" oninput="recalcTotal(false)"></div>
+      </div>
+
+      <div id="extractedTextBox" style="display:none;margin-top:10px">
+        <h3>🔍 Raw Extracted Text (for reference)</h3>
+        <textarea id="rawText" rows="5" readonly style="font-family:monospace;font-size:10.5px;background:var(--bg)"></textarea>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:10px">
+        <button class="btn green" onclick="saveEntry()">✅ Save to Register &amp; Update Inventory</button>
+        <button class="btn red" onclick="resetEntry()">🗑 Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SALES ===================== -->
+  <div class="panel" id="p-sales">
+    <div class="card">
+      <h2>🟢 Sales Register</h2>
+      <div class="kpi-row" id="salesKpis"></div>
+      <div class="scrollbox"><table id="salesTable"><thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th>Items</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Source File</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== PURCHASE ===================== -->
+  <div class="panel" id="p-purchase">
+    <div class="card">
+      <h2>🔵 Purchase Register</h2>
+      <div class="kpi-row" id="purchaseKpis"></div>
+      <div class="scrollbox"><table id="purchaseTable"><thead><tr><th>Bill No</th><th>Date</th><th>Supplier</th><th>Items</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Source File</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== EXPENSE ===================== -->
+  <div class="panel" id="p-expense">
+    <div class="card">
+      <h2>🟠 Expense Register</h2>
+      <div class="kpi-row" id="expenseKpis"></div>
+      <div class="scrollbox"><table id="expenseTable"><thead><tr><th>Bill No</th><th>Date</th><th>Paid To</th><th>Category</th><th>Description</th><th>GST</th><th>Total</th><th>Source File</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== INVENTORY ===================== -->
+  <div class="panel" id="p-inventory">
+    <div class="card">
+      <h2>📋 Inventory Master (Item List &amp; Opening Stock)</h2>
+      <p class="muted">Upload your Inventory Master (Excel: columns <b>Item Code, Item Name, Unit, Opening Stock, Reorder Level</b>) once. Saved Sales/Purchase bills will then update Closing Stock automatically and persist on this device (browser storage) — no need to re-upload each time.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px">
+        <input type="file" id="masterFile" accept=".xlsx,.xls,.csv" onchange="loadItemMaster(this.files[0])">
+        <button class="btn small secondary" onclick="addMasterItem()">+ Add Item Manually</button>
+        <button class="btn small red" onclick="clearItemMaster()">🗑 Clear Master</button>
+        <span id="masterStatus" class="muted"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📦 Inventory Impact (Opening → Closing Stock)</h2>
+      <p class="muted">Purchase bill items = stock IN (+) · Sales bill items = stock OUT (−). Expense bills do not affect inventory.
+      Closing Stock = Opening Stock + Total IN − Total OUT, recalculated automatically every time a Sales/Purchase bill is saved.
+      Items found in bills that aren't in your Inventory Master show Opening Stock = 0 — add them to the master for accurate balances.</p>
+      <div class="scrollbox"><table id="invTable"><thead><tr><th>Item</th><th>Unit</th><th>Opening Stock</th><th>Total IN (Purchase)</th><th>Total OUT (Sales)</th><th>Closing Stock</th><th>Reorder Level</th><th>Status</th><th># Bills</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>📜 Movement Log</h3>
+      <div class="scrollbox"><table id="invLogTable"><thead><tr><th>Date</th><th>Bill No</th><th>Type</th><th>Item</th><th>Qty</th><th>Direction</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+  <datalist id="itemMasterList"></datalist>
+
+  <!-- ===================== EXPORT ===================== -->
+  <div class="panel" id="p-export">
+    <div class="card">
+      <h2>⬇ Export Registers</h2>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:10px">
+        <button class="btn" onclick="exportRegister('sales')">📥 Sales Register (CSV)</button>
+        <button class="btn" onclick="exportRegister('purchase')">📥 Purchase Register (CSV)</button>
+        <button class="btn" onclick="exportRegister('expense')">📥 Expense Register (CSV)</button>
+        <button class="btn green" onclick="exportInventory()">📥 Inventory Movement (CSV)</button>
+        <button class="btn green" onclick="exportUpdatedMaster()">📥 Updated Inventory Master (Excel)</button>
+      </div>
+      <div class="card" style="margin-top:16px;background:var(--bg)">
+        <h3>How to use the exports</h3>
+        <p class="muted">
+        <b>Sales / Purchase / Expense Register (CSV)</b> — one row per bill, ready to append to your Accounts /
+        Sales / Purchase logs feeding the VC Dashboard's Accounts, Sales and Purchase modules.<br><br>
+        <b>Inventory Movement (CSV)</b> — per-item IN/OUT quantities from every bill processed this session.<br><br>
+        <b>Updated Inventory Master (Excel)</b> — your Inventory Master with stock levels rolled forward
+        (Opening + IN − OUT = new Opening), ready to save as your next Inventory Master file — this is the
+        "automatic inventory update" output.<br><br>
+        All data — registers, inventory log and item master — is saved automatically in this browser
+        (local storage) so it stays available next time you open this file on this device.<br><br>
+        All data is processed locally in your browser — nothing is uploaded to a server.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+<footer>SSPI Bills Data Entry Bot · Sales / Purchase / Expense capture with automatic inventory update.</footer>
+
+<script>
+let currentType = 'sales';
+let salesRegister = [], purchaseRegister = [], expenseRegister = [];
+let inventoryLog = []; // {date, billNo, type, item, qty, direction}
+let itemMaster = []; // {code, name, unit, opening, reorder}
+let currentFileName = '';
+
+const STORAGE_KEY = 'sspi_bills_bot_data_v1';
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({salesRegister, purchaseRegister, expenseRegister, inventoryLog, itemMaster}));
+  }catch(e){ console.warn('Could not save local data', e); }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    salesRegister = d.salesRegister || [];
+    purchaseRegister = d.purchaseRegister || [];
+    expenseRegister = d.expenseRegister || [];
+    inventoryLog = d.inventoryLog || [];
+    itemMaster = d.itemMaster || [];
+  }catch(e){ console.warn('Could not load saved data', e); }
+}
+
+function showTab(id, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='inventory') renderInventory();
+}
+
+function setBillType(type, el){
+  currentType = type;
+  document.querySelectorAll('#billTypeRow button').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const labels = {sales:'Sales Bill', purchase:'Purchase Bill', expense:'Expense Bill'};
+  document.getElementById('billTypeLabel').textContent = labels[type];
+  document.getElementById('f-partylabel').textContent = type==='sales' ? 'Customer Name' : (type==='purchase' ? 'Supplier Name' : 'Paid To');
+  document.getElementById('expenseOnlyFields').style.display = type==='expense' ? 'block' : 'none';
+  document.getElementById('itemsHint').textContent = type==='expense'
+    ? '(optional — for split/description of expense)'
+    : '(item name, qty, unit, rate, amount — for inventory update)';
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  e.target.style.background = 'var(--bg)';
+  if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+}
+
+function handleFile(file){
+  if(!file) return;
+  currentFileName = file.name;
+  const ext = file.name.split('.').pop().toLowerCase();
+  document.getElementById('fileStatus').textContent = `Reading "${file.name}" (${ext.toUpperCase()})...`;
+  resetEntry(false);
+
+  if(['xlsx','xls','csv'].includes(ext)){
+    readExcel(file);
+  } else if(ext==='pdf'){
+    readPDF(file);
+  } else if(['docx','doc'].includes(ext)){
+    readDocx(file);
+  } else if(['jpg','jpeg','png'].includes(ext)){
+    readImage(file);
+  } else {
+    document.getElementById('fileStatus').textContent = 'Unsupported file type.';
+  }
+}
+
+// ---------- EXCEL / CSV ----------
+function readExcel(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, {type:'array', cellDates:true});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+    document.getElementById('fileStatus').textContent = `Loaded "${file.name}" — ${json.length} rows.`;
+    showEntryCard();
+    document.getElementById('extractedTextBox').style.display='none';
+
+    if(!json.length) return;
+    const header = json[0].map(h=>String(h).toLowerCase());
+    const idx = (regexes)=>{ for(const re of regexes){ const i = header.findIndex(h=>re.test(h)); if(i>=0) return i; } return -1; };
+    const itemIdx = idx([/item/i,/desc/i,/product/i]);
+    const qtyIdx = idx([/qty/i,/quantity/i]);
+    const unitIdx = idx([/unit/i,/uom/i]);
+    const rateIdx = idx([/rate/i,/price/i]);
+    const amtIdx = idx([/amount/i,/total/i,/value/i]);
+
+    document.querySelector('#itemsTable tbody').innerHTML = '';
+    let subtotal = 0;
+    json.slice(1).forEach(row=>{
+      if(!row.some(c=>String(c).trim()!=='')) return;
+      const item = itemIdx>=0 ? row[itemIdx] : '';
+      const qty = qtyIdx>=0 ? parseFloat(row[qtyIdx])||0 : 0;
+      const unit = unitIdx>=0 ? row[unitIdx] : '';
+      const rate = rateIdx>=0 ? parseFloat(row[rateIdx])||0 : 0;
+      let amount = amtIdx>=0 ? parseFloat(row[amtIdx])||0 : (qty*rate);
+      if(!item && !qty && !amount) return;
+      addItemRow(item, qty, unit, rate, amount);
+      subtotal += amount;
+    });
+    document.getElementById('f-subtotal').value = subtotal.toFixed(2);
+    recalcTotal(true);
+    // try to guess bill no / date / party from header text of whole sheet
+    const flatText = json.map(r=>r.join(' ')).join('\n');
+    autoFillFromText(flatText);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ---------- PDF ----------
+function readPDF(file){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const reader = new FileReader();
+  reader.onload = async e=>{
+    try{
+      const pdf = await pdfjsLib.getDocument({data:new Uint8Array(e.target.result)}).promise;
+      let text = '';
+      for(let p=1; p<=pdf.numPages; p++){
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        text += content.items.map(it=>it.str).join(' ') + '\n';
+      }
+      document.getElementById('fileStatus').textContent = `Extracted text from "${file.name}" (${pdf.numPages} page(s)).`;
+      finishTextExtraction(text);
+    } catch(err){
+      document.getElementById('fileStatus').textContent = `Could not read PDF text ("${err.message}"). Please fill details manually.`;
+      showEntryCard();
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ---------- DOCX ----------
+function readDocx(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    mammoth.extractRawText({arrayBuffer:e.target.result}).then(result=>{
+      document.getElementById('fileStatus').textContent = `Extracted text from "${file.name}".`;
+      finishTextExtraction(result.value);
+    }).catch(err=>{
+      document.getElementById('fileStatus').textContent = `Could not read Word file. Please fill details manually.`;
+      showEntryCard();
+    });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ---------- IMAGE (OCR) ----------
+function readImage(file){
+  document.getElementById('fileStatus').textContent = `Running OCR on "${file.name}"... this may take a moment.`;
+  Tesseract.recognize(file, 'eng').then(({data:{text}})=>{
+    document.getElementById('fileStatus').textContent = `OCR complete for "${file.name}".`;
+    finishTextExtraction(text);
+  }).catch(err=>{
+    document.getElementById('fileStatus').textContent = `OCR failed. Please fill details manually.`;
+    showEntryCard();
+  });
+}
+
+// ---------- Common: text -> fields ----------
+function finishTextExtraction(text){
+  showEntryCard();
+  document.getElementById('extractedTextBox').style.display='block';
+  document.getElementById('rawText').value = text;
+  document.querySelector('#itemsTable tbody').innerHTML = '';
+  addItemRow(); // start with one blank row for manual line items
+  autoFillFromText(text);
+}
+
+function autoFillFromText(text){
+  const get = (regexes)=>{
+    for(const re of regexes){
+      const m = text.match(re);
+      if(m) return m[1].trim();
+    }
+    return '';
+  };
+  const billNo = get([/(?:invoice|bill|inv)[\s.no#:-]*[\s:#-]*([A-Za-z0-9\/\-]+)/i, /(?:no\.?|number)[\s:#-]+([A-Za-z0-9\/\-]+)/i]);
+  if(billNo) document.getElementById('f-billno').value = billNo;
+
+  const dateStr = get([/(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/, /(\d{4}-\d{2}-\d{2})/]);
+  if(dateStr) document.getElementById('f-date').value = normalizeDate(dateStr);
+
+  const party = get([/(?:bill\s*to|customer|m\/s|buyer)[\s:.-]*([A-Za-z0-9 .,&\-]{3,40})/i, /(?:supplier|vendor|seller)[\s:.-]*([A-Za-z0-9 .,&\-]{3,40})/i]);
+  if(party) document.getElementById('f-party').value = party.split('\n')[0].trim();
+
+  const gstAmt = get([/(?:gst|tax|cgst|sgst|igst)[\s:₹rs.]*([\d,]+\.?\d*)/i]);
+  if(gstAmt) document.getElementById('f-gstamt').value = parseFloat(gstAmt.replace(/,/g,''))||0;
+
+  const total = get([/(?:grand\s*total|total\s*amount|net\s*amount|total)[\s:₹rs.]*([\d,]+\.?\d*)/i]);
+  if(total){
+    document.getElementById('f-total').value = parseFloat(total.replace(/,/g,''))||0;
+    recalcTotal(false);
+  }
+}
+
+function normalizeDate(s){
+  s = s.trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m) return s;
+  m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if(m){
+    let [_, d, mo, y] = m;
+    if(y.length===2) y = '20'+y;
+    return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  return '';
+}
+
+function showEntryCard(){
+  document.getElementById('entryCard').style.display = 'block';
+  if(!document.querySelector('#itemsTable tbody').children.length) addItemRow();
+}
+
+// ---------- Manual entry (no file upload) ----------
+function startManualEntry(){
+  currentFileName = ''; // marks this record as manually entered, not from a file
+  resetEntry(false);
+  document.querySelector('#itemsTable tbody').innerHTML = '';
+  addItemRow();
+  document.getElementById('extractedTextBox').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileStatus').textContent = '✍️ Manual entry — no file attached. Fill in the details below and save as usual.';
+  showEntryCard();
+  document.getElementById('entryCard').scrollIntoView({behavior:'smooth', block:'start'});
+  document.getElementById('f-billno').focus();
+}
+
+function addItemRow(item='', qty='', unit='', rate='', amount=''){
+  const tbody = document.querySelector('#itemsTable tbody');
+  const tr = document.createElement('tr');
+  tr.className = 'itemrow';
+  tr.innerHTML = `
+    <td><input type="text" class="small-input" value="${item}" list="itemMasterList"></td>
+    <td><input type="number" step="0.01" class="small-input itm-qty" value="${qty}" onchange="recalcItemAmount(this)"></td>
+    <td><input type="text" class="small-input" value="${unit}"></td>
+    <td><input type="number" step="0.01" class="small-input itm-rate" value="${rate}" onchange="recalcItemAmount(this)"></td>
+    <td><input type="number" step="0.01" class="small-input itm-amount" value="${amount}"></td>
+    <td><button class="btn small red" onclick="this.closest('tr').remove(); recalcSubtotalFromItems();">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function recalcItemAmount(el){
+  const tr = el.closest('tr');
+  const qty = parseFloat(tr.querySelector('.itm-qty').value)||0;
+  const rate = parseFloat(tr.querySelector('.itm-rate').value)||0;
+  if(qty && rate) tr.querySelector('.itm-amount').value = (qty*rate).toFixed(2);
+  recalcSubtotalFromItems();
+}
+
+function recalcSubtotalFromItems(){
+  let sum = 0;
+  document.querySelectorAll('#itemsTable .itm-amount').forEach(i=>sum += parseFloat(i.value)||0);
+  if(sum>0){ document.getElementById('f-subtotal').value = sum.toFixed(2); recalcTotal(true); }
+}
+
+function recalcTotal(fromSubtotal){
+  const subtotal = parseFloat(document.getElementById('f-subtotal').value)||0;
+  const gstPct = parseFloat(document.getElementById('f-gst').value)||0;
+  if(fromSubtotal){
+    const gstAmt = +(subtotal * gstPct/100).toFixed(2);
+    document.getElementById('f-gstamt').value = gstAmt;
+    document.getElementById('f-total').value = (subtotal+gstAmt).toFixed(2);
+  } else {
+    const total = parseFloat(document.getElementById('f-total').value)||0;
+    const gstAmt = +(subtotal * gstPct/100).toFixed(2);
+    document.getElementById('f-gstamt').value = gstAmt;
+    if(!subtotal && total){ document.getElementById('f-subtotal').value = (total - gstAmt).toFixed(2); }
+  }
+}
+document.getElementById('f-gst').addEventListener('input', ()=>recalcTotal(true));
+
+function resetEntry(hideCard=true){
+  document.getElementById('f-billno').value='';
+  document.getElementById('f-date').value='';
+  document.getElementById('f-party').value='';
+  document.getElementById('f-gst').value='0';
+  document.getElementById('f-gstamt').value='';
+  document.getElementById('f-subtotal').value='';
+  document.getElementById('f-total').value='';
+  document.getElementById('f-category').selectedIndex = 0;
+  document.getElementById('rawText').value='';
+  document.querySelector('#itemsTable tbody').innerHTML='';
+  if(hideCard){ document.getElementById('entryCard').style.display='none'; document.getElementById('fileStatus').textContent=''; document.getElementById('fileInput').value=''; }
+}
+
+function saveEntry(){
+  const billNo = document.getElementById('f-billno').value.trim() || '(no number)';
+  const date = document.getElementById('f-date').value || '';
+  const party = document.getElementById('f-party').value.trim();
+  const gstPct = parseFloat(document.getElementById('f-gst').value)||0;
+  const gstAmt = parseFloat(document.getElementById('f-gstamt').value)||0;
+  const subtotal = parseFloat(document.getElementById('f-subtotal').value)||0;
+  const total = parseFloat(document.getElementById('f-total').value)||0;
+
+  const items = [];
+  document.querySelectorAll('#itemsTable tbody tr').forEach(tr=>{
+    const inputs = tr.querySelectorAll('input');
+    const item = inputs[0].value.trim();
+    const qty = parseFloat(inputs[1].value)||0;
+    const unit = inputs[2].value.trim();
+    const rate = parseFloat(inputs[3].value)||0;
+    const amount = parseFloat(inputs[4].value)||0;
+    if(item || qty || amount) items.push({item, qty, unit, rate, amount});
+  });
+
+  if(!party) { if(!confirm('Party/Paid-To name is empty. Save anyway?')) return; }
+
+  const record = {billNo, date, party, gstPct, gstAmt, subtotal, total, items, file: currentFileName, category: document.getElementById('f-category').value};
+
+  if(currentType==='sales'){
+    salesRegister.push(record);
+    items.forEach(it=>{ if(it.item && it.qty) inventoryLog.push({date, billNo, type:'Sales', item:it.item, qty:it.qty, direction:'OUT'}); });
+  } else if(currentType==='purchase'){
+    purchaseRegister.push(record);
+    items.forEach(it=>{ if(it.item && it.qty) inventoryLog.push({date, billNo, type:'Purchase', item:it.item, qty:it.qty, direction:'IN'}); });
+  } else {
+    expenseRegister.push(record);
+  }
+
+  saveState();
+  gsPost({sheet:'bills_'+currentType, billNo, date, party, total, gstAmt, itemCount:items.length});
+  renderAll();
+  resetEntry(true);
+  alert(`Saved to ${currentType==='sales'?'Sales':currentType==='purchase'?'Purchase':'Expense'} Register${items.length && currentType!=='expense' ? ' — inventory updated for '+items.length+' item(s).' : '.'}`);
+}
+
+function renderAll(){
+  renderRegister('sales', salesRegister, document.querySelector('#salesTable tbody'), 'party');
+  renderRegister('purchase', purchaseRegister, document.querySelector('#purchaseTable tbody'), 'party');
+  renderExpense();
+  renderKpis('sales', salesRegister);
+  renderKpis('purchase', purchaseRegister);
+  renderKpis('expense', expenseRegister);
+  renderItemMasterList();
+  renderInventory();
+}
+
+function renderRegister(type, reg, tbody, partyField){
+  tbody.innerHTML = reg.map(r=>`
+    <tr>
+      <td>${r.billNo}</td><td>${r.date}</td><td>${r[partyField]||'—'}</td>
+      <td>${r.items.length} item(s)${r.items.length?': '+r.items.map(i=>i.item).filter(Boolean).slice(0,3).join(', ')+(r.items.length>3?'…':''):''}</td>
+      <td>₹${r.subtotal.toFixed(2)}</td><td>₹${r.gstAmt.toFixed(2)} (${r.gstPct}%)</td><td><b>₹${r.total.toFixed(2)}</b></td>
+      <td class="muted">${r.file||'manual'}</td>
+    </tr>`).join('') || `<tr><td colspan="8" class="muted" style="text-align:center;padding:14px">No bills entered yet.</td></tr>`;
+}
+
+function renderExpense(){
+  const tbody = document.querySelector('#expenseTable tbody');
+  tbody.innerHTML = expenseRegister.map(r=>`
+    <tr>
+      <td>${r.billNo}</td><td>${r.date}</td><td>${r.party||'—'}</td><td><span class="pill pill-orange">${r.category}</span></td>
+      <td>${r.items.length?r.items.map(i=>i.item).filter(Boolean).join(', '):'—'}</td>
+      <td>₹${r.gstAmt.toFixed(2)} (${r.gstPct}%)</td><td><b>₹${r.total.toFixed(2)}</b></td>
+      <td class="muted">${r.file||'manual'}</td>
+    </tr>`).join('') || `<tr><td colspan="8" class="muted" style="text-align:center;padding:14px">No bills entered yet.</td></tr>`;
+}
+
+function renderKpis(type, reg){
+  const total = reg.reduce((s,r)=>s+r.total,0);
+  const gst = reg.reduce((s,r)=>s+r.gstAmt,0);
+  const el = document.getElementById(type+'Kpis');
+  const labels = {sales:'Sales', purchase:'Purchases', expense:'Expenses'};
+  el.innerHTML = `
+    <div class="kpi"><div class="val">${reg.length}</div><div class="lbl">${labels[type]} Bills Entered</div></div>
+    <div class="kpi"><div class="val">₹${total.toLocaleString('en-IN',{maximumFractionDigits:2})}</div><div class="lbl">Total Value</div></div>
+    <div class="kpi"><div class="val">₹${gst.toLocaleString('en-IN',{maximumFractionDigits:2})}</div><div class="lbl">Total GST</div></div>`;
+}
+
+function findMasterItem(name){
+  const key = (name||'').trim().toLowerCase();
+  return itemMaster.find(m=>m.name.trim().toLowerCase()===key);
+}
+
+function loadItemMaster(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+      let added = 0;
+      rows.forEach(r=>{
+        const keys = Object.keys(r);
+        const get = (re)=>{ const k = keys.find(k=>re.test(k)); return k? r[k] : ''; };
+        const name = String(get(/item.?name|item|description|particular/i)||'').trim();
+        if(!name) return;
+        const code = String(get(/item.?code|code/i)||'').trim();
+        const unit = String(get(/unit|uom/i)||'').trim();
+        const opening = parseFloat(get(/open/i))||0;
+        const reorder = parseFloat(get(/reorder|min/i))||0;
+        const existing = findMasterItem(name);
+        if(existing){ existing.code = code||existing.code; existing.unit = unit||existing.unit; existing.opening = opening; existing.reorder = reorder||existing.reorder; }
+        else { itemMaster.push({code, name, unit, opening, reorder}); }
+        added++;
+      });
+      saveState();
+      renderAll();
+      document.getElementById('masterStatus').textContent = `Loaded ${added} item(s) from "${file.name}".`;
+    }catch(err){
+      alert('Could not read Inventory Master file: '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function addMasterItem(){
+  const name = prompt('Item Name:'); if(!name) return;
+  const unit = prompt('Unit (e.g. PCS, KG, BOX):','PCS')||'';
+  const opening = parseFloat(prompt('Opening Stock:','0'))||0;
+  const reorder = parseFloat(prompt('Reorder Level (optional):','0'))||0;
+  const code = prompt('Item Code (optional):','')||'';
+  if(findMasterItem(name)){ alert('Item already exists in master.'); return; }
+  itemMaster.push({code, name, unit, opening, reorder});
+  saveState(); renderAll();
+}
+
+function clearItemMaster(){
+  if(!confirm('Remove the entire Inventory Master list? Movement history (sales/purchase logs) will not be affected.')) return;
+  itemMaster = [];
+  saveState(); renderAll();
+  document.getElementById('masterStatus').textContent = 'Inventory Master cleared.';
+}
+
+function renderItemMasterList(){
+  document.getElementById('itemMasterList').innerHTML = itemMaster.map(m=>`<option value="${m.name}">`).join('');
+}
+
+function renderInventory(){
+  const byItem = {};
+  // seed with master items so opening stock shows even with no movements yet
+  itemMaster.forEach(m=>{
+    byItem[m.name.trim().toLowerCase()] = {item:m.name, unit:m.unit, opening:m.opening||0, reorder:m.reorder||0, in:0, out:0, bills:new Set(), inMaster:true};
+  });
+  inventoryLog.forEach(m=>{
+    const key = m.item.trim().toLowerCase();
+    if(!byItem[key]){
+      const master = findMasterItem(m.item);
+      byItem[key] = {item:m.item, unit: master?master.unit:'', opening: master?master.opening:0, reorder: master?master.reorder:0, in:0, out:0, bills:new Set(), inMaster: !!master};
+    }
+    if(m.direction==='IN') byItem[key].in += m.qty; else byItem[key].out += m.qty;
+    byItem[key].bills.add(m.billNo);
+  });
+  document.querySelector('#invTable tbody').innerHTML = Object.values(byItem).map(e=>{
+    const closing = e.opening + e.in - e.out;
+    let status = '—', statusColor = 'var(--accent)';
+    if(!e.inMaster){ status = 'Not in Master'; statusColor = 'var(--orange)'; }
+    else if(e.reorder>0 && closing<=e.reorder){ status = 'Low Stock'; statusColor = 'var(--red)'; }
+    else if(e.inMaster){ status = 'OK'; statusColor = 'var(--green)'; }
+    return `<tr>
+      <td>${e.item}</td><td>${e.unit||'—'}</td><td>${e.opening.toFixed(2)}</td>
+      <td>${e.in.toFixed(2)}</td><td>${e.out.toFixed(2)}</td>
+      <td><b style="color:${closing>=0?'var(--green)':'var(--red)'}">${closing.toFixed(2)}</b></td>
+      <td>${e.reorder?e.reorder.toFixed(2):'—'}</td>
+      <td><span class="pill" style="background:${statusColor}1a;color:${statusColor}">${status}</span></td>
+      <td>${e.bills.size}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="9" class="muted" style="text-align:center;padding:14px">No inventory items yet — upload an Inventory Master and/or save a Sales or Purchase bill with line items.</td></tr>`;
+
+  document.querySelector('#invLogTable tbody').innerHTML = inventoryLog.map(m=>`
+    <tr><td>${m.date}</td><td>${m.billNo}</td><td>${m.type}</td><td>${m.item}</td><td>${m.qty}</td>
+    <td><span class="pill ${m.direction==='IN'?'pill-green':'pill-red'}">${m.direction}</span></td></tr>`).join('')
+    || `<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">No movements logged yet.</td></tr>`;
+}
+
+function downloadCSV(filename, rows){
+  const csv = rows.map(r=>r.map(c=>{
+    const s = String(c ?? '');
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function exportRegister(type){
+  const map = {sales:salesRegister, purchase:purchaseRegister, expense:expenseRegister};
+  const reg = map[type];
+  if(!reg.length){ alert('No entries to export.'); return; }
+  let rows;
+  if(type==='expense'){
+    rows = [['Bill No','Date','Paid To','Category','Items/Description','Subtotal','GST %','GST Amount','Total','Source File']];
+    reg.forEach(r=>rows.push([r.billNo,r.date,r.party,r.category,r.items.map(i=>i.item).join('; '),r.subtotal.toFixed(2),r.gstPct,r.gstAmt.toFixed(2),r.total.toFixed(2),r.file]));
+  } else {
+    rows = [['Bill No','Date','Party','Item','Qty','Unit','Rate','Amount','Subtotal (Bill)','GST %','GST Amount','Total (Bill)','Source File']];
+    reg.forEach(r=>{
+      if(r.items.length===0){
+        rows.push([r.billNo,r.date,r.party,'','','','','',r.subtotal.toFixed(2),r.gstPct,r.gstAmt.toFixed(2),r.total.toFixed(2),r.file]);
+      } else {
+        r.items.forEach((it,idx)=>{
+          rows.push([r.billNo,r.date,r.party,it.item,it.qty,it.unit,it.rate,it.amount.toFixed(2),
+            idx===0?r.subtotal.toFixed(2):'', idx===0?r.gstPct:'', idx===0?r.gstAmt.toFixed(2):'', idx===0?r.total.toFixed(2):'', r.file]);
+        });
+      }
+    });
+  }
+  downloadCSV(`${type}_register.csv`, rows);
+}
+
+function exportInventory(){
+  if(!inventoryLog.length){ alert('No inventory movements to export.'); return; }
+  const rows = [['Date','Bill No','Bill Type','Item','Qty','Direction']];
+  inventoryLog.forEach(m=>rows.push([m.date,m.billNo,m.type,m.item,m.qty,m.direction]));
+  downloadCSV('inventory_movement_log.csv', rows);
+}
+
+function exportUpdatedMaster(){
+  // Build the same combined item view used in the Inventory tab
+  const byItem = {};
+  itemMaster.forEach(m=>{
+    byItem[m.name.trim().toLowerCase()] = {code:m.code, item:m.name, unit:m.unit, opening:m.opening||0, reorder:m.reorder||0, in:0, out:0};
+  });
+  inventoryLog.forEach(m=>{
+    const key = m.item.trim().toLowerCase();
+    if(!byItem[key]){
+      const master = findMasterItem(m.item);
+      byItem[key] = {code: master?master.code:'', item:m.item, unit: master?master.unit:'', opening: master?master.opening:0, reorder: master?master.reorder:0, in:0, out:0};
+    }
+    if(m.direction==='IN') byItem[key].in += m.qty; else byItem[key].out += m.qty;
+  });
+  const entries = Object.values(byItem);
+  if(!entries.length){ alert('No Inventory Master or movements to export. Upload an Inventory Master and/or save bills with line items first.'); return; }
+
+  const today = new Date().toISOString().slice(0,10);
+  const aoa = [['Item Code','Item Name','Unit','Opening Stock','Reorder Level','Notes']];
+  entries.forEach(e=>{
+    const closing = e.opening + e.in - e.out;
+    aoa.push([e.code||'', e.item, e.unit||'', +closing.toFixed(2), e.reorder||0, `Rolled forward on ${today}: prev opening ${e.opening.toFixed(2)} + IN ${e.in.toFixed(2)} - OUT ${e.out.toFixed(2)}`]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:14},{wch:30},{wch:8},{wch:14},{wch:14},{wch:60}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Inventory Master');
+  XLSX.writeFile(wb, `Inventory_Master_Updated_${today}.xlsx`);
+
+  if(confirm('Updated Inventory Master downloaded.\n\nApply these new Closing Stock values as the Opening Stock for the next cycle now? (Recommended after you have finalized today\'s bills.)')){
+    entries.forEach(e=>{
+      const closing = e.opening + e.in - e.out;
+      const existing = findMasterItem(e.item);
+      if(existing){ existing.opening = +closing.toFixed(2); }
+      else { itemMaster.push({code:e.code, name:e.item, unit:e.unit, opening:+closing.toFixed(2), reorder:e.reorder}); }
+    });
+    inventoryLog = [];
+    saveState(); renderAll();
+    alert('Inventory Master updated. Movement log cleared and ready for the next batch of bills.');
+  }
+}
+
+loadState();
+renderAll();
+
+// ── JSONP cross-device sync ─────────────────────────────
+function gsGet(type, limit){
+  return new Promise(function(resolve){
+    var cbName='_gsJP_'+Date.now();
+    var script=document.createElement('script');
+    var done=false;
+    window[cbName]=function(d){ done=true; delete window[cbName]; if(script.parentNode) script.parentNode.removeChild(script); resolve((d&&d.data)?d.data:[]); };
+    script.onerror=function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } },10000);
+    script.src=GS_URL+'?type='+type+'&limit='+(limit||200)+'&callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+function showToast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e3a5f;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 2px 12px rgba(0,0,0,0.2)';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },4000);
+}
+function loadBillsFromSheets(){
+  // Load sales bills
+  gsGet('billsSales', 200).then(function(rows){
+    if(!rows||!rows.length) return;
+    var synced=0;
+    rows.forEach(function(r){
+      var billNo=r['Bill No']||r['Timestamp']; if(!billNo) return;
+      var exists=salesRegister.some(function(e){ return e.billNo===billNo; });
+      if(!exists){
+        salesRegister.push({billNo:billNo, date:r['Date']||'', party:r['Party']||'',
+          items:[], subtotal:0, gstAmt:parseFloat(r['GST Amt'])||0,
+          total:parseFloat(r['Total'])||0, source:'Cloud'});
+        synced++;
+      }
+    });
+    if(synced>0){ saveState(); renderAll(); showToast('☁ '+synced+' sales bills synced from Google Sheets'); }
+  });
+  // Load purchase bills
+  gsGet('billsPurchase', 200).then(function(rows){
+    if(!rows||!rows.length) return;
+    var synced=0;
+    rows.forEach(function(r){
+      var billNo=r['Bill No']||r['Timestamp']; if(!billNo) return;
+      var exists=purchaseRegister.some(function(e){ return e.billNo===billNo; });
+      if(!exists){
+        purchaseRegister.push({billNo:billNo, date:r['Date']||'', party:r['Party']||'',
+          items:[], subtotal:0, gstAmt:parseFloat(r['GST Amt'])||0,
+          total:parseFloat(r['Total'])||0, source:'Cloud'});
+        synced++;
+      }
+    });
+    if(synced>0){ saveState(); renderAll(); showToast('☁ '+synced+' purchase bills synced from Google Sheets'); }
+  });
+}
+setTimeout(loadBillsFromSheets, 1500);
+</script>
+</body>
+</html>

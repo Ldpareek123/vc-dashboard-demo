@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI QR Code Hub — V4</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1F3864,#2E75B6);padding:18px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid #2E75B6}
+.header h1{font-size:22px;font-weight:700;color:#fff}
+.header p{font-size:12px;color:#94a3b8;margin-top:3px}
+.badge{background:#2E75B6;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px;vertical-align:middle}
+.nav-tabs{display:flex;gap:0;background:#1e293b;border-bottom:2px solid #334155;padding:0 24px;overflow-x:auto}
+.tab{padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;color:#94a3b8;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .2s}
+.tab.active{color:#2E75B6;border-bottom-color:#2E75B6}
+.tab:hover{color:#e2e8f0}
+.main{padding:24px;max-width:1400px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+
+/* QR Grid */
+.qr-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.qr-controls input,.qr-controls select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 12px;border-radius:6px;font-size:13px}
+.btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+.btn-primary{background:#2E75B6;color:#fff}.btn-primary:hover{background:#1F3864}
+.btn-success{background:#375623;color:#fff}.btn-success:hover{background:#2d4a1c}
+.btn-warn{background:#C65911;color:#fff}.btn-warn:hover{background:#a04b0f}
+.btn-sm{padding:5px 10px;font-size:11px}
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.qr-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px;text-align:center;transition:transform .2s;cursor:pointer}
+.qr-card:hover{transform:translateY(-2px);border-color:#2E75B6}
+.qr-card .dept-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-bottom:8px}
+.qr-canvas{margin:8px auto;display:flex;justify-content:center}
+.qr-card h4{font-size:12px;color:#e2e8f0;margin:8px 0 4px;font-weight:600}
+.qr-card p{font-size:10px;color:#64748b}
+.qr-card .qr-btns{display:flex;gap:6px;justify-content:center;margin-top:8px}
+
+/* Scanner */
+.scanner-wrap{max-width:500px;margin:0 auto;text-align:center}
+#scanner-video{width:100%;border-radius:10px;background:#000;border:2px solid #2E75B6}
+.scan-result{margin-top:16px;padding:16px;background:#1e293b;border-radius:8px;border-left:4px solid #375623;display:none}
+.scan-result.show{display:block}
+
+/* Machine QR */
+.machine-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.mcard{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center}
+.mcard .mid{font-size:10px;color:#94a3b8;margin-bottom:4px}
+.mcard h4{font-size:12px;color:#e2e8f0;margin-bottom:8px}
+
+/* Print styles */
+@media print{
+  body{background:#fff;color:#000}
+  .header,.nav-tabs,.qr-controls,.no-print{display:none!important}
+  .qr-grid,.machine-grid{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:12px!important}
+  .qr-card,.mcard{border:1px solid #ccc!important;background:#fff!important;page-break-inside:avoid}
+  .qr-card h4{color:#000!important}.qr-card p{color:#555!important}
+  #scanner-section{display:none!important}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>📱 SSPI QR Code Hub <span class="badge">V4</span></h1>
+    <p>Generate printable QR codes for all bots & machines • Scan barcodes for RM entry</p>
+  </div>
+  <button class="btn btn-primary no-print" onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'" style="margin-left:auto">← Dashboard</button>
+</div>
+
+<div class="nav-tabs">
+  <div class="tab active" onclick="switchTab('bots')">🤖 Bot QR Codes</div>
+  <div class="tab" onclick="switchTab('machines')">⚙️ Machine QR Codes</div>
+  <div class="tab" onclick="switchTab('scanner')">📷 Barcode Scanner</div>
+  <div class="tab" onclick="switchTab('print')">🖨️ Print Sheet</div>
+</div>
+
+<div class="main">
+
+<!-- BOT QR CODES -->
+<div id="bots-section" class="section active">
+  <div class="qr-controls no-print">
+    <input type="text" id="qr-search" placeholder="Search bots..." oninput="filterBots()" style="width:200px">
+    <select id="dept-filter" onchange="filterBots()">
+      <option value="">All Departments</option>
+      <option>Production</option>
+      <option>HR</option>
+      <option>Finance</option>
+      <option>Stores</option>
+      <option>Sales</option>
+      <option>Compliance</option>
+    </select>
+    <button class="btn btn-success" onclick="window.print()">🖨️ Print All</button>
+    <button class="btn btn-primary" onclick="downloadAllQR()">⬇️ Download All</button>
+  </div>
+  <div class="qr-grid" id="bot-grid"></div>
+</div>
+
+<!-- MACHINE QR CODES -->
+<div id="machines-section" class="section">
+  <div class="qr-controls no-print">
+    <button class="btn btn-success" onclick="window.print()">🖨️ Print Machine Labels</button>
+    <button class="btn btn-primary" onclick="downloadAllMachineQR()">⬇️ Download All</button>
+    <span style="font-size:12px;color:#94a3b8;margin-left:8px">Stick QR labels on each machine — workers scan to open maintenance bot pre-filled</span>
+  </div>
+  <div class="machine-grid" id="machine-grid"></div>
+</div>
+
+<!-- BARCODE SCANNER -->
+<div id="scanner-section" class="section">
+  <div class="scanner-wrap">
+    <h3 style="margin-bottom:16px;color:#2E75B6">📷 Camera Barcode / QR Scanner</h3>
+    <p style="font-size:13px;color:#94a3b8;margin-bottom:16px">Scan barcodes on RM bags, job cards, or machine labels to instantly open the right bot pre-filled with data.</p>
+    <video id="scanner-video" autoplay playsinline></video>
+    <canvas id="scanner-canvas" style="display:none"></canvas>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+      <button class="btn btn-primary" id="scan-btn" onclick="startScanner()">📷 Start Camera</button>
+      <button class="btn btn-warn" id="stop-btn" onclick="stopScanner()" style="display:none">⏹ Stop</button>
+    </div>
+    <div class="scan-result" id="scan-result">
+      <div id="scan-text" style="font-size:14px;font-weight:600;color:#22c55e;margin-bottom:8px"></div>
+      <div id="scan-action" style="font-size:12px;color:#94a3b8;margin-bottom:10px"></div>
+      <div id="scan-buttons" style="display:flex;gap:8px;justify-content:center"></div>
+    </div>
+    <div style="margin-top:20px;background:#1e293b;border-radius:8px;padding:16px;text-align:left">
+      <h4 style="font-size:13px;color:#2E75B6;margin-bottom:8px">🏷️ What can you scan?</h4>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.8">
+        ✅ SSPI Bot QR codes (opens bot directly)<br>
+        ✅ Machine QR labels (opens Maintenance bot pre-filled)<br>
+        ✅ Job card barcodes (opens Manufacturing bot with JC number)<br>
+        ✅ RM bag barcodes (opens Materials/RM bot with material pre-filled)<br>
+        ✅ Any URL QR code
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT SHEET -->
+<div id="print-section" class="section">
+  <div class="no-print" style="margin-bottom:20px">
+    <h3 style="margin-bottom:8px;color:#2E75B6">🖨️ Print-Ready QR Sheet</h3>
+    <p style="font-size:13px;color:#94a3b8;margin-bottom:12px">Select what to include on the print sheet, then click Print.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="print-bots" checked onchange="buildPrintSheet()"> Bot QR Codes</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="print-machines" checked onchange="buildPrintSheet()"> Machine Labels</label>
+      <button class="btn btn-success" onclick="window.print()" style="margin-left:auto">🖨️ Print Now</button>
+    </div>
+  </div>
+  <div id="print-sheet"></div>
+</div>
+
+</div><!-- /main -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+<script>
+const BASE_PATH = window.location.href.replace(/[^/]*$/, '');
+
+const BOTS = [
+  {name:'SSPI Manufacturing Dashboard',file:'SSPI_Manufacturing_Dashboard.html',dept:'Production',color:'#2E75B6'},
+  {name:'Machine Module',file:'SSPI_Machine_Module.html',dept:'Production',color:'#2E75B6'},
+  {name:'Master Flow Chart',file:'SSPI_Master_Machine_Flow_Chart.html',dept:'Production',color:'#2E75B6'},
+  {name:'Materials GRN Bot',file:'SSPI_Materials_Bot.html',dept:'Stores',color:'#375623'},
+  {name:'RM Data Entry Bot',file:'SSPI_RM_Bot.html',dept:'Stores',color:'#375623'},
+  {name:'RM Dashboard',file:'SSPI_RM_Dashboard.html',dept:'Stores',color:'#375623'},
+  {name:'Stores Inventory Bot',file:'Stores_Inventory_Bot.html',dept:'Stores',color:'#375623'},
+  {name:'Salary Data Entry Bot',file:'SSPI_Salary_Data_Entry_Bot.html',dept:'HR',color:'#C65911'},
+  {name:'Daily Attendance Bot',file:'SSPI_Daily_Attendance_Bot.html',dept:'HR',color:'#C65911'},
+  {name:'Monthly Payroll Bot',file:'SSPI_Monthly_Payroll_Bot.html',dept:'HR',color:'#C65911'},
+  {name:'HR Admin Module',file:'SSPI_HR_Admin_Module.html',dept:'HR',color:'#C65911'},
+  {name:'Advance Against Salary',file:'Advance_Against_Salary_Bot.html',dept:'HR',color:'#C65911'},
+  {name:'Attendance Correction Bot',file:'Attendance_Punch_Correction_Bot.html',dept:'HR',color:'#C65911'},
+  {name:'Finance Accounts Module',file:'SSPI_Finance_Accounts_Module.html',dept:'Finance',color:'#4B3BA5'},
+  {name:'Accounting Voucher Bot',file:'Accounting_Voucher_Bot.html',dept:'Finance',color:'#4B3BA5'},
+  {name:'Bills Data Entry Bot',file:'Bills_Data_Entry_Bot.html',dept:'Finance',color:'#4B3BA5'},
+  {name:'Debtors Control Bot',file:'Debtors_Control_Bot.html',dept:'Finance',color:'#4B3BA5'},
+  {name:'GST Recon Bot',file:'GST_Recon_DataEntry_Bot.html',dept:'Finance',color:'#4B3BA5'},
+  {name:'Sales Order Bot',file:'SSPI_Sales_Order_Bot.html',dept:'Sales',color:'#0E6F56'},
+  {name:'ESIC EPF Compliance Bot',file:'ESIC_EPF_Compliance_Bot.html',dept:'Compliance',color:'#8B0000'},
+  {name:'Approvals Inbox',file:'SSPI_Approvals_Inbox.html',dept:'Production',color:'#6B7280'},
+  {name:'Owner Daily Report',file:'SSPI_Owner_Daily_Report.html',dept:'Production',color:'#1F3864'},
+  {name:'Analytics Dashboard',file:'SSPI_Analytics_Dashboard.html',dept:'Production',color:'#2E75B6'},
+  {name:'QR Hub',file:'SSPI_QR_Hub.html',dept:'Production',color:'#2E75B6'},
+  {name:'PM Calendar',file:'SSPI_PM_Calendar.html',dept:'Production',color:'#375623'},
+  {name:'Customer Portal',file:'SSPI_Customer_Portal.html',dept:'Sales',color:'#0E6F56'},
+];
+
+const MACHINES = [
+  'PP Corrugation Machine 1','PP Corrugation Machine 2','PP Corrugation Machine 3',
+  'PP Corrugation Machine 4','PP Corrugation Machine 5','PP Lamination Machine 1',
+  'PP Lamination Machine 2','Slitter Machine 1','Slitter Machine 2','Slitter Machine 3',
+  'Bag Making Machine 1','Bag Making Machine 2','Bag Making Machine 3','Bag Making Machine 4',
+  'Printing Machine 1','Printing Machine 2','Printing Machine 3','Sealing Machine 1',
+  'Sealing Machine 2','Compressor 1','Compressor 2','Boiler','DG Set 1','DG Set 2',
+  'Forklift','Weigh Bridge'
+];
+
+function buildBotGrid(filter='', dept='') {
+  const grid = document.getElementById('bot-grid');
+  grid.innerHTML = '';
+  BOTS.filter(b => {
+    const matchSearch = !filter || b.name.toLowerCase().includes(filter.toLowerCase());
+    const matchDept = !dept || b.dept === dept;
+    return matchSearch && matchDept;
+  }).forEach((bot, i) => {
+    const card = document.createElement('div');
+    card.className = 'qr-card';
+    card.innerHTML = `
+      <span class="dept-badge" style="background:${bot.color}20;color:${bot.color}">${bot.dept}</span>
+      <div class="qr-canvas" id="qr-bot-${i}"></div>
+      <h4>${bot.name}</h4>
+      <p>${bot.file}</p>
+      <div class="qr-btns no-print">
+        <button class="btn btn-sm btn-primary" onclick="downloadQR('qr-bot-${i}','${bot.name}')">⬇️</button>
+        <button class="btn btn-sm btn-success" onclick="openBot('${bot.file}')">Open</button>
+      </div>`;
+    grid.appendChild(card);
+    setTimeout(() => {
+      new QRCode(document.getElementById(`qr-bot-${i}`), {
+        text: BASE_PATH + bot.file,
+        width: 120, height: 120,
+        colorDark: bot.color, colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }, i * 30);
+  });
+}
+
+function buildMachineGrid() {
+  const grid = document.getElementById('machine-grid');
+  grid.innerHTML = '';
+  MACHINES.forEach((m, i) => {
+    const card = document.createElement('div');
+    card.className = 'mcard';
+    const mid = 'M-' + String(i+1).padStart(2,'0');
+    card.innerHTML = `
+      <div class="mid">${mid}</div>
+      <h4>${m}</h4>
+      <div id="qr-machine-${i}" style="display:flex;justify-content:center;margin:8px 0"></div>
+      <div style="font-size:10px;color:#64748b">Scan → Maintenance Bot</div>`;
+    grid.appendChild(card);
+    setTimeout(() => {
+      const url = BASE_PATH + `SSPI_Machine_Module.html?machine=${encodeURIComponent(m)}&id=${mid}`;
+      new QRCode(document.getElementById(`qr-machine-${i}`), {
+        text: url, width: 110, height: 110,
+        colorDark: '#1F3864', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }, i * 30);
+  });
+}
+
+function filterBots() {
+  buildBotGrid(document.getElementById('qr-search').value, document.getElementById('dept-filter').value);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const tabs = ['bots','machines','scanner','print'];
+  document.querySelectorAll('.tab')[tabs.indexOf(tab)].classList.add('active');
+  document.getElementById(tab+'-section').classList.add('active');
+  if (tab === 'print') buildPrintSheet();
+}
+
+function buildPrintSheet() {
+  const sheet = document.getElementById('print-sheet');
+  sheet.innerHTML = '<h2 style="margin-bottom:12px;color:#1F3864">SSPI Bhiwadi — QR Reference Sheet</h2>';
+  if (document.getElementById('print-bots').checked) {
+    sheet.innerHTML += '<h3 style="margin:12px 0 8px;color:#2E75B6">Bot QR Codes</h3>';
+    const g = document.createElement('div');
+    g.style.cssText = 'display:grid;grid-template-columns:repeat(5,1fr);gap:12px';
+    sheet.appendChild(g);
+    BOTS.forEach((bot, i) => {
+      const c = document.createElement('div');
+      c.style.cssText = 'border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center;background:#fff';
+      c.innerHTML = `<div id="ps-bot-${i}"></div><p style="font-size:10px;color:#333;margin-top:4px;font-weight:600">${bot.name}</p>`;
+      g.appendChild(c);
+      setTimeout(() => {
+        new QRCode(document.getElementById(`ps-bot-${i}`), {
+          text: BASE_PATH + bot.file, width: 80, height: 80,
+          colorDark: '#1F3864', colorLight: '#ffffff'
+        });
+      }, i * 20);
+    });
+  }
+}
+
+function downloadQR(id, name) {
+  const canvas = document.querySelector(`#${id} canvas`);
+  if (!canvas) { alert('QR not ready yet'); return; }
+  const a = document.createElement('a');
+  a.download = name.replace(/\s+/g,'-') + '-QR.png';
+  a.href = canvas.toDataURL();
+  a.click();
+}
+
+function openBot(url){
+  if(!url||url==='#'||url==='#all')return false;
+  if(window.location.protocol==='file:'){
+    window.location.href=url;
+    return false;
+  }
+  try{
+    var w=window.open(url,'_blank');
+    if(!w||w.closed||typeof w.closed==='undefined'){
+      window.location.href=url;
+    }
+  }catch(e){ window.location.href=url; }
+  return false;
+}
+
+// CAMERA SCANNER
+let scanStream = null, scanInterval = null;
+
+function startScanner() {
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      scanStream = stream;
+      const video = document.getElementById('scanner-video');
+      video.srcObject = stream;
+      document.getElementById('scan-btn').style.display = 'none';
+      document.getElementById('stop-btn').style.display = 'inline-block';
+      scanInterval = setInterval(scanFrame, 300);
+    })
+    .catch(e => alert('Camera access denied: ' + e.message));
+}
+
+function stopScanner() {
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+  document.getElementById('scan-btn').style.display = 'inline-block';
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('scanner-video').srcObject = null;
+}
+
+function scanFrame() {
+  const video = document.getElementById('scanner-video');
+  if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+  const canvas = document.getElementById('scanner-canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height);
+  if (code) {
+    handleScanResult(code.data);
+    stopScanner();
+  }
+}
+
+function handleScanResult(data) {
+  const result = document.getElementById('scan-result');
+  const text = document.getElementById('scan-text');
+  const action = document.getElementById('scan-action');
+  const btns = document.getElementById('scan-buttons');
+  result.classList.add('show');
+  text.textContent = '✅ Scanned: ' + data;
+  btns.innerHTML = '';
+
+  // Detect type
+  if (data.includes('.html')) {
+    const file = data.split('/').pop();
+    const bot = BOTS.find(b => b.file === file);
+    if (bot) {
+      action.textContent = `Detected: ${bot.name} (${bot.dept})`;
+    } else action.textContent = 'Detected: SSPI page';
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.textContent = '→ Open Now';
+    btn.onclick = () => window.location.href = data;
+    btns.appendChild(btn);
+  } else if (/^(M-\d+|JC-\d+|GRN-\d+)/i.test(data)) {
+    const prefix = data.substring(0,2).toUpperCase();
+    const targets = {
+      'M-': ['SSPI_Machine_Module.html?machine='+data, 'Open Machine Bot'],
+      'JC': ['SSPI_Manufacturing_Dashboard.html?jc='+data, 'Open Job Card'],
+      'GR': ['SSPI_Materials_Bot.html?grn='+data, 'Open GRN Bot']
+    };
+    const match = targets[prefix] || targets[data.substring(0,2).toUpperCase()];
+    if (match) {
+      action.textContent = 'Detected: ' + data + ' — routing to correct bot';
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-primary';
+      btn.textContent = match[1];
+      btn.onclick = () => window.location.href = match[0];
+      btns.appendChild(btn);
+    } else {
+      action.textContent = 'Barcode data: ' + data;
+    }
+  } else {
+    action.textContent = data.startsWith('http') ? 'External URL detected' : 'Raw data scanned';
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn btn-success';
+    copyBtn.textContent = '📋 Copy';
+    copyBtn.onclick = () => navigator.clipboard.writeText(data);
+    btns.appendChild(copyBtn);
+  }
+}
+
+// Init
+buildBotGrid();
+buildMachineGrid();
+</script>
+</body>
+</html>

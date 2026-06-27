@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Finance &amp; Accounts Module | Shree Shyam Packaging Industries</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+  :root{--primary:#6D2E46;--accent:#B85042;--secondary:#0ea5e9;--success:#22c55e;--danger:#ef4444;--warn:#eab308;--purple:#a855f7;--bg1:#1e293b;--bg2:#0f172a;--bg3:#334155;--text1:#f1f5f9;--text2:#94a3b8;--border:#334155}
+  .header{background:linear-gradient(135deg,#1e293b,#0f172a);border-bottom:2px solid var(--primary);padding:0;position:sticky;top:0;z-index:100}
+  .header-top{display:flex;align-items:center;gap:16px;padding:10px 20px;background:rgba(109,46,70,0.12)}
+  .logo-area{display:flex;align-items:center;gap:12px}
+  .logo-circle{width:48px;height:48px;background:linear-gradient(135deg,var(--primary),#3d1a28);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff}
+  .company-info h1{font-size:18px;font-weight:700;color:#d8849c}
+  .company-info p{font-size:11px;color:var(--text2)}
+  .header-badges{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+  .badge{background:rgba(109,46,70,0.2);border:1px solid rgba(109,46,70,0.4);color:#d8849c;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
+  .badge.gold{background:rgba(184,80,66,0.18);border-color:rgba(184,80,66,0.4);color:var(--accent)}
+  .badge.blue{background:rgba(14,165,233,0.15);border-color:rgba(14,165,233,0.3);color:var(--secondary)}
+  .nav{display:flex;gap:4px;padding:8px 20px;overflow-x:auto;background:#1e293b}
+  .nav-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all .2s}
+  .nav-btn:hover,.nav-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+  .content{padding:20px;max-width:1600px;margin:0 auto}
+  .section{display:none}
+  .section.active{display:block}
+  .sec-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+  .sec-header h2{font-size:20px;font-weight:700;color:var(--text1)}
+  .sec-header p{font-size:13px;color:var(--text2);margin-left:auto}
+  .cards{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:24px}
+  .card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .card.maroon::before{background:var(--primary)}
+  .card.gold::before{background:var(--accent)}
+  .card.blue::before{background:var(--secondary)}
+  .card.green::before{background:var(--success)}
+  .card.red::before{background:var(--danger)}
+  .card.yellow::before{background:var(--warn)}
+  .card-icon{font-size:28px;margin-bottom:8px}
+  .card-value{font-size:28px;font-weight:800;color:var(--text1)}
+  .card-label{font-size:12px;color:var(--text2);margin-top:2px}
+  .card-sub{font-size:11px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+  .table-wrap{background:var(--bg1);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+  .table-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px}
+  .table-head h3{font-size:14px;font-weight:700;color:var(--text1)}
+  table{width:100%;border-collapse:collapse}
+  th{background:#0f172a;color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:10px 14px;font-size:13px;color:var(--text1);border-bottom:1px solid rgba(51,65,85,.5)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(109,46,70,0.08)}
+  .tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700}
+  .tag.green{background:rgba(34,197,94,.15);color:var(--success)}
+  .tag.gold{background:rgba(184,80,66,.2);color:var(--accent)}
+  .tag.blue{background:rgba(14,165,233,.15);color:var(--secondary)}
+  .tag.red{background:rgba(239,68,68,.15);color:var(--danger)}
+  .tag.purple{background:rgba(168,85,247,.15);color:var(--purple)}
+  .tag.yellow{background:rgba(234,179,8,.15);color:var(--warn)}
+  .bot-card{background:var(--bg1);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:10px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .bot-card .icon{font-size:24px}
+  .bot-card .title{font-size:14px;font-weight:700;color:var(--text1)}
+  .bot-card .desc{font-size:11px;color:var(--text2);margin-top:2px;max-width:560px}
+  .links-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+  .link-btn{background:var(--bg1);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+  .link-btn:hover{border-color:var(--primary);color:#d8849c}
+  .btn{padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-secondary{background:var(--bg3);color:var(--text1)}
+  .pin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center}
+  .pin-overlay.open{display:flex}
+  .pin-box{background:#1e293b;border:1px solid var(--primary);border-radius:14px;padding:30px;width:340px;text-align:center}
+  .pin-box h3{color:#d8849c;font-size:16px;font-weight:700;margin-bottom:6px}
+  .pin-box p{font-size:12px;color:var(--text2);margin-bottom:16px}
+  .pin-box input{width:100%;background:#0f172a;border:1px solid var(--border);color:var(--text1);padding:10px;border-radius:8px;font-size:14px;text-align:center;letter-spacing:3px;margin-bottom:12px}
+  .pin-error{color:var(--danger);font-size:12px;margin-top:8px;display:none}
+  @media(max-width:768px){.cards{grid-template-columns:repeat(2,1fr)}.header-badges{display:none}}
+</style>
+</head>
+<body>
+<div id="back_to_dashboard" style="background:#1E3A5F;color:#fff;padding:8px 20px;display:flex;align-items:center;gap:12px;font-size:12px;position:sticky;top:0;z-index:9999;box-shadow:0 2px 6px rgba(0,0,0,.35)">
+  <button onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">← Back to Dashboard</button>
+  <span style="opacity:.55;font-size:11px;">SSPI Operations Dashboard V4</span>
+</div>
+
+<!-- PIN GATE -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div style="font-size:36px;margin-bottom:10px">💰</div>
+    <h3>Finance &amp; Accounts Module Access</h3>
+    <p>Shree Shyam Packaging Industries<br>Enter your authorization PIN to continue</p>
+    <input type="password" id="pinInput" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')verifyPin()">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:1" onclick="verifyPin()">🔓 Unlock</button>
+      <button class="btn btn-secondary" onclick="goBack()">✕ Cancel</button>
+    </div>
+    <p class="pin-error" id="pinError">❌ Invalid PIN. Please try again.</p>
+    <div style="margin-top:14px;font-size:10px;color:#475569">
+      OWNER@2026 · VC-ACC-2026 · VC-ADMIN-2026 · VC-HEAD-2026
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo-area">
+      <div class="logo-circle">SS</div>
+      <div class="company-info">
+        <h1>💰 SSPI Finance &amp; Accounts Module</h1>
+        <p>Shree Shyam Packaging Industries, Bhiwadi · All Finance &amp; Accounts Reports, Company-Wide</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge">₹48.05L Revenue</span>
+      <span class="badge gold">₹28.5L Cash</span>
+      <span class="badge blue">21 Open Invoices</span>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showSection('overview')">📊 Overview</button>
+    <button class="nav-btn" onclick="showSection('accounts')">📒 Accounts &amp; P&amp;L</button>
+    <button class="nav-btn" onclick="showSection('debtors')">💰 Debtors &amp; Receivables</button>
+    <button class="nav-btn" onclick="showSection('sales')">📈 Sales &amp; Orders</button>
+    <button class="nav-btn" onclick="showSection('purchase')">📥 Purchase &amp; Procurement</button>
+    <button class="nav-btn" onclick="showSection('gst')">🧮 GST Compliance</button>
+    <button class="nav-btn" onclick="showSection('vouchers')">🧾 Vouchers &amp; Bills</button>
+    <button class="nav-btn blue" onclick="showSection('reports')">📑 Reports</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+<div class="links-bar">
+  <a class="link-btn" 
+  <a class="link-btn" href="SSPI_Machine_Module.html" onclick="openBot(this.href);return false;">⚙️ Machine Module</a>
+  <a class="link-btn" href="SSPI_HR_Admin_Module.html" onclick="openBot(this.href);return false;">🧑‍💼 HR &amp; Admin Module</a>
+  <a class="link-btn" href="SSPI_COMBINED_DASHBOARD_V4.html" onclick="openBot(this.href);return false;">📊 Combined Dashboard</a>
+</div>
+
+<!-- ═══════════════ OVERVIEW ═══════════════ -->
+<div class="section active" id="overview">
+  <div class="sec-header">
+    <h2>📊 Finance &amp; Accounts Overview</h2>
+    <p>Shree Shyam Packaging Industries — Company-Wide, June 2026</p>
+  </div>
+  <div class="cards">
+    <div class="card maroon"><div class="card-icon">💰</div><div class="card-value">₹48.05L</div><div class="card-label">Revenue Collected</div><div class="card-sub">Target: ₹50L (96.1%)</div></div>
+    <div class="card gold"><div class="card-icon">🏦</div><div class="card-value">₹28.5L</div><div class="card-label">Cash Balance</div><div class="card-sub">As of today — Healthy</div></div>
+    <div class="card green"><div class="card-icon">📈</div><div class="card-value">₹1.77L</div><div class="card-label">Net Profit (PAT)</div><div class="card-sub">After all expenses</div></div>
+    <div class="card red"><div class="card-icon">⚠️</div><div class="card-value">₹12.4L</div><div class="card-label">Invoice Overdue</div><div class="card-sub">3 invoices &gt;60 days</div></div>
+    <div class="card yellow"><div class="card-icon">📋</div><div class="card-value">₹14.2L</div><div class="card-label">Outstanding Receivables</div><div class="card-sub">Payment pending</div></div>
+    <div class="card blue"><div class="card-icon">🧾</div><div class="card-value">₹32L</div><div class="card-label">Total Debtors Outstanding</div><div class="card-sub">2 accounts in legal stage</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px">
+    <div class="table-wrap" style="padding:18px;margin-bottom:0">
+      <h3 style="margin-bottom:10px">📈 Sales &amp; Orders</h3>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        Orders Value: <b style="color:var(--text1)">₹47.5L</b> (Target ₹52L)<br>
+        Orders Delivered: <b style="color:var(--text1)">14 of 22</b><br>
+        Pending Dispatch: <b style="color:var(--danger)">4 overdue</b>
+      </div>
+    </div>
+    <div class="table-wrap" style="padding:18px;margin-bottom:0">
+      <h3 style="margin-bottom:10px">📥 Purchase &amp; Procurement</h3>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        PO On-Time: <b style="color:var(--text1)">88.9%</b> (Target 95%)<br>
+        Total POs (Month): <b style="color:var(--text1)">20</b> · ₹28.4L value<br>
+        Pending GRN: <b style="color:var(--warn)">4</b> · Avg Lead Time: <b style="color:var(--text1)">9.2 days</b>
+      </div>
+    </div>
+    <div class="table-wrap" style="padding:18px;margin-bottom:0">
+      <h3 style="margin-bottom:10px">🧮 GST &amp; Statutory</h3>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8">
+        GSTR-2B / GSTR-1 / GSTR-3B: <b style="color:var(--success)">Reconciled</b><br>
+        e-Invoice / e-Way Bill: <b style="color:var(--success)">In Sync</b><br>
+        RCM Compliance: <b style="color:var(--success)">✅ On Track</b>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ACCOUNTS & P&L ═══════════════ -->
+<div class="section" id="accounts">
+  <div class="sec-header"><h2>📒 Accounts &amp; Profit/Loss</h2><p>Cash position, P&amp;L, and invoice aging — company wide</p></div>
+  <div class="cards">
+    <div class="card maroon"><div class="card-icon">💰</div><div class="card-value">₹48.05L</div><div class="card-label">Revenue Collected</div><div class="card-sub">Target: ₹50L</div></div>
+    <div class="card red"><div class="card-icon">⚠️</div><div class="card-value">₹12.4L</div><div class="card-label">Invoice Overdue</div><div class="card-sub">3 invoices &gt;60 days</div></div>
+    <div class="card gold"><div class="card-icon">🏦</div><div class="card-value">₹28.5L</div><div class="card-label">Cash Balance</div><div class="card-sub">As of today</div></div>
+    <div class="card green"><div class="card-icon">📈</div><div class="card-value">₹1.77L</div><div class="card-label">Net Profit (PAT)</div><div class="card-sub">After all expenses</div></div>
+  </div>
+
+  <div class="bot-card">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">📒</span>
+      <div>
+        <div class="title">General Accounting Voucher Entry Bot</div>
+        <div class="desc">Record Payment, Receipt, Journal &amp; Contra accounting vouchers with document attachments for books reconciliation.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('Accounting_Voucher_Bot.html','_blank')">🚀 Open Voucher Bot</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>Invoice Aging Summary</h3><span class="tag red">Action Required</span></div>
+    <table>
+      <thead><tr><th>Aging Bucket</th><th>No. of Invoices</th><th>Outstanding Amount</th><th>% of Total</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Current (0–30 days)</td><td>12</td><td>₹8.2L</td><td>28.4%</td><td><span class="tag green">Regular follow-up</span></td></tr>
+        <tr><td>Warning (31–60 days)</td><td>6</td><td>₹7.8L</td><td>27.0%</td><td><span class="tag yellow">Send reminder</span></td></tr>
+        <tr><td>Overdue (&gt;60 days)</td><td>3</td><td>₹12.4L</td><td>43.0%</td><td><span class="tag red">Legal notice / MD</span></td></tr>
+        <tr><td><strong>TOTAL OUTSTANDING</strong></td><td><strong>21</strong></td><td><strong>₹28.8L</strong></td><td><strong>100%</strong></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>Revenue vs Expenses vs Profit — June 2026</h3></div>
+    <table>
+      <thead><tr><th>Metric</th><th>Target</th><th>Actual</th><th>Achievement %</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Revenue</td><td>₹50L</td><td>₹48.05L</td><td>96.1%</td><td><span class="tag green">✓ Near Target</span></td></tr>
+        <tr><td>Cash Balance</td><td>≥₹25L</td><td>₹28.5L</td><td>—</td><td><span class="tag green">✓ OK</span></td></tr>
+        <tr><td>Net Profit (PAT)</td><td>—</td><td>₹1.77L</td><td>—</td><td><span class="tag green">✓ Positive</span></td></tr>
+        <tr><td>Outstanding Receivables</td><td>≤₹10L</td><td>₹14.2L</td><td>—</td><td><span class="tag yellow">⚠ Above Target</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ DEBTORS & RECEIVABLES ═══════════════ -->
+<div class="section" id="debtors">
+  <div class="sec-header"><h2>💰 Debtors &amp; Receivables</h2><p>Customer outstanding, aging analysis, and collection forecast</p></div>
+  <div class="cards">
+    <div class="card red"><div class="card-icon">💸</div><div class="card-value">₹32L</div><div class="card-label">Total Debtors Outstanding</div><div class="card-sub">All customers</div></div>
+    <div class="card red"><div class="card-icon">⚖️</div><div class="card-value">2</div><div class="card-label">Accounts in Legal Stage</div><div class="card-sub">Escalated for recovery</div></div>
+    <div class="card yellow"><div class="card-icon">⏳</div><div class="card-value">₹14.2L</div><div class="card-label">Outstanding Receivables</div><div class="card-sub">Payment pending</div></div>
+    <div class="card green"><div class="card-icon">✅</div><div class="card-value">₹8.2L</div><div class="card-label">Current (0-30 days)</div><div class="card-sub">Regular follow-up</div></div>
+  </div>
+
+  <div class="bot-card" style="border-left-color:#9a3412">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">💰</span>
+      <div>
+        <div class="title">Debtors Control Bot</div>
+        <div class="desc">Manage customer outstanding, aging analysis, receipt entry, follow-up log, escalation register &amp; collection forecast — ₹32L outstanding, 2 accounts in legal stage.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="background:#9a3412" onclick="window.open('Debtors_Control_Bot.html','_blank')">🚀 Open Debtors Bot</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>Debtor Aging Breakdown</h3></div>
+    <table>
+      <thead><tr><th>Aging Bucket</th><th>No. of Invoices</th><th>Outstanding Amount</th><th>% of Total</th><th>Recommended Action</th></tr></thead>
+      <tbody>
+        <tr><td>Current (0–30 days)</td><td>12</td><td>₹8.2L</td><td>28.4%</td><td><span class="tag green">Regular follow-up</span></td></tr>
+        <tr><td>Warning (31–60 days)</td><td>6</td><td>₹7.8L</td><td>27.0%</td><td><span class="tag yellow">Send reminder</span></td></tr>
+        <tr><td>Overdue (&gt;60 days)</td><td>3</td><td>₹12.4L</td><td>43.0%</td><td><span class="tag red">Legal notice / MD escalation</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>⚖️ Legal Stage Escalations</h3><span class="tag red">2 accounts</span></div>
+    <table>
+      <thead><tr><th>Customer</th><th>Outstanding</th><th>Days Overdue</th><th>Escalated To</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Customer A (&gt;60 days)</td><td>₹6.5L</td><td>78 days</td><td>Owner / MD</td><td><span class="tag red">Legal Notice Sent</span></td></tr>
+        <tr><td>Customer B (&gt;60 days)</td><td>₹5.9L</td><td>65 days</td><td>Owner / MD</td><td><span class="tag yellow">Final Reminder</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ SALES & ORDERS ═══════════════ -->
+<div class="section" id="sales">
+  <div class="sec-header"><h2>📈 Sales &amp; Orders</h2><p>Order pipeline, dispatch, and revenue performance</p></div>
+  <div class="cards">
+    <div class="card maroon"><div class="card-icon">📈</div><div class="card-value">₹47.5L</div><div class="card-label">Orders Value</div><div class="card-sub">Target: ₹52L (91.4%)</div></div>
+    <div class="card green"><div class="card-icon">✅</div><div class="card-value">14</div><div class="card-label">Orders Delivered</div><div class="card-sub">of 22 orders</div></div>
+    <div class="card red"><div class="card-icon">🚚</div><div class="card-value">4</div><div class="card-label">Pending Dispatch</div><div class="card-sub">Overdue orders</div></div>
+    <div class="card yellow"><div class="card-icon">⏳</div><div class="card-value">₹14.2L</div><div class="card-label">Outstanding</div><div class="card-sub">Payment pending</div></div>
+  </div>
+
+  <div class="bot-card">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">📦</span>
+      <div>
+        <div class="title">Sales Order &amp; Dispatch Bot</div>
+        <div class="desc">Captures orders (manual entry with PDF/XLSX/DOCX attach, or auto-drafted from a Gmail label), links each order to its Job Card, and tracks it through to Dispatch.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('SSPI_Sales_Order_Bot.html','_blank')">🚀 Open Sales Order Bot</button>
+  </div>
+
+  <div class="bot-card" style="border-left-color:var(--secondary)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🧾</span>
+      <div>
+        <div class="title">Sales Bills Bot</div>
+        <div class="desc">Upload sales invoices (PDF/Excel/JPG/Word) to auto-build the Sales Register and reduce inventory.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('Bills_Data_Entry_Bot.html','_blank')">🚀 Open Bills Bot</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>Sales Performance Snapshot — June 2026</h3></div>
+    <table>
+      <thead><tr><th>Metric</th><th>Target</th><th>Actual</th><th>Achievement %</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Sales Value</td><td>₹52L</td><td>₹47.5L</td><td>91.4%</td><td><span class="tag yellow">⚠ Below Target</span></td></tr>
+        <tr><td>Orders Delivered</td><td>22</td><td>14</td><td>63.6%</td><td><span class="tag yellow">⚠ In Progress</span></td></tr>
+        <tr><td>Pending Dispatch</td><td>0</td><td>4</td><td>—</td><td><span class="tag red">⚠ Action Needed</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ PURCHASE & PROCUREMENT ═══════════════ -->
+<div class="section" id="purchase">
+  <div class="sec-header"><h2>📥 Purchase &amp; Procurement</h2><p>Purchase orders, supplier performance, and GRN tracking</p></div>
+  <div class="cards">
+    <div class="card maroon"><div class="card-icon">📋</div><div class="card-value">20</div><div class="card-label">Total POs (Month)</div><div class="card-sub">₹28.4L total value</div></div>
+    <div class="card yellow"><div class="card-icon">⏱️</div><div class="card-value">88.9%</div><div class="card-label">PO On-Time Delivery</div><div class="card-sub">Target: 95%</div></div>
+    <div class="card gold"><div class="card-icon">📦</div><div class="card-value">4</div><div class="card-label">Pending GRN</div><div class="card-sub">POs awaiting delivery</div></div>
+    <div class="card red"><div class="card-icon">⏳</div><div class="card-value">9.2 days</div><div class="card-label">Avg Lead Time</div><div class="card-sub">Target: 7 days</div></div>
+  </div>
+
+  <div class="bot-card" style="border-left-color:var(--accent)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🧾</span>
+      <div>
+        <div class="title">Purchase Bills Bot</div>
+        <div class="desc">Upload purchase bills (PDF/Excel/JPG/Word) to auto-build the Purchase Register and add stock to inventory.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('Bills_Data_Entry_Bot.html','_blank')">🚀 Open Bills Bot</button>
+  </div>
+
+  <div class="bot-card" style="border-left-color:var(--secondary)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">📦</span>
+      <div>
+        <div class="title">Stores &amp; Inventory Bot</div>
+        <div class="desc">Record Goods Receipt Notes (GRN), Material Issues to Production, and Stock Adjustments — Opening/IN/OUT/Closing stock and reorder alerts computed automatically.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('Stores_Inventory_Bot.html','_blank')">🚀 Open Stores Bot</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>Procurement Performance Snapshot — June 2026</h3></div>
+    <table>
+      <thead><tr><th>Metric</th><th>Target</th><th>Actual</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>PO On-Time Delivery</td><td>95%</td><td>88.9%</td><td><span class="tag yellow">⚠ Below Target</span></td></tr>
+        <tr><td>Average Lead Time</td><td>7 days</td><td>9.2 days</td><td><span class="tag yellow">⚠ Above Target</span></td></tr>
+        <tr><td>Pending GRN</td><td>0</td><td>4</td><td><span class="tag red">⚠ Action Needed</span></td></tr>
+        <tr><td>Total Stock Value</td><td>—</td><td>₹42.8L</td><td><span class="tag green">✓ 20 item types</span></td></tr>
+        <tr><td>Stock Accuracy</td><td>≥99%</td><td>98.5%</td><td><span class="tag green">✓ Near Target</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ GST COMPLIANCE ═══════════════ -->
+<div class="section" id="gst">
+  <div class="sec-header"><h2>🧮 GST &amp; Statutory Compliance</h2><p>GSTR-2B/1/3B reconciliation, e-Invoice, e-Way Bill, ITC &amp; RCM tracking</p></div>
+  <div class="cards">
+    <div class="card green"><div class="card-icon">✅</div><div class="card-value">Reconciled</div><div class="card-label">GSTR-2B vs Purchase Register</div></div>
+    <div class="card green"><div class="card-icon">✅</div><div class="card-value">Reconciled</div><div class="card-label">GSTR-1 vs Sales Register</div></div>
+    <div class="card green"><div class="card-icon">✅</div><div class="card-value">Matched</div><div class="card-label">GSTR-3B vs Books</div></div>
+    <div class="card blue"><div class="card-icon">🧾</div><div class="card-value">In Sync</div><div class="card-label">e-Invoice / e-Way Bill</div></div>
+  </div>
+
+  <div class="bot-card" style="border-left-color:#2C5282">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🧮</span>
+      <div>
+        <div class="title">GST Reconciliation Data Entry Bot</div>
+        <div class="desc">Enter GSTR-2B, Purchase Register, GSTR-1, Sales Register, e-Invoice/IRN &amp; e-Way Bill data — auto-matches with books and flags mismatches for ITC and RCM compliance.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="background:#2C5282" onclick="window.open('GST_Recon_DataEntry_Bot.html','_blank')">🚀 Open GST Recon Bot</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>GST Reconciliation Toolkit — Sheet Coverage</h3></div>
+    <table>
+      <thead><tr><th>Reconciliation Sheet</th><th>Purpose</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>GSTR-2B vs Purchase Register</td><td>Match input tax credit claims with GSTN-reported purchases</td><td><span class="tag green">✅ Reconciled</span></td></tr>
+        <tr><td>GSTR-1 vs Sales Register</td><td>Match outward supplies reported vs books</td><td><span class="tag green">✅ Reconciled</span></td></tr>
+        <tr><td>GSTR-3B vs Books Summary</td><td>Cross-check monthly summary return against ledgers</td><td><span class="tag green">✅ Matched</span></td></tr>
+        <tr><td>ITC Summary</td><td>Track eligible / ineligible / reversed input tax credit</td><td><span class="tag green">✅ Up to Date</span></td></tr>
+        <tr><td>E-Invoice / IRN Register</td><td>Reconcile e-invoices generated with IRN against sales</td><td><span class="tag blue">🔄 In Sync</span></td></tr>
+        <tr><td>E-Way Bill Reconciliation</td><td>Match e-way bills with dispatch &amp; sales records</td><td><span class="tag blue">🔄 In Sync</span></td></tr>
+        <tr><td>Payment Reconciliation</td><td>Match GST payments with challans / cash &amp; credit ledger</td><td><span class="tag green">✅ Reconciled</span></td></tr>
+        <tr><td>RCM Compliance Tracker</td><td>Track Reverse Charge Mechanism liability &amp; payment</td><td><span class="tag green">✅ On Track</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ VOUCHERS & BILLS ═══════════════ -->
+<div class="section" id="vouchers">
+  <div class="sec-header"><h2>🧾 Vouchers &amp; Bills</h2><p>Accounting voucher entry and sales/purchase/expense bill management</p></div>
+  <div class="cards">
+    <div class="card maroon"><div class="card-icon">📒</div><div class="card-value">4</div><div class="card-label">Voucher Types</div><div class="card-sub">Payment, Receipt, Journal, Contra</div></div>
+    <div class="card gold"><div class="card-icon">🧾</div><div class="card-value">3</div><div class="card-label">Bill Categories</div><div class="card-sub">Sales, Purchase, Expense</div></div>
+  </div>
+
+  <div class="bot-card">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">📒</span>
+      <div>
+        <div class="title">General Accounting Voucher Entry Bot</div>
+        <div class="desc">Record Payment, Receipt, Journal &amp; Contra accounting vouchers with document attachments for books reconciliation.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('Accounting_Voucher_Bot.html','_blank')">🚀 Open Voucher Bot</button>
+  </div>
+
+  <div class="bot-card" style="border-left-color:var(--secondary)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🧾</span>
+      <div>
+        <div class="title">Sales / Purchase / Expense Bills Bot</div>
+        <div class="desc">Upload bills as PDF, Excel, JPG/JPEG or Word — bot extracts bill details, builds Sales/Purchase/Expense registers, and updates Inventory automatically.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('Bills_Data_Entry_Bot.html','_blank')">🚀 Open Bills Bot</button>
+  </div>
+
+  <div class="bot-card" style="border-left-color:#9a3412">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🔐</span>
+      <div>
+        <div class="title">Approvals Inbox</div>
+        <div class="desc">Every pending request from Advance, Debtors Escalation, Credit Limit Change, Route Card and RM Substitution lands here for Owner/Accounts Head to Approve or Reject.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="background:#9a3412" onclick="window.open('SSPI_Approvals_Inbox.html','_blank')">🚀 Open Approvals Inbox</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>Voucher Types Reference</h3></div>
+    <table>
+      <thead><tr><th>Voucher Type</th><th>Use Case</th><th>Approval</th></tr></thead>
+      <tbody>
+        <tr><td>Payment Voucher</td><td>Outgoing payments to suppliers, vendors, expenses</td><td>Accounts Head</td></tr>
+        <tr><td>Receipt Voucher</td><td>Incoming payments from customers / debtors</td><td>Accounts Head</td></tr>
+        <tr><td>Journal Voucher</td><td>Non-cash adjustments, provisions, depreciation</td><td>Accounts Head + Owner</td></tr>
+        <tr><td>Contra Voucher</td><td>Cash ↔ Bank transfers within company accounts</td><td>Accounts Head</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ REPORTS ═══════════════ -->
+<div class="section" id="reports">
+  <div class="sec-header"><h2>📑 Finance &amp; Accounts Reports</h2><p>Printable / exportable reports — click to generate</p></div>
+  <div class="cards">
+    <div class="card maroon"><div class="card-icon">💰</div><div class="card-value">₹48.05L</div><div class="card-label">Revenue This Month</div></div>
+    <div class="card gold"><div class="card-icon">🏦</div><div class="card-value">₹28.5L</div><div class="card-label">Cash Balance</div></div>
+    <div class="card red"><div class="card-icon">⚠️</div><div class="card-value">₹32L</div><div class="card-label">Debtors Outstanding</div></div>
+    <div class="card blue"><div class="card-icon">🧮</div><div class="card-value">8</div><div class="card-label">GST Recon Sheets Tracked</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">📒</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">P&amp;L Summary Report</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Revenue, cash balance, profit, and receivables vs target</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptPL()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">💰</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">Debtors Aging Report</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Full aging breakdown + legal stage escalations</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptDebtors()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">📈</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">Sales Register Summary</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Orders value, delivery, and dispatch performance</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptSales()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">📥</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">Purchase Register Summary</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">PO performance, lead time, and GRN status</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptPurchase()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">🧮</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">GST Compliance Summary</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">All 8 reconciliation sheets with current status</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptGST()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">📋</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">Finance &amp; Accounts MIS Summary</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">One-page executive summary — all KPIs across this module</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptModuleSummary()">Generate ↗</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+const VALID_PINS = ['OWNER@2026','VC-ACC-2026','VC-ADMIN-2026','VC-HEAD-2026','CEO@2026'];
+
+window.onload = function(){
+  document.getElementById('pinOverlay').classList.add('open');
+  document.getElementById('pinInput').focus();
+};
+
+function verifyPin(){
+  const pin = document.getElementById('pinInput').value.trim();
+  if(VALID_PINS.includes(pin)){
+    document.getElementById('pinOverlay').classList.remove('open');
+  } else {
+    document.getElementById('pinError').style.display='block';
+    document.getElementById('pinInput').value='';
+    document.getElementById('pinInput').focus();
+  }
+}
+function goBack(){ window.location.href = 'SSPI_COMBINED_DASHBOARD_V4.html'; }
+
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.classList.remove('active');
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+
+function rptOpen(title, html){
+  const w = window.open('', '_blank', 'width=980,height=720,scrollbars=yes');
+  if (!w) { alert('⚠ Popup blocked — allow popups for this page'); return; }
+  w.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
+  <style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#1e293b}
+  h2{color:#1e293b;border-bottom:2px solid #6D2E46;padding-bottom:6px}
+  table{width:100%;border-collapse:collapse;margin:12px 0}
+  th{background:#1e293b;color:white;padding:7px 10px;text-align:left;font-size:11px}
+  td{padding:6px 10px;border-bottom:1px solid #e2e8f0;font-size:11px}
+  tr:nth-child(even){background:#f8fafc}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold}
+  @media print{button{display:none}}</style></head><body>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div><h2>${title}</h2><div style="font-size:11px;color:#64748b">Printed: ${new Date().toLocaleString()}</div></div>
+    <button onclick="window.print()" style="padding:6px 16px;background:#6D2E46;color:white;border:none;border-radius:6px;cursor:pointer">🖨 Print</button>
+  </div>${html}
+<script>
+function openBot(url){
+  if(!url||url==='#')return false;
+  if(window.location.protocol==='file:'){window.location.href=url;return false;}
+  try{var w=window.open(url,'_blank');if(!w||w.closed||typeof w.closed==='undefined'){window.location.href=url;}}catch(e){window.location.href=url;}
+  return false;
+}
+</script>
+</body></html>`);
+  w.document.close();
+}
+
+function tableFromSection(selector){
+  const t = document.querySelector(selector);
+  return t ? t.outerHTML : '<p>No data found.</p>';
+}
+
+function rptPL(){
+  const tables = document.querySelectorAll('#accounts table');
+  let html = '<h3>Invoice Aging Summary</h3>' + tables[0].outerHTML + '<h3 style="margin-top:16px">Revenue vs Expenses vs Profit</h3>' + tables[1].outerHTML;
+  rptOpen('P&L Summary Report — SSPI Bhiwadi', html);
+}
+
+function rptDebtors(){
+  const tables = document.querySelectorAll('#debtors table');
+  let html = '<h3>Debtor Aging Breakdown</h3>' + tables[0].outerHTML + '<h3 style="margin-top:16px">Legal Stage Escalations</h3>' + tables[1].outerHTML;
+  rptOpen('Debtors Aging Report — SSPI Bhiwadi', html);
+}
+
+function rptSales(){
+  const html = tableFromSection('#sales .table-wrap table');
+  rptOpen('Sales Register Summary Report — SSPI Bhiwadi', html);
+}
+
+function rptPurchase(){
+  const html = tableFromSection('#purchase .table-wrap table');
+  rptOpen('Purchase Register Summary Report — SSPI Bhiwadi', html);
+}
+
+function rptGST(){
+  const html = tableFromSection('#gst .table-wrap table');
+  rptOpen('GST Compliance Summary Report — SSPI Bhiwadi', html);
+}
+
+function rptModuleSummary(){
+  const html = `
+  <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+  <tr><td>Revenue Collected</td><td>₹48.05L of ₹50L target (96.1%)</td></tr>
+  <tr><td>Cash Balance</td><td>₹28.5L — Healthy</td></tr>
+  <tr><td>Net Profit (PAT)</td><td>₹1.77L after all expenses</td></tr>
+  <tr><td>Invoice Overdue</td><td>₹12.4L — 3 invoices &gt;60 days</td></tr>
+  <tr><td>Outstanding Receivables</td><td>₹14.2L payment pending</td></tr>
+  <tr><td>Total Debtors Outstanding</td><td>₹32L — 2 accounts in legal stage</td></tr>
+  <tr><td>Sales Orders</td><td>₹47.5L value, 14 of 22 delivered, 4 pending dispatch</td></tr>
+  <tr><td>Purchase Orders</td><td>20 POs (₹28.4L), 88.9% on-time, 4 pending GRN, 9.2 day avg lead time</td></tr>
+  <tr><td>GST Compliance</td><td>All 8 reconciliation sheets (GSTR-2B/1/3B, ITC, e-Invoice, e-Way Bill, Payment, RCM) on track</td></tr>
+  </tbody></table>`;
+  rptOpen('Finance & Accounts Module Summary (MIS) — SSPI Bhiwadi', html);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Owner Daily Report</title>
+<style>
+  :root{
+    --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#ffffff;
+    --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --red:#b3261e;
+    --orange:#c97a1a; --yellow:#fff7cc; --lgreen:#e8f5ec; --lred:#fdeceb; --lorange:#fdf1e2;
+  }
+  *{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
+  body{margin:0; background:var(--bg); color:var(--text);}
+  header{background:linear-gradient(135deg,var(--navy) 0%,#0a1f33 100%); color:#fff; padding:20px 24px;}
+  header h1{margin:0; font-size:22px;}
+  header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+  .container{max-width:1280px; margin:0 auto; padding:20px;}
+  .topbar{display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px 18px; margin-bottom:18px;}
+  .topbar label{font-size:11px; color:var(--muted); display:block; margin-bottom:3px;}
+  .topbar input[type=date]{padding:6px 8px; border:1px solid var(--border); border-radius:5px; font-size:13px;}
+  .btn{background:var(--accent); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:12px; cursor:pointer; font-weight:bold;}
+  .btn:hover{opacity:.9;}
+  .btn.secondary{background:var(--navy2);}
+  #lastUpdated{font-size:11px; color:var(--muted); margin-left:auto;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:18px;}
+  .card h2{margin:0 0 12px; font-size:16px; color:var(--navy); display:flex; align-items:center; gap:8px;}
+  .card p.hint{font-size:12px; color:var(--muted); margin:-4px 0 12px;}
+  .kpi-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:6px;}
+  .kpi{background:var(--bg); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:8px; padding:12px 14px;}
+  .kpi.green{border-left-color:var(--green);}
+  .kpi.red{border-left-color:var(--red);}
+  .kpi.orange{border-left-color:var(--orange);}
+  .kpi .val{font-size:21px; font-weight:bold; color:var(--navy);}
+  .kpi .lbl{font-size:11px; color:var(--muted); margin-top:2px;}
+  .kpi .cmp{font-size:10.5px; margin-top:4px;}
+  .cmp.up{color:var(--green);} .cmp.down{color:var(--red);}
+  table{width:100%; border-collapse:collapse; font-size:12px;}
+  th,td{border:1px solid var(--border); padding:6px 8px; text-align:left;}
+  th{background:var(--bg); color:var(--navy);}
+  .scrollbox{max-height:320px; overflow:auto; border:1px solid var(--border); border-radius:6px;}
+  .pill{display:inline-block; padding:2px 9px; border-radius:10px; font-size:10.5px; font-weight:bold;}
+  .pill-green{background:var(--lgreen); color:var(--green);}
+  .pill-orange{background:var(--lorange); color:var(--orange);}
+  .pill-red{background:var(--lred); color:var(--red);}
+  .pill-gray{background:#eee; color:#555;}
+  .decision-item{display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--border);}
+  .decision-item:last-child{border-bottom:none;}
+  .decision-icon{font-size:20px; flex-shrink:0;}
+  .decision-text b{color:var(--navy);}
+  .decision-text .sub{font-size:11px; color:var(--muted); margin-top:2px;}
+  .section-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:900px){ .section-grid{grid-template-columns:1fr;} }
+  .muted{color:var(--muted); font-size:12px;}
+  .note{background:#eef5fb; border-left:4px solid var(--accent); border-radius:0 6px 6px 0; padding:10px 14px; font-size:12px; color:#333; margin-bottom:14px; line-height:1.6;}
+  footer{text-align:center; font-size:11px; color:var(--muted); padding:18px;}
+  .loading{text-align:center; padding:30px; color:var(--muted); font-size:13px;}
+  @media print{ .topbar button, .no-print{display:none;} }
+</style>
+</head>
+<body>
+<!-- ACCESS CONTROL GATE -->
+<div id="accessGate" style="position:fixed;inset:0;background:#1E3A5F;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Arial,Helvetica,sans-serif">
+  <div style="background:#fff;border-radius:10px;padding:30px 36px;max-width:380px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.35)">
+    <div style="font-size:32px;margin-bottom:8px">👑</div>
+    <h2 style="margin:0 0 6px;color:#1E3A5F;font-size:16px">Owner Daily Report — Restricted Access</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 14px">Enter the Owner access code to continue.</p>
+    <input id="gatePin" type="password" placeholder="Access Code" autocomplete="off" style="width:100%;padding:9px;font-size:14px;border:1px solid #d6dce4;border-radius:6px;text-align:center;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkGatePin()">
+    <div id="gateErr" style="color:#b3261e;font-size:11px;margin-top:6px;min-height:14px"></div>
+    <button onclick="checkGatePin()" style="margin-top:8px;background:#2E86AB;color:#fff;border:none;border-radius:6px;padding:9px 22px;font-size:12px;font-weight:bold;cursor:pointer">Unlock</button>
+    <div style="font-size:10.5px;color:#999;margin-top:10px">Authorized: Owner / Management only</div>
+  </div>
+</div>
+<script>
+(function(){
+  var VALID_PINS = ['OWNER@2026'];
+  var SESSION_KEY = 'sspi_gate_ownerdaily';
+  function checkGatePin(){
+    var v=document.getElementById('gatePin').value.trim();
+    if(VALID_PINS.indexOf(v)>-1){
+      sessionStorage.setItem(SESSION_KEY,'1');
+      document.getElementById('accessGate').remove();
+    } else {
+      document.getElementById('gateErr').textContent='Incorrect code. Contact VC Admin.';
+    }
+  }
+  window.checkGatePin=checkGatePin;
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    var g=document.getElementById('accessGate'); if(g) g.remove();
+  }
+})();
+</script>
+
+<header>
+  <h1>👑 SSPI Owner Daily Report</h1>
+  <p>One-page snapshot across Production, Sales/Purchase, Finance, HR and Compliance — pulled live from the same Google Sheet every bot writes to.</p>
+</header>
+
+<div class="container">
+  <div class="topbar">
+    <div>
+      <label>Report Date</label>
+      <input type="date" id="reportDate">
+    </div>
+    <button class="btn" onclick="loadReport()">🔄 Load Report</button>
+    <button class="btn secondary no-print" onclick="window.print()">🖨 Print</button>
+    <span id="lastUpdated"></span>
+  </div>
+
+  <div id="loadingMsg" class="loading">Pick a date and click "Load Report" — or it loads today's data automatically.</div>
+
+  <div id="reportBody" style="display:none">
+
+    <!-- DECISIONS NEEDED TODAY -->
+    <div class="card">
+      <h2>⚡ Decisions Needed Today</h2>
+      <p class="hint">Auto-flagged from live data — review these first.</p>
+      <div id="decisionsList"></div>
+    </div>
+
+    <!-- TOP KPI STRIP -->
+    <div class="card">
+      <h2>📊 At a Glance — <span id="kpiDateLabel"></span></h2>
+      <div class="kpi-row" id="kpiStrip"></div>
+    </div>
+
+    <div class="section-grid">
+      <!-- PRODUCTION -->
+      <div class="card">
+        <h2>🏭 Production</h2>
+        <div class="kpi-row" id="prodKpis"></div>
+        <div class="scrollbox"><table><thead><tr><th>JC No</th><th>Product</th><th>Qty</th><th>Status</th></tr></thead><tbody id="jobCardsBody"></tbody></table></div>
+      </div>
+
+      <!-- QUALITY -->
+      <div class="card">
+        <h2>✅ Quality</h2>
+        <div class="kpi-row" id="qualityKpis"></div>
+        <div class="scrollbox"><table><thead><tr><th>Date</th><th>NCR No</th><th>Product</th><th>Defect</th><th>Status</th></tr></thead><tbody id="ncrBody"></tbody></table></div>
+      </div>
+
+      <!-- SALES / PURCHASE / BILLS -->
+      <div class="card">
+        <h2>📈 Sales, Purchase &amp; Bills</h2>
+        <div class="kpi-row" id="salesKpis"></div>
+      </div>
+
+      <!-- SALES ORDER PIPELINE -->
+      <div class="card">
+        <h2>📦 Sales Order Pipeline</h2>
+        <div class="kpi-row" id="soPipelineKpis"></div>
+        <div class="scrollbox"><table><thead><tr><th>SO No</th><th>Customer</th><th>Product</th><th>Qty</th><th>Status</th><th>Linked JC</th><th>Balance Qty</th><th>Delivery Due</th></tr></thead><tbody id="soPipelineBody"></tbody></table></div>
+      </div>
+
+      <!-- FINANCE -->
+      <div class="card">
+        <h2>💰 Finance &amp; Cash Movement</h2>
+        <div class="kpi-row" id="financeKpis"></div>
+      </div>
+
+      <!-- HR / ATTENDANCE -->
+      <div class="card">
+        <h2>👥 HR &amp; Attendance</h2>
+        <div class="kpi-row" id="hrKpis"></div>
+        <div class="scrollbox"><table><thead><tr><th>Employee</th><th>Department</th><th>Status</th><th>Hours</th></tr></thead><tbody id="attBody"></tbody></table></div>
+      </div>
+
+      <!-- DEBTORS -->
+      <div class="card">
+        <h2>📒 Debtors</h2>
+        <div class="kpi-row" id="debtorKpis"></div>
+        <div class="scrollbox"><table><thead><tr><th>Customer</th><th>Invoice No</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead><tbody id="overdueBody"></tbody></table></div>
+      </div>
+
+      <!-- ADVANCES -->
+      <div class="card">
+        <h2>💸 Advance Against Salary</h2>
+        <div class="kpi-row" id="advanceKpis"></div>
+        <div class="scrollbox"><table><thead><tr><th>Code</th><th>Employee</th><th>Outstanding Balance</th></tr></thead><tbody id="advanceBody"></tbody></table></div>
+      </div>
+
+      <!-- COMPLIANCE -->
+      <div class="card">
+        <h2>🛡️ Compliance Due Dates</h2>
+        <div class="kpi-row" id="complianceKpis"></div>
+        <p class="muted">GST due dates assume monthly filing — confirm filing frequency (monthly vs QRMP) with your CA. ESI/EPF due date is the 15th of the following month, per current ESIC/EPFO rules.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+<footer>SSPI Owner Daily Report · read-only · same backend as every SSPI bot · refresh anytime for the latest figures</footer>
+
+<script>
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+
+function gsGet(type, limit){
+  return new Promise(function(resolve){
+    var cbName='_gsJP_'+Date.now()+'_'+Math.floor(Math.random()*10000);
+    var script=document.createElement('script');
+    var done=false;
+    window[cbName]=function(d){ done=true; delete window[cbName]; if(script.parentNode) script.parentNode.removeChild(script); resolve((d&&d.data)?d.data:[]); };
+    script.onerror=function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } },12000);
+    script.src=GS_URL+'?type='+type+'&limit='+(limit||300)+'&callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+
+// ---------- date helpers ----------
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function shiftDate(dateStr, days){
+  const d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+days);
+  return d.toISOString().slice(0,10);
+}
+// Normalize many possible date formats (ISO, dd/mm/yyyy, dd-mm-yyyy, locale strings) to YYYY-MM-DD
+function normDate(val){
+  if(!val) return '';
+  const s = String(val).trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){
+    let [_, a, b, y] = m;
+    if(y.length===2) y = '20'+y;
+    // assume dd/mm/yyyy (Indian convention) for ambiguous cases
+    return `${y}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`;
+  }
+  const d = new Date(s);
+  if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  return '';
+}
+function fmtMoney(n){ return '₹'+(Number(n)||0).toLocaleString('en-IN',{maximumFractionDigits:2}); }
+function pctChange(today, yesterday){
+  if(!yesterday) return null;
+  return ((today-yesterday)/Math.abs(yesterday))*100;
+}
+function cmpHtml(today, yesterday, label){
+  if(yesterday===null || yesterday===undefined) return '';
+  const diff = today - yesterday;
+  const cls = diff>=0 ? 'up' : 'down';
+  const arrow = diff>=0 ? '▲' : '▼';
+  return `<div class="cmp ${cls}">${arrow} ${Math.abs(diff).toLocaleString('en-IN',{maximumFractionDigits:2})} vs ${label}</div>`;
+}
+
+// ---------- main load ----------
+let DATA = {};
+const TYPES = ['jobCards','production','quality','accounts','attendance','stores','sales','purchase',
+               'debtors','debtorsPay','debtorsFU','billsSales','billsPurchase','billsExpense',
+               'salary','esiEpf','advance','gstPurchase','gstSales','dispatch','approvalRequest'];
+
+async function fetchAll(){
+  const results = await Promise.all(TYPES.map(t => gsGet(t, 400)));
+  TYPES.forEach((t,i) => DATA[t] = results[i] || []);
+}
+
+function byDate(type, dateField, dateStr){
+  return (DATA[type]||[]).filter(r => normDate(r[dateField]) === dateStr);
+}
+
+async function loadReport(){
+  document.getElementById('loadingMsg').style.display = 'block';
+  document.getElementById('loadingMsg').textContent = 'Loading live data from Google Sheets…';
+  document.getElementById('reportBody').style.display = 'none';
+
+  await fetchAll();
+
+  const dateStr = document.getElementById('reportDate').value || todayStr();
+  const yStr = shiftDate(dateStr, -1);
+
+  renderReport(dateStr, yStr);
+
+  document.getElementById('loadingMsg').style.display = 'none';
+  document.getElementById('reportBody').style.display = 'block';
+  document.getElementById('lastUpdated').textContent = 'Last updated: ' + new Date().toLocaleString('en-IN');
+}
+
+function renderReport(dateStr, yStr){
+  document.getElementById('kpiDateLabel').textContent = new Date(dateStr+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  const decisions = [];
+
+  // ===== PRODUCTION =====
+  const jcToday = byDate('jobCards','Date',dateStr);
+  const jcOpen = jcToday.filter(r=>r['Status']==='Open').length;
+  const jcAllOpen = (DATA.jobCards||[]).filter(r=>r['Status']==='Open').length;
+  const prodToday = byDate('production','Date',dateStr);
+  const prodYest = byDate('production','Date',yStr);
+  const totalActualToday = prodToday.reduce((s,r)=>s+(parseFloat(r['Actual'])||0),0);
+  const totalActualYest = prodYest.reduce((s,r)=>s+(parseFloat(r['Actual'])||0),0);
+  const avgEffToday = prodToday.length ? prodToday.reduce((s,r)=>s+(parseFloat(r['Efficiency%'])||0),0)/prodToday.length : null;
+
+  document.getElementById('prodKpis').innerHTML = `
+    <div class="kpi"><div class="val">${jcToday.length}</div><div class="lbl">Job Cards Created Today</div></div>
+    <div class="kpi orange"><div class="val">${jcAllOpen}</div><div class="lbl">Total Open Job Cards</div></div>
+    <div class="kpi"><div class="val">${totalActualToday}</div><div class="lbl">Production Output Today</div>${cmpHtml(totalActualToday,totalActualYest,'yesterday')}</div>
+    <div class="kpi ${avgEffToday!==null && avgEffToday<90 ? 'orange':'green'}"><div class="val">${avgEffToday!==null?avgEffToday.toFixed(1)+'%':'—'}</div><div class="lbl">Avg Efficiency Today</div></div>`;
+  document.getElementById('jobCardsBody').innerHTML = jcToday.map(r=>`<tr><td>${r['JC No']||''}</td><td>${r['Product']||''}</td><td>${r['Qty']||''}</td><td>${r['Status']||''}</td></tr>`).join('')
+    || `<tr><td colspan="4" class="muted" style="text-align:center;padding:10px">No job cards created on this date.</td></tr>`;
+
+  // ===== QUALITY =====
+  const ncrToday = byDate('quality','Date',dateStr);
+  const ncrOpenAll = (DATA.quality||[]).filter(r=>r['Status']==='Open');
+  document.getElementById('qualityKpis').innerHTML = `
+    <div class="kpi"><div class="val">${ncrToday.length}</div><div class="lbl">NCRs Raised Today</div></div>
+    <div class="kpi ${ncrOpenAll.length>0?'red':'green'}"><div class="val">${ncrOpenAll.length}</div><div class="lbl">Total Open NCRs</div></div>`;
+  document.getElementById('ncrBody').innerHTML = ncrToday.map(r=>`<tr><td>${r['Date']||''}</td><td>${r['NCR No']||''}</td><td>${r['Product']||''}</td><td>${r['Defect Type']||''}</td><td><span class="pill ${r['Status']==='Open'?'pill-red':'pill-green'}">${r['Status']||''}</span></td></tr>`).join('')
+    || `<tr><td colspan="5" class="muted" style="text-align:center;padding:10px">No NCRs raised on this date.</td></tr>`;
+  if(ncrOpenAll.length>0){
+    decisions.push({icon:'⚠️', sev:'red', text:`<b>${ncrOpenAll.length} open Quality NCR(s)</b> awaiting root-cause action.`, sub: ncrOpenAll.slice(0,5).map(r=>r['NCR No']+' — '+r['Product']).join(', ')});
+  }
+
+  // ===== SALES / PURCHASE / BILLS =====
+  const soToday = byDate('sales','Date',dateStr);
+  const poToday = byDate('purchase','Date',dateStr);
+  const bsToday = byDate('billsSales','Date',dateStr);
+  const bpToday = byDate('billsPurchase','Date',dateStr);
+  const beToday = byDate('billsExpense','Date',dateStr);
+  const soVal = soToday.reduce((s,r)=>s+(parseFloat(r['Amount'])||0),0);
+  const poVal = poToday.reduce((s,r)=>s+(parseFloat(r['Amount'])||0),0);
+  const bsVal = bsToday.reduce((s,r)=>s+(parseFloat(r['Total'])||0),0);
+  const bpVal = bpToday.reduce((s,r)=>s+(parseFloat(r['Total'])||0),0);
+  const beVal = beToday.reduce((s,r)=>s+(parseFloat(r['Total'])||0),0);
+  document.getElementById('salesKpis').innerHTML = `
+    <div class="kpi green"><div class="val">${fmtMoney(soVal+bsVal)}</div><div class="lbl">Sales Today (Orders + Bills)</div></div>
+    <div class="kpi orange"><div class="val">${fmtMoney(poVal+bpVal)}</div><div class="lbl">Purchases Today (Orders + Bills)</div></div>
+    <div class="kpi red"><div class="val">${fmtMoney(beVal)}</div><div class="lbl">Expenses Billed Today</div></div>
+    <div class="kpi"><div class="val">${soToday.length+poToday.length+bsToday.length+bpToday.length+beToday.length}</div><div class="lbl">Total Entries Today</div></div>`;
+
+  // ===== SALES ORDER PIPELINE =====
+  const allSO = DATA.sales || [];
+  const liveSO = allSO.filter(r => r['Status'] !== 'Draft - Needs Review');
+  const draftSO = allSO.filter(r => r['Status'] === 'Draft - Needs Review');
+  const stageCount = s => liveSO.filter(r => r['Status'] === s).length;
+  document.getElementById('soPipelineKpis').innerHTML = `
+    <div class="kpi"><div class="val">${stageCount('Order Received')}</div><div class="lbl">Order Received</div></div>
+    <div class="kpi orange"><div class="val">${stageCount('In Production')}</div><div class="lbl">In Production</div></div>
+    <div class="kpi"><div class="val">${stageCount('Partially Dispatched')}</div><div class="lbl">Partially Dispatched</div></div>
+    <div class="kpi green"><div class="val">${stageCount('Dispatched')}</div><div class="lbl">Dispatched</div></div>
+    <div class="kpi ${draftSO.length>0?'red':'green'}"><div class="val">${draftSO.length}</div><div class="lbl">Email Drafts Needing Review</div></div>`;
+  document.getElementById('soPipelineBody').innerHTML = liveSO.slice(0,40).map(r=>`<tr><td>${r['SO No']||''}</td><td>${r['Customer']||''}</td><td>${r['Product']||''}</td><td>${r['Qty']||''}</td><td><span class="pill ${r['Status']==='Dispatched'?'pill-green':(r['Status']==='In Production'?'pill-orange':'pill-blue')}">${r['Status']||''}</span></td><td>${r['Linked Job Card']||'—'}</td><td>${r['Balance Qty']!==undefined?r['Balance Qty']:''}</td><td>${r['Delivery Date']||''}</td></tr>`).join('')
+    || `<tr><td colspan="8" class="muted" style="text-align:center;padding:10px">No sales orders yet.</td></tr>`;
+  if (draftSO.length > 0) {
+    decisions.push({icon:'📧', sev:'orange', text:`<b>${draftSO.length} order(s) captured from email</b> still need Product/Qty/Rate filled in.`, sub: draftSO.slice(0,5).map(r=>r['SO No']+' — '+r['Customer']).join(', ')});
+  }
+  const overdueSO = liveSO.filter(r => r['Delivery Date'] && normDate(r['Delivery Date']) < dateStr && r['Status'] !== 'Dispatched');
+  if (overdueSO.length > 0) {
+    decisions.push({icon:'⏰', sev:'red', text:`<b>${overdueSO.length} sales order(s) past delivery due date</b> and not yet fully dispatched.`, sub: overdueSO.slice(0,5).map(r=>r['SO No']+' — '+r['Customer']).join(', ')});
+  }
+
+  // ===== PENDING APPROVALS =====
+  const pendingApprovals = (DATA.approvalRequest||[]).filter(r => r['Status'] === 'Pending');
+  if (pendingApprovals.length > 0) {
+    decisions.push({icon:'🔐', sev:'red', text:`<b>${pendingApprovals.length} request(s) waiting in the Approvals Inbox</b> — Advance, Escalation, Credit Limit, Route Card or Substitution.`, sub: pendingApprovals.slice(0,5).map(r=>r['Type']+': '+r['Summary']).join(' | ')});
+  }
+
+  // ===== FINANCE / ACCOUNTS =====
+  const accToday = byDate('accounts','Date',dateStr);
+  const payToday = accToday.filter(r=>/payment/i.test(r['Voucher Type']||'')).reduce((s,r)=>s+(parseFloat(r['Amount'])||0),0);
+  const recvToday = accToday.filter(r=>/receipt/i.test(r['Voucher Type']||'')).reduce((s,r)=>s+(parseFloat(r['Amount'])||0),0);
+  document.getElementById('financeKpis').innerHTML = `
+    <div class="kpi green"><div class="val">${fmtMoney(recvToday)}</div><div class="lbl">Receipts Today</div></div>
+    <div class="kpi red"><div class="val">${fmtMoney(payToday)}</div><div class="lbl">Payments Today</div></div>
+    <div class="kpi ${(recvToday-payToday)>=0?'green':'red'}"><div class="val">${fmtMoney(recvToday-payToday)}</div><div class="lbl">Net Cash Movement Today</div></div>
+    <div class="kpi"><div class="val">${accToday.length}</div><div class="lbl">Vouchers Entered Today</div></div>`;
+
+  // ===== HR / ATTENDANCE =====
+  const attToday = byDate('attendance','Date',dateStr);
+  const present = attToday.filter(r=>/present/i.test(r['Status']||'')).length;
+  const absent = attToday.filter(r=>/absent/i.test(r['Status']||'')).length;
+  const total = attToday.length;
+  const attPct = total ? (present/total*100) : null;
+  document.getElementById('hrKpis').innerHTML = `
+    <div class="kpi green"><div class="val">${present}</div><div class="lbl">Present Today</div></div>
+    <div class="kpi red"><div class="val">${absent}</div><div class="lbl">Absent Today</div></div>
+    <div class="kpi"><div class="val">${total}</div><div class="lbl">Attendance Records Logged</div></div>
+    <div class="kpi ${attPct!==null && attPct<90 ? 'orange':'green'}"><div class="val">${attPct!==null?attPct.toFixed(1)+'%':'—'}</div><div class="lbl">Attendance Rate</div></div>`;
+  document.getElementById('attBody').innerHTML = attToday.map(r=>`<tr><td>${r['Employee']||''}</td><td>${r['Department']||''}</td><td><span class="pill ${/present/i.test(r['Status']||'')?'pill-green':'pill-red'}">${r['Status']||''}</span></td><td>${r['Hours']||''}</td></tr>`).join('')
+    || `<tr><td colspan="4" class="muted" style="text-align:center;padding:10px">No attendance logged on this date.</td></tr>`;
+  if(absent>=3){
+    decisions.push({icon:'👥', sev:'orange', text:`<b>${absent} employee(s) absent today</b> — check if production capacity is affected.`, sub:''});
+  }
+
+  // ===== DEBTORS =====
+  const allDebtors = DATA.debtors||[];
+  const overdue = allDebtors.filter(r=>{
+    const due = normDate(r['Due Date']);
+    const status = (r['Status']||'').toLowerCase();
+    return due && due < dateStr && !/closed|paid/.test(status);
+  });
+  const overdueTotal = overdue.reduce((s,r)=>s+(parseFloat(r['Amount'])||0),0);
+  const recvFromDebtorsToday = byDate('debtorsPay','Date',dateStr).reduce((s,r)=>s+(parseFloat(r['Net']||r['Amount'])||0),0);
+  document.getElementById('debtorKpis').innerHTML = `
+    <div class="kpi ${overdue.length>0?'red':'green'}"><div class="val">${overdue.length}</div><div class="lbl">Overdue Invoices</div></div>
+    <div class="kpi red"><div class="val">${fmtMoney(overdueTotal)}</div><div class="lbl">Overdue Amount</div></div>
+    <div class="kpi green"><div class="val">${fmtMoney(recvFromDebtorsToday)}</div><div class="lbl">Collected Today</div></div>`;
+  document.getElementById('overdueBody').innerHTML = overdue.slice(0,30).map(r=>`<tr><td>${r['Customer']||''}</td><td>${r['Invoice No']||''}</td><td>${fmtMoney(r['Amount'])}</td><td>${r['Due Date']||''}</td><td><span class="pill pill-red">${r['Status']||'Open'}</span></td></tr>`).join('')
+    || `<tr><td colspan="5" class="muted" style="text-align:center;padding:10px">No overdue invoices. 🎉</td></tr>`;
+  if(overdue.length>0){
+    decisions.push({icon:'📒', sev:'red', text:`<b>${overdue.length} overdue debtor invoice(s)</b> totaling ${fmtMoney(overdueTotal)}.`, sub: overdue.slice(0,5).map(r=>r['Customer']+' ('+fmtMoney(r['Amount'])+')').join(', ')});
+  }
+
+  // ===== ADVANCES =====
+  const advRows = DATA.advance||[];
+  const byEmp = {};
+  advRows.forEach(r=>{
+    const code = r['Emp Code'];
+    if(!code) return;
+    if(!byEmp[code]) byEmp[code] = {name:r['Employee'], balance:0};
+    const amt = parseFloat(r['Amount'])||0;
+    byEmp[code].balance += (r['Entry Type']==='Recovery' ? -amt : amt);
+  });
+  const outstanding = Object.entries(byEmp).map(([code,v])=>({code, name:v.name, balance:Math.round(v.balance*100)/100})).filter(e=>e.balance>0).sort((a,b)=>b.balance-a.balance);
+  const totalOutstanding = outstanding.reduce((s,e)=>s+e.balance,0);
+  const disbToday = byDate('advance','Date',dateStr).filter(r=>r['Entry Type']==='Disbursement').reduce((s,r)=>s+(parseFloat(r['Amount'])||0),0);
+  const recovToday = byDate('advance','Date',dateStr).filter(r=>r['Entry Type']==='Recovery').reduce((s,r)=>s+(parseFloat(r['Amount'])||0),0);
+  document.getElementById('advanceKpis').innerHTML = `
+    <div class="kpi orange"><div class="val">${fmtMoney(totalOutstanding)}</div><div class="lbl">Total Outstanding (All Employees)</div></div>
+    <div class="kpi"><div class="val">${outstanding.length}</div><div class="lbl">Employees with Active Advance</div></div>
+    <div class="kpi red"><div class="val">${fmtMoney(disbToday)}</div><div class="lbl">Disbursed Today</div></div>
+    <div class="kpi green"><div class="val">${fmtMoney(recovToday)}</div><div class="lbl">Recovered Today</div></div>`;
+  document.getElementById('advanceBody').innerHTML = outstanding.slice(0,15).map(e=>`<tr><td>${e.code}</td><td>${e.name}</td><td>${fmtMoney(e.balance)}</td></tr>`).join('')
+    || `<tr><td colspan="3" class="muted" style="text-align:center;padding:10px">No outstanding advances.</td></tr>`;
+  if(outstanding.length>0){
+    decisions.push({icon:'💸', sev:'orange', text:`<b>${fmtMoney(totalOutstanding)} in outstanding employee advances</b> across ${outstanding.length} employee(s).`, sub: outstanding.slice(0,5).map(e=>e.name+' ('+fmtMoney(e.balance)+')').join(', ')});
+  }
+
+  // ===== COMPLIANCE DUE DATES =====
+  const now = new Date(dateStr+'T00:00:00');
+  function daysUntil(day, monthOffset){
+    const target = new Date(now.getFullYear(), now.getMonth()+monthOffset, day);
+    if(target < now) target.setMonth(target.getMonth()+1);
+    return Math.ceil((target-now)/(1000*60*60*24));
+  }
+  const esiEpfDue = daysUntil(15, 1);
+  const gstr1Due = daysUntil(11, 1);
+  const gstr3bDue = daysUntil(20, 1);
+  document.getElementById('complianceKpis').innerHTML = `
+    <div class="kpi ${esiEpfDue<=5?'red':'green'}"><div class="val">${esiEpfDue} day(s)</div><div class="lbl">ESI/EPF Payment Due (15th)</div></div>
+    <div class="kpi ${gstr1Due<=5?'red':'green'}"><div class="val">${gstr1Due} day(s)</div><div class="lbl">GSTR-1 Due (11th, monthly)</div></div>
+    <div class="kpi ${gstr3bDue<=5?'red':'green'}"><div class="val">${gstr3bDue} day(s)</div><div class="lbl">GSTR-3B Due (20th, monthly)</div></div>`;
+  if(esiEpfDue<=5) decisions.push({icon:'🛡️', sev:'red', text:`<b>ESI/EPF payment due in ${esiEpfDue} day(s)</b> — confirm contributions are finalized.`, sub:''});
+  if(gstr3bDue<=5) decisions.push({icon:'🧾', sev:'red', text:`<b>GSTR-3B due in ${gstr3bDue} day(s)</b> — confirm with your CA.`, sub:''});
+
+  // ===== TOP KPI STRIP (overview) =====
+  document.getElementById('kpiStrip').innerHTML = `
+    <div class="kpi green"><div class="val">${fmtMoney(soVal+bsVal)}</div><div class="lbl">Sales Today</div></div>
+    <div class="kpi red"><div class="val">${fmtMoney(beVal+payToday)}</div><div class="lbl">Outflow Today (Expenses+Payments)</div></div>
+    <div class="kpi"><div class="val">${attPct!==null?attPct.toFixed(0)+'%':'—'}</div><div class="lbl">Attendance Rate</div></div>
+    <div class="kpi orange"><div class="val">${jcAllOpen}</div><div class="lbl">Open Job Cards</div></div>
+    <div class="kpi ${ncrOpenAll.length>0?'red':'green'}"><div class="val">${ncrOpenAll.length}</div><div class="lbl">Open Quality NCRs</div></div>
+    <div class="kpi ${overdue.length>0?'red':'green'}"><div class="val">${fmtMoney(overdueTotal)}</div><div class="lbl">Debtors Overdue</div></div>`;
+
+  // ===== DECISIONS LIST =====
+  const decisionsEl = document.getElementById('decisionsList');
+  if(decisions.length===0){
+    decisionsEl.innerHTML = `<div class="decision-item"><div class="decision-icon">✅</div><div class="decision-text"><b>Nothing urgent flagged today.</b><div class="sub">All clear across quality, debtors, advances and compliance dates.</div></div></div>`;
+  } else {
+    decisionsEl.innerHTML = decisions.map(d=>`
+      <div class="decision-item">
+        <div class="decision-icon">${d.icon}</div>
+        <div class="decision-text">${d.text}${d.sub?`<div class="sub">${d.sub}</div>`:''}</div>
+      </div>`).join('');
+  }
+}
+
+// init
+document.getElementById('reportDate').value = todayStr();
+loadReport();
+</script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Order Tracking Portal</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f4f8;min-height:100vh}
+.hero{background:linear-gradient(135deg,#1F3864,#2E75B6);padding:32px 24px;text-align:center}
+.hero img{width:64px;height:64px;background:#fff;border-radius:12px;padding:8px;margin-bottom:12px}
+.hero h1{font-size:28px;font-weight:700;color:#fff;margin-bottom:6px}
+.hero p{font-size:14px;color:#bfdbfe;margin-bottom:20px}
+.search-box{display:flex;gap:0;max-width:500px;margin:0 auto;border-radius:8px;overflow:hidden;box-shadow:0 4px 20px #00000033}
+.search-box input{flex:1;padding:14px 18px;font-size:15px;border:none;outline:none;background:#fff;color:#1F3864}
+.search-box button{padding:14px 24px;background:#C65911;color:#fff;border:none;cursor:pointer;font-size:14px;font-weight:700;transition:.2s}
+.search-box button:hover{background:#a04b0f}
+.main{max-width:900px;margin:32px auto;padding:0 20px}
+.info-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.info-card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 8px #0000001a;text-align:center;border-top:4px solid var(--clr)}
+.info-card .ic-val{font-size:26px;font-weight:700;color:var(--clr)}
+.info-card .ic-label{font-size:12px;color:#64748b;margin-top:4px}
+
+/* Timeline */
+.order-card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px #0000001a;margin-bottom:20px}
+.order-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #e2e8f0}
+.order-id{font-size:20px;font-weight:700;color:#1F3864}
+.order-date{font-size:13px;color:#64748b;margin-top:4px}
+.status-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700}
+.chip-processing{background:#dbeafe;color:#1d4ed8}
+.chip-production{background:#fef3c7;color:#92400e}
+.chip-qc{background:#e0e7ff;color:#3730a3}
+.chip-dispatch{background:#dcfce7;color:#166534}
+.chip-delivered{background:#f0fdf4;color:#15803d}
+.chip-pending{background:#fee2e2;color:#991b1b}
+
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:#e2e8f0}
+.tl-step{position:relative;margin-bottom:24px}
+.tl-step:last-child{margin-bottom:0}
+.tl-dot{position:absolute;left:-26px;top:2px;width:18px;height:18px;border-radius:50%;border:3px solid #e2e8f0;background:#fff;z-index:1;transition:.3s}
+.tl-step.done .tl-dot{background:#22c55e;border-color:#22c55e}
+.tl-step.active .tl-dot{background:#2E75B6;border-color:#2E75B6;box-shadow:0 0 0 4px #2E75B633}
+.tl-step.pending .tl-dot{background:#fff;border-color:#cbd5e1}
+.tl-step h4{font-size:14px;font-weight:700;color:#1F3864;margin-bottom:4px}
+.tl-step.pending h4{color:#94a3b8}
+.tl-step p{font-size:12px;color:#64748b}
+.tl-step .tl-date{font-size:11px;color:#94a3b8;margin-top:4px}
+.tl-step.active h4{color:#2E75B6}
+
+.items-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:16px}
+.items-table th{background:#f8fafc;padding:8px 12px;text-align:left;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:2px solid #e2e8f0}
+.items-table td{padding:8px 12px;border-bottom:1px solid #f0f4f8;color:#374151}
+
+.msg-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-top:16px;display:flex;gap:12px;align-items:flex-start}
+.msg-box .msg-icon{font-size:20px}
+.msg-box p{font-size:13px;color:#166534}
+
+.not-found{text-align:center;padding:48px 24px;background:#fff;border-radius:12px;box-shadow:0 2px 12px #0000001a}
+.not-found h3{font-size:18px;color:#1F3864;margin-bottom:8px}
+.not-found p{font-size:13px;color:#64748b}
+
+.powered{text-align:center;padding:24px;font-size:11px;color:#94a3b8}
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>📦 Order Tracking Portal</h1>
+  <p>Shree Shyam Packaging Industries, Bhiwadi — Real-time order status for verified customers</p>
+  <div class="search-box">
+    <input type="text" id="po-input" placeholder="Enter your PO Number (e.g. PO-2026-1234)"
+           onkeydown="if(event.key==='Enter')trackOrder()">
+    <button onclick="trackOrder()">Track Order →</button>
+  </div>
+</div>
+
+<div class="main" id="main-content">
+  <!-- Welcome state -->
+  <div style="text-align:center;padding:32px 0">
+    <p style="font-size:14px;color:#64748b;margin-bottom:20px">Enter your PO number above to track your order status in real-time.</p>
+    <div class="info-cards">
+      <div class="info-card" style="--clr:#2E75B6">
+        <div class="ic-val">23</div>
+        <div class="ic-label">Active Orders</div>
+      </div>
+      <div class="info-card" style="--clr:#375623">
+        <div class="ic-val">97%</div>
+        <div class="ic-label">On-Time Delivery</div>
+      </div>
+      <div class="info-card" style="--clr:#C65911">
+        <div class="ic-val">3–5 days</div>
+        <div class="ic-label">Avg Lead Time</div>
+      </div>
+      <div class="info-card" style="--clr:#0E6F56">
+        <div class="ic-val">ISO 9001</div>
+        <div class="ic-label">Quality Certified</div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 8px #0000001a;text-align:left">
+      <h3 style="font-size:14px;color:#1F3864;margin-bottom:12px">📞 Contact Us</h3>
+      <p style="font-size:13px;color:#374151;line-height:2">
+        🏭 Plant: SSPI, Bhiwadi, Rajasthan — 301019<br>
+        📧 Email: sspi.bhiwadi@gmail.com<br>
+        📱 WhatsApp: +91 94600 XXXXX<br>
+        🕐 Working Hours: Mon–Sat, 8 AM – 6 PM
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="powered">Powered by BDS Board Live Operations System • ldpareek4@gmail.com</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+
+// Demo orders (in production, fetch from GAS)
+const DEMO_ORDERS = {
+  'PO-2026-1001': {
+    poNo:'PO-2026-1001', customer:'Maruti Suzuki', date:'10 Jun 2026', dueDate:'20 Jun 2026',
+    status:'dispatch', statusLabel:'Ready for Dispatch',
+    items:[
+      {desc:'PP Woven Bags 50kg',qty:5000,uom:'Pcs',done:5000,pending:0},
+      {desc:'HDPE Liner Bags',qty:2000,uom:'Pcs',done:2000,pending:0},
+    ],
+    steps:[
+      {name:'Order Received',desc:'PO confirmed by SSPI Sales team',date:'10 Jun 2026',state:'done'},
+      {name:'Material Planning',desc:'RM allocated — PP Granules, HDPE',date:'11 Jun 2026',state:'done'},
+      {name:'Production Started',desc:'Job Card JC-2026-0142 created',date:'12 Jun 2026',state:'done'},
+      {name:'Quality Check',desc:'QC passed — 100% inspection done',date:'18 Jun 2026',state:'done'},
+      {name:'Ready for Dispatch',desc:'Packed and lorry receipt generated',date:'19 Jun 2026',state:'active'},
+      {name:'Delivered',desc:'Expected delivery',date:'20 Jun 2026',state:'pending'},
+    ],
+    note:'Your order is ready for dispatch. LR will be shared on your WhatsApp. Expected delivery: 20 Jun 2026.'
+  },
+  'PO-2026-1002': {
+    poNo:'PO-2026-1002', customer:'Hero MotoCorp', date:'15 Jun 2026', dueDate:'25 Jun 2026',
+    status:'production', statusLabel:'In Production',
+    items:[
+      {desc:'Laminated PP Bags 25kg',qty:8000,uom:'Pcs',done:5600,pending:2400},
+      {desc:'PP Corrugated Bags',qty:3000,uom:'Pcs',done:3000,pending:0},
+    ],
+    steps:[
+      {name:'Order Received',desc:'PO confirmed',date:'15 Jun 2026',state:'done'},
+      {name:'Material Planning',desc:'RM allocated',date:'16 Jun 2026',state:'done'},
+      {name:'Production Started',desc:'Job Card JC-2026-0158 — 70% complete',date:'17 Jun 2026',state:'active'},
+      {name:'Quality Check',desc:'Pending completion',date:'23 Jun 2026',state:'pending'},
+      {name:'Ready for Dispatch',desc:'Target',date:'24 Jun 2026',state:'pending'},
+      {name:'Delivered',desc:'Expected',date:'25 Jun 2026',state:'pending'},
+    ],
+    note:'Production is 70% complete. On track for delivery by 25 Jun 2026.'
+  }
+};
+
+function trackOrder() {
+  const po = document.getElementById('po-input').value.trim().toUpperCase();
+  const main = document.getElementById('main-content');
+  if (!po) { alert('Please enter a PO number'); return; }
+
+  // Try GAS fetch first, fallback to demo
+  const order = DEMO_ORDERS[po];
+  if (order) {
+    showOrderResult(order);
+  } else {
+    // In production: fetch from GAS
+    main.innerHTML = `<div class="not-found">
+      <div style="font-size:48px;margin-bottom:12px">🔍</div>
+      <h3>Order Not Found</h3>
+      <p>No order found for PO number "<strong>${po}</strong>".<br>
+      Please check the PO number or contact SSPI on +91 94600 XXXXX.</p>
+      <button onclick="main.innerHTML=''" style="margin-top:16px;padding:8px 16px;background:#2E75B6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">← Search Again</button>
+    </div>`;
+  }
+}
+
+function showOrderResult(o) {
+  const statusChips = {
+    processing:'chip-processing',production:'chip-production',
+    qc:'chip-qc',dispatch:'chip-dispatch',delivered:'chip-delivered',pending:'chip-pending'
+  };
+  const progressPct = Math.round(o.steps.filter(s=>s.state==='done').length/o.steps.length*100);
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="order-card">
+      <div class="order-header">
+        <div>
+          <div class="order-id">${o.poNo}</div>
+          <div class="order-date">Customer: ${o.customer} • Ordered: ${o.date} • Due: ${o.dueDate}</div>
+        </div>
+        <span class="status-chip ${statusChips[o.status]||'chip-processing'}">${o.statusLabel}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px">
+        <div>
+          <h3 style="font-size:14px;font-weight:700;color:#1F3864;margin-bottom:16px">Order Progress</h3>
+          <div class="timeline">
+            ${o.steps.map(s=>`
+              <div class="tl-step ${s.state}">
+                <div class="tl-dot"></div>
+                <h4>${s.state==='done'?'✅ ':''}${s.name}</h4>
+                <p>${s.desc}</p>
+                <div class="tl-date">${s.date}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div>
+          <h3 style="font-size:14px;font-weight:700;color:#1F3864;margin-bottom:16px">Overall Progress</h3>
+          <div style="background:#f0f4f8;border-radius:8px;padding:16px;text-align:center;margin-bottom:16px">
+            <div style="font-size:36px;font-weight:700;color:#2E75B6">${progressPct}%</div>
+            <div style="height:8px;background:#e2e8f0;border-radius:4px;margin:8px 0;overflow:hidden">
+              <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,#2E75B6,#22c55e);border-radius:4px"></div>
+            </div>
+            <div style="font-size:11px;color:#64748b">${o.steps.filter(s=>s.state==='done').length} of ${o.steps.length} steps complete</div>
+          </div>
+          <h4 style="font-size:12px;color:#64748b;margin-bottom:8px;text-transform:uppercase">Order Items</h4>
+          <table class="items-table">
+            <thead><tr><th>Item</th><th>Qty</th><th>Done</th></tr></thead>
+            <tbody>${o.items.map(i=>`<tr>
+              <td>${i.desc}</td>
+              <td>${i.qty} ${i.uom}</td>
+              <td style="color:${i.pending===0?'#22c55e':'#fbbf24'};font-weight:600">${i.done}/${i.qty}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+      ${o.note?`<div class="msg-box"><div class="msg-icon">💬</div><p>${o.note}</p></div>`:''}
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button onclick="document.getElementById('main-content').innerHTML=''"
+          style="padding:8px 14px;background:#2E75B6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">← Track Another</button>
+        <button onclick="window.print()"
+          style="padding:8px 14px;background:#375623;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🖨️ Print</button>
+      </div>
+    </div>`;
+}
+</script>
+</body>
+</html>

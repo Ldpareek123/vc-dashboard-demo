@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Raw Materials Data Entry Bot</title>
+<style>
+:root{
+  --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#fff;
+  --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --red:#b3261e;
+  --orange:#b8860b; --yellow:#fff7cc; --purple:#6d28d9; --teal:#0d9488;
+}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;}
+body{margin:0;background:var(--bg);color:var(--text);}
+header{background:var(--navy);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;}
+header h1{margin:0;font-size:19px;}
+header p{margin:0;font-size:11px;opacity:.8;}
+.tabs{display:flex;flex-wrap:wrap;background:var(--navy2);padding:0 14px;}
+.tab{padding:10px 14px;color:#fff;cursor:pointer;font-size:12px;opacity:.75;border-bottom:3px solid transparent;white-space:nowrap;}
+.tab.active{opacity:1;border-bottom-color:var(--accent);font-weight:bold;}
+.container{max-width:1200px;margin:0 auto;padding:18px;}
+.panel{display:none;}.panel.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;}
+.card h2{margin:0 0 14px;font-size:15px;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.grid{display:grid;gap:12px;}
+.g2{grid-template-columns:1fr 1fr;}
+.g3{grid-template-columns:1fr 1fr 1fr;}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr;}
+label{display:block;font-size:11px;font-weight:bold;color:var(--navy);margin-bottom:3px;}
+input,select,textarea{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:5px;font-size:13px;}
+textarea{min-height:48px;resize:vertical;}
+input:focus,select:focus{outline:2px solid var(--accent);border-color:var(--accent);}
+.btn{background:var(--accent);color:#fff;border:none;padding:9px 18px;border-radius:5px;font-size:13px;cursor:pointer;font-weight:bold;}
+.btn:hover{background:var(--navy);}
+.btn.green{background:var(--green);}
+.btn.red{background:var(--red);}
+.btn.orange{background:var(--orange);}
+.btn.small{padding:5px 10px;font-size:11px;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+.note{background:#eef5fb;border-left:4px solid var(--accent);padding:9px 12px;font-size:12px;color:#333;border-radius:0 6px 6px 0;margin-bottom:14px;line-height:1.6;}
+.warn{background:#fff7e0;border-left:4px solid var(--orange);padding:9px 12px;font-size:12px;border-radius:0 6px 6px 0;margin-bottom:14px;}
+.alert{background:#fde7e7;border-left:4px solid var(--red);padding:9px 12px;font-size:12px;border-radius:0 6px 6px 0;margin-bottom:14px;}
+.ok{background:#e3f6e9;border-left:4px solid var(--green);padding:9px 12px;font-size:12px;border-radius:0 6px 6px 0;margin-bottom:14px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:var(--navy);color:#fff;padding:6px 7px;text-align:left;white-space:nowrap;}
+td{border:1px solid var(--border);padding:5px 7px;vertical-align:middle;}
+tr:nth-child(even){background:#fafbfc;}
+.tbl-wrap{max-height:400px;overflow:auto;border:1px solid var(--border);border-radius:6px;margin-top:10px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold;}
+.badge.ok{background:#e3f6e9;color:var(--green);}
+.badge.warn{background:#fff7e0;color:var(--orange);}
+.badge.alert{background:#fde7e7;color:var(--red);}
+.badge.blue{background:#eef5fb;color:var(--accent);}
+.kpi-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.kpi{flex:1;min-width:130px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.kpi b{display:block;font-size:22px;color:var(--navy);}
+.kpi span{font-size:11px;color:var(--muted);}
+.thick-box{background:#fffbe6;border:2px dashed var(--orange);border-radius:8px;padding:14px;margin-bottom:14px;}
+.thick-box h3{margin:0 0 10px;font-size:13px;color:var(--orange);}
+.variance-ok{color:var(--green);font-weight:bold;}
+.variance-warn{color:var(--orange);font-weight:bold;}
+.variance-bad{color:var(--red);font-weight:bold;}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.section-title{font-size:13px;font-weight:bold;color:var(--navy2);margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--border);}
+.grade-tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:bold;margin-right:4px;}
+.gA{background:#d1fae5;color:#065f46;}
+.gB{background:#dbeafe;color:#1e40af;}
+.gC{background:#fef3c7;color:#92400e;}
+.gMR{background:#ede9fe;color:#5b21b6;}
+.gBWR{background:#fce7f3;color:#9d174d;}
+.gBWP{background:#e0f2fe;color:#0c4a6e;}
+#msg{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:bold;z-index:9999;display:none;max-width:320px;}
+#msg.success{background:#1d7a3c;color:#fff;}
+#msg.error{background:#b3261e;color:#fff;}
+#msg.info{background:var(--accent);color:#fff;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📦 Raw Materials Data Entry Bot</h1>
+    <p>SSPI Bhiwadi | Stores & RM Management | Auth: SSPI-VC-2026-SECURE</p>
+  </div>
+  <div style="margin-left:auto;font-size:11px;opacity:.8;text-align:right;">
+    <div id="hdr-date"></div>
+    <div id="hdr-time"></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPanel('grn')">📥 GRN Entry</div>
+  <div class="tab" onclick="showPanel('issue')">📤 Issue to Production</div>
+  <div class="tab" onclick="showPanel('thickness')">📏 Thickness Variance</div>
+  <div class="tab" onclick="showPanel('grade_stock')">📊 Grade-wise Stock</div>
+  <div class="tab" onclick="showPanel('comp_stock')">🔧 Component Stock</div>
+  <div class="tab" onclick="showPanel('adjustments')">⚙️ Adjustments</div>
+  <div class="tab" onclick="showPanel('grn_log')">📋 GRN Register</div>
+</div>
+
+<div class="container">
+
+<!-- ========== GRN ENTRY ========== -->
+<div id="panel-grn" class="panel active">
+  <div class="note">
+    <b>📥 Goods Received Note (GRN)</b> — Enter details at the time of material receipt. <b>IMPORTANT:</b> Always enter both the <b>Paper Thickness</b> (as per invoice/delivery note) and the <b>Actual Physical Thickness</b> (measured at gate). Variance is auto-flagged if &gt; 2mm.
+  </div>
+
+  <div class="card">
+    <h2>📋 GRN Header</h2>
+    <div class="grid g3">
+      <div><label>GRN No. *</label><input id="grn_no" placeholder="Auto: GRN-260624-001" readonly></div>
+      <div><label>Date *</label><input id="grn_date" type="date"></div>
+      <div><label>Supplier Name *</label><input id="grn_supplier" placeholder="e.g. Sharma Timber Depot"></div>
+      <div><label>Invoice / DC No.</label><input id="grn_invoice" placeholder="Supplier invoice number"></div>
+      <div><label>Vehicle No.</label><input id="grn_vehicle" placeholder="e.g. RJ14 GH 5678"></div>
+      <div><label>Received By</label><input id="grn_received_by" placeholder="Storekeeper name"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🌲 Material Details</h2>
+    <div class="grid g4">
+      <div>
+        <label>Material Type *</label>
+        <select id="grn_material" onchange="updateGradeOptions(); updateUnit();">
+          <option value="">-- Select --</option>
+          <option value="Eucalyptus">Eucalyptus Wood</option>
+          <option value="Pinewood">Pinewood</option>
+          <option value="Plywood">Plywood</option>
+          <option value="Nails">Nails</option>
+          <option value="Blocks">Blocks/Posts</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label>Grade *</label>
+        <select id="grn_grade">
+          <option value="">-- Select Material First --</option>
+        </select>
+      </div>
+      <div><label>Quantity Received *</label><input id="grn_qty" type="number" min="0" step="0.01" placeholder="e.g. 500"></div>
+      <div><label>Unit</label><input id="grn_unit" readonly placeholder="CFT / Sqft / kg / nos"></div>
+    </div>
+    <div class="grid g3" style="margin-top:12px;">
+      <div><label>Rate per Unit (₹)</label><input id="grn_rate" type="number" min="0" step="0.01" placeholder="e.g. 90"></div>
+      <div><label>Total Amount (₹)</label><input id="grn_amount" readonly placeholder="Auto-calculated"></div>
+      <div><label>Moisture Content (%)</label><input id="grn_moisture" type="number" min="0" max="100" step="0.1" placeholder="If tested (optional)"></div>
+    </div>
+  </div>
+
+  <!-- THICKNESS SECTION — KEY FEATURE -->
+  <div class="thick-box">
+    <h3>📏 Thickness Measurement (Paper vs Actual)</h3>
+    <div class="note" style="margin-bottom:10px;">
+      This section applies to <b>Plywood, Wood planks, and Boards</b>. Enter the thickness from the invoice/bill, then measure actual physical thickness at gate. The system flags variance &gt; 2mm.
+    </div>
+    <div class="grid g4">
+      <div>
+        <label>Paper Thickness (mm) <small style="color:var(--orange);">As per Invoice</small></label>
+        <input id="grn_paper_thick" type="number" min="0" step="0.5" placeholder="e.g. 18" oninput="calcThickVariance()">
+      </div>
+      <div>
+        <label>Actual Physical Thickness (mm) <small style="color:var(--green);">Measured at Gate</small></label>
+        <input id="grn_actual_thick" type="number" min="0" step="0.5" placeholder="e.g. 16.5" oninput="calcThickVariance()">
+      </div>
+      <div>
+        <label>Variance (mm) <small>Auto</small></label>
+        <input id="grn_thick_variance" readonly placeholder="Auto-calculated">
+      </div>
+      <div>
+        <label>Variance Status</label>
+        <input id="grn_thick_status" readonly placeholder="OK / WARNING / CRITICAL">
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:10px;">
+      <div><label>Measurement Tool Used</label>
+        <select id="grn_measure_tool">
+          <option value="Vernier">Vernier Caliper</option>
+          <option value="Scale">Steel Scale</option>
+          <option value="Digital">Digital Gauge</option>
+          <option value="Tape">Tape Measure</option>
+        </select>
+      </div>
+      <div><label>No. of Pieces Measured</label><input id="grn_pieces_measured" type="number" min="1" placeholder="e.g. 5"></div>
+      <div><label>Thickness Action Taken</label>
+        <select id="grn_thick_action">
+          <option value="Accepted">Accepted As-Is</option>
+          <option value="Price Adjusted">Price Adjusted for Variance</option>
+          <option value="Short Accepted">Accepted with Short Weight</option>
+          <option value="Returned">Material Returned to Supplier</option>
+          <option value="Pending">Pending Decision</option>
+        </select>
+      </div>
+    </div>
+    <div id="variance_alert" style="margin-top:10px;display:none;"></div>
+  </div>
+
+  <div class="card">
+    <h2>📝 Quality & Remarks</h2>
+    <div class="grid g3">
+      <div>
+        <label>Quality Check</label>
+        <select id="grn_qc">
+          <option value="Pass">✅ Pass</option>
+          <option value="Conditional">⚠️ Conditional Accept</option>
+          <option value="Reject">❌ Reject / Return</option>
+        </select>
+      </div>
+      <div><label>Rejection Reason (if any)</label><input id="grn_reject_reason" placeholder="If rejected, state reason"></div>
+      <div><label>Stacking Location</label><input id="grn_location" placeholder="e.g. Yard A, Bay 3"></div>
+    </div>
+    <div style="margin-top:10px;">
+      <label>Remarks</label>
+      <textarea id="grn_remarks" placeholder="Any additional observations about quality, condition, etc."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn green" onclick="saveGRN()">💾 Save GRN</button>
+      <button class="btn" onclick="printGRN()">🖨️ Print GRN</button>
+      <button class="btn red small" onclick="clearGRN()">🗑️ Clear Form</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ISSUE TO PRODUCTION ========== -->
+<div id="panel-issue" class="panel">
+  <div class="note">
+    <b>📤 Material Issue to Production</b> — Issue raw materials to the production floor. Select Product/Size to auto-load BOM components and calculate required quantities.
+  </div>
+
+  <div class="card">
+    <h2>🏭 Production Reference</h2>
+    <div class="grid g4">
+      <div><label>Issue Date *</label><input id="iss_date" type="date"></div>
+      <div><label>Shift</label>
+        <select id="iss_shift"><option>A (7am-3pm)</option><option>B (3pm-11pm)</option><option>C (11pm-7am)</option></select>
+      </div>
+      <div><label>Job Card No.</label><input id="iss_jobcard" placeholder="e.g. JC-260624-001"></div>
+      <div><label>Issued By (Storekeeper)</label><input id="iss_by" placeholder="Name"></div>
+    </div>
+    <div class="grid g3" style="margin-top:10px;">
+      <div>
+        <label>Product Type</label>
+        <select id="iss_product_type" onchange="loadSizes()">
+          <option value="">-- Select --</option>
+          <option value="Pallet">Pallet</option>
+          <option value="Box">Box</option>
+          <option value="Crate">Crate</option>
+        </select>
+      </div>
+      <div>
+        <label>Product ID / Size</label>
+        <select id="iss_product_id" onchange="loadBOM()">
+          <option value="">-- Select Product Type First --</option>
+        </select>
+      </div>
+      <div><label>Quantity to Produce</label><input id="iss_qty_to_produce" type="number" min="1" placeholder="e.g. 100" oninput="calcIssueQty()"></div>
+    </div>
+  </div>
+
+  <div class="card" id="bom_section" style="display:none;">
+    <h2>📋 BOM — Required Materials for Issue</h2>
+    <div class="note">Quantities auto-calculated from BOM × production quantity. <b>Adjust actual qty if required.</b></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Component</th><th>Material</th><th>Grade</th><th>BOM Qty</th>
+          <th>Unit</th><th>For Production</th><th>Actual Issue Qty</th><th>Avail. Stock</th><th>Status</th>
+        </tr></thead>
+        <tbody id="bom_rows"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn green" onclick="saveIssue()">💾 Confirm & Save Issue</button>
+      <button class="btn small" onclick="document.getElementById('bom_section').style.display='none'">✖ Cancel</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>✏️ Manual Issue Entry (Single Line)</h2>
+    <div class="note">Use this if you're issuing material not linked to a product/BOM — e.g. maintenance, scrap recovery, etc.</div>
+    <div class="grid g4">
+      <div>
+        <label>Material</label>
+        <select id="man_material" onchange="updateManGrade()">
+          <option value="">-- Select --</option>
+          <option value="Eucalyptus">Eucalyptus Wood</option>
+          <option value="Pinewood">Pinewood</option>
+          <option value="Plywood">Plywood</option>
+          <option value="Nails">Nails</option>
+          <option value="Blocks">Blocks/Posts</option>
+        </select>
+      </div>
+      <div><label>Grade</label><select id="man_grade"><option value="">-- Select Material --</option></select></div>
+      <div><label>Quantity</label><input id="man_qty" type="number" min="0" step="0.01"></div>
+      <div><label>Unit</label><input id="man_unit" readonly placeholder="CFT / Sqft / kg / nos"></div>
+    </div>
+    <div class="grid g3" style="margin-top:10px;">
+      <div><label>Purpose</label><input id="man_purpose" placeholder="e.g. Maintenance / Repair / Trial"></div>
+      <div><label>Issued To</label><input id="man_issued_to" placeholder="Department / Person"></div>
+      <div><label>Remarks</label><input id="man_remarks" placeholder="Optional"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="saveManualIssue()">💾 Save Manual Issue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== THICKNESS VARIANCE ========== -->
+<div id="panel-thickness" class="panel">
+  <div class="note">
+    <b>📏 Thickness Variance Register</b> — All GRNs where paper thickness ≠ actual physical thickness. Critical variances (&gt;5mm) are flagged in red. Use this to negotiate with suppliers or adjust purchase rates.
+  </div>
+
+  <div class="kpi-row" id="thick_kpis">
+    <div class="kpi"><b id="tv_total">0</b><span>Total GRNs with Variance</span></div>
+    <div class="kpi"><b id="tv_critical" style="color:var(--red)">0</b><span>Critical (&gt;5mm)</span></div>
+    <div class="kpi"><b id="tv_warn" style="color:var(--orange)">0</b><span>Warning (2-5mm)</span></div>
+    <div class="kpi"><b id="tv_ok" style="color:var(--green)">0</b><span>OK (&lt;2mm)</span></div>
+  </div>
+
+  <div class="card">
+    <h2>🔍 Filter</h2>
+    <div class="grid g4">
+      <div><label>Date From</label><input id="tv_from" type="date"></div>
+      <div><label>Date To</label><input id="tv_to" type="date"></div>
+      <div>
+        <label>Material</label>
+        <select id="tv_material">
+          <option value="">All</option>
+          <option>Eucalyptus</option><option>Pinewood</option><option>Plywood</option>
+        </select>
+      </div>
+      <div>
+        <label>Variance Status</label>
+        <select id="tv_status">
+          <option value="">All</option>
+          <option value="CRITICAL">Critical only</option>
+          <option value="WARNING">Warning only</option>
+          <option value="OK">OK only</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="loadThicknessLog()">🔍 Load / Refresh</button>
+      <button class="btn small" onclick="printThicknessReport()">🖨️ Print Report</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Thickness Variance Register</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>GRN No.</th><th>Date</th><th>Supplier</th><th>Material</th><th>Grade</th>
+          <th>Paper Thick (mm)</th><th>Actual Thick (mm)</th><th>Variance (mm)</th>
+          <th>Variance %</th><th>Status</th><th>Action Taken</th>
+        </tr></thead>
+        <tbody id="thickness_log_body">
+          <tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px;">Click "Load / Refresh" to view records</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== GRADE-WISE STOCK ========== -->
+<div id="panel-grade_stock" class="panel">
+  <div class="note">
+    Current stock view by material and grade. Data reflects all saved GRNs minus issues. Click <b>Refresh</b> to recalculate.
+  </div>
+
+  <div class="card">
+    <h2>🌲 Wood Stock — Grade-wise</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Material</th><th>Grade</th><th>Opening Stock</th><th>Total Received</th>
+          <th>Total Issued</th><th>Closing Stock</th><th>Unit</th><th>Rate (₹)</th>
+          <th>Value (₹)</th><th>Reorder Level</th><th>Status</th>
+        </tr></thead>
+        <tbody id="wood_stock_body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>🪵 Plywood Stock — Grade & Thickness-wise</h2>
+    <div class="note">Plywood is tracked by grade AND nominal thickness. Variance between invoice and actual thickness is flagged.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Grade</th><th>Nominal Thickness (mm)</th><th>Avg Actual Thick (mm)</th>
+          <th>Opening</th><th>Received</th><th>Issued</th><th>Closing</th>
+          <th>Unit</th><th>Rate (₹)</th><th>Value (₹)</th><th>Status</th>
+        </tr></thead>
+        <tbody id="ply_stock_body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>🔩 Other Materials Stock</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Material</th><th>Opening</th><th>Received</th><th>Issued</th>
+          <th>Closing</th><th>Unit</th><th>Rate (₹)</th><th>Value (₹)</th><th>Status</th>
+        </tr></thead>
+        <tbody id="other_stock_body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" onclick="loadGradeStock()">🔄 Refresh Stock</button>
+    <button class="btn small" onclick="printStockStatement()">🖨️ Print Stock Statement</button>
+  </div>
+</div>
+
+<!-- ========== COMPONENT STOCK ========== -->
+<div id="panel-comp_stock" class="panel">
+  <div class="note">
+    <b>🔧 Component Stock Entry</b> — Record daily component counts. Components are semi-finished parts (cut planks, boards, blocks) tracked between production stages.
+  </div>
+
+  <div class="card">
+    <h2>📦 Daily Component Stock Entry</h2>
+    <div class="grid g3">
+      <div><label>Date *</label><input id="cs_date" type="date"></div>
+      <div><label>Shift</label>
+        <select id="cs_shift"><option>A</option><option>B</option><option>C</option><option>All Day</option></select>
+      </div>
+      <div><label>Entered By</label><input id="cs_by" placeholder="Name"></div>
+    </div>
+    <hr class="divider">
+    <div class="section-title">Pallet Components</div>
+    <div class="tbl-wrap" style="max-height:300px;">
+      <table>
+        <thead><tr>
+          <th>Component</th><th>Stage</th><th>Used For</th><th>Opening</th>
+          <th>Produced Today</th><th>Used Today</th><th>Closing</th><th>Unit</th><th>Target</th><th>Status</th>
+        </tr></thead>
+        <tbody id="comp_pallet_body"></tbody>
+      </table>
+    </div>
+    <div class="section-title" style="margin-top:14px;">Box Components</div>
+    <div class="tbl-wrap" style="max-height:300px;">
+      <table>
+        <thead><tr>
+          <th>Component</th><th>Stage</th><th>Used For</th><th>Opening</th>
+          <th>Produced Today</th><th>Used Today</th><th>Closing</th><th>Unit</th><th>Target</th><th>Status</th>
+        </tr></thead>
+        <tbody id="comp_box_body"></tbody>
+      </table>
+    </div>
+    <div class="section-title" style="margin-top:14px;">Crate Components</div>
+    <div class="tbl-wrap" style="max-height:300px;">
+      <table>
+        <thead><tr>
+          <th>Component</th><th>Stage</th><th>Used For</th><th>Opening</th>
+          <th>Produced Today</th><th>Used Today</th><th>Closing</th><th>Unit</th><th>Target</th><th>Status</th>
+        </tr></thead>
+        <tbody id="comp_crate_body"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn green" onclick="saveCompStock()">💾 Save Component Stock</button>
+      <button class="btn small" onclick="loadCompStock()">🔄 Load Previous</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ADJUSTMENTS ========== -->
+<div id="panel-adjustments" class="panel">
+  <div class="warn">
+    <b>⚠️ Stock Adjustments</b> — Use only for physical stock verification discrepancies, damage write-off, or opening balance corrections. All adjustments are logged with reason.
+  </div>
+
+  <div class="card">
+    <h2>⚙️ Stock Adjustment Entry</h2>
+    <div class="grid g4">
+      <div><label>Date</label><input id="adj_date" type="date"></div>
+      <div>
+        <label>Adjustment Type</label>
+        <select id="adj_type">
+          <option value="Opening Balance">Opening Balance</option>
+          <option value="Physical Verification">Physical Verification Surplus</option>
+          <option value="Shortage">Physical Verification Shortage</option>
+          <option value="Damage Write-off">Damage / Wastage Write-off</option>
+          <option value="Rate Correction">Rate Correction</option>
+          <option value="Transfer In">Transfer In (from another location)</option>
+          <option value="Transfer Out">Transfer Out (to another location)</option>
+        </select>
+      </div>
+      <div>
+        <label>Material</label>
+        <select id="adj_material" onchange="updateAdjGrade()">
+          <option value="">-- Select --</option>
+          <option value="Eucalyptus">Eucalyptus Wood</option>
+          <option value="Pinewood">Pinewood</option>
+          <option value="Plywood">Plywood</option>
+          <option value="Nails">Nails</option>
+          <option value="Blocks">Blocks/Posts</option>
+        </select>
+      </div>
+      <div><label>Grade</label><select id="adj_grade"><option value="">-- Select Material --</option></select></div>
+    </div>
+    <div class="grid g4" style="margin-top:10px;">
+      <div><label>Quantity (±)</label><input id="adj_qty" type="number" step="0.01" placeholder="Positive = add, Negative = reduce"></div>
+      <div><label>Unit</label><input id="adj_unit" readonly></div>
+      <div><label>Authorised By</label><input id="adj_auth" placeholder="Manager / Owner name"></div>
+      <div><label>Reference No.</label><input id="adj_ref" placeholder="Stock take report no."></div>
+    </div>
+    <div style="margin-top:10px;">
+      <label>Reason for Adjustment *</label>
+      <textarea id="adj_reason" placeholder="Mandatory: explain why this adjustment is being made"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn orange" onclick="saveAdjustment()">💾 Save Adjustment</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <h2>📋 Adjustment Log</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Date</th><th>Type</th><th>Material</th><th>Grade</th>
+          <th>Qty Adj.</th><th>Unit</th><th>Reason</th><th>Auth By</th><th>Ref No.</th>
+        </tr></thead>
+        <tbody id="adj_log_body">
+          <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px;">No adjustments recorded yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== GRN REGISTER ========== -->
+<div id="panel-grn_log" class="panel">
+  <div class="note">Complete GRN history. Use filters to find specific receipts.</div>
+
+  <div class="card">
+    <h2>🔍 Filter GRN Register</h2>
+    <div class="grid g4">
+      <div><label>Date From</label><input id="gr_from" type="date"></div>
+      <div><label>Date To</label><input id="gr_to" type="date"></div>
+      <div>
+        <label>Material</label>
+        <select id="gr_mat">
+          <option value="">All</option>
+          <option>Eucalyptus</option><option>Pinewood</option><option>Plywood</option><option>Nails</option><option>Blocks</option>
+        </select>
+      </div>
+      <div>
+        <label>Grade</label>
+        <select id="gr_grade">
+          <option value="">All</option>
+          <option>Grade A</option><option>Grade B</option><option>Grade C</option>
+          <option>MR</option><option>BWR</option><option>BWP</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="loadGRNLog()">🔍 Load</button>
+      <button class="btn small" onclick="exportGRNCSV()">⬇️ Export CSV</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 GRN Register</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>GRN No.</th><th>Date</th><th>Supplier</th><th>Material</th><th>Grade</th>
+          <th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th>
+          <th>Paper Thick</th><th>Actual Thick</th><th>Variance</th><th>Status</th><th>QC</th>
+        </tr></thead>
+        <tbody id="grn_log_body">
+          <tr><td colspan="14" style="text-align:center;color:var(--muted);padding:20px;">Click "Load" to view GRN records</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<div id="msg"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const AUTH = 'SSPI-VC-2026-SECURE';
+
+// ===== DATA STORE (localStorage) =====
+function getData(key){ try{return JSON.parse(localStorage.getItem('sspi_rm_'+key)||'[]');}catch(e){return[];} }
+function saveData(key,arr){ localStorage.setItem('sspi_rm_'+key, JSON.stringify(arr)); }
+function pushData(key,obj){ const a=getData(key); a.push({...obj,saved_at:new Date().toISOString()}); saveData(key,a); }
+
+// ===== INIT =====
+const TODAY = new Date().toISOString().split('T')[0];
+document.querySelectorAll('input[type=date]').forEach(e=>e.value=TODAY);
+
+function updateClock(){
+  const n=new Date();
+  document.getElementById('hdr-date').textContent = n.toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('hdr-time').textContent = n.toLocaleTimeString('en-IN');
+}
+updateClock(); setInterval(updateClock,1000);
+
+// Generate GRN No
+function genGRNNo(){
+  const d=new Date(),
+        dd=String(d.getDate()).padStart(2,'0'),
+        mm=String(d.getMonth()+1).padStart(2,'0'),
+        yy=String(d.getFullYear()).slice(-2),
+        existing=getData('grn').length+1,
+        seq=String(existing).padStart(3,'0');
+  return `GRN-${yy}${mm}${dd}-${seq}`;
+}
+document.getElementById('grn_no').value = genGRNNo();
+
+// ===== TABS =====
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='grade_stock') loadGradeStock();
+  if(id==='comp_stock') initCompStock();
+  if(id==='thickness') loadThicknessLog();
+  if(id==='grn_log') loadGRNLog();
+  if(id==='adjustments') loadAdjLog();
+}
+
+// ===== MATERIAL CONFIGS =====
+const MATERIAL_CONFIG = {
+  'Eucalyptus': { grades:['Grade A','Grade B'], unit:'CFT', rates:{'Grade A':90,'Grade B':70} },
+  'Pinewood':   { grades:['Grade A','Grade B','Grade C'], unit:'CFT', rates:{'Grade A':85,'Grade B':70,'Grade C':50} },
+  'Plywood':    { grades:['MR (Commercial)','BWR (Water Resistant)','BWP (Water Proof)'], unit:'Sqft', rates:{'MR (Commercial)':35,'BWR (Water Resistant)':45,'BWP (Water Proof)':60} },
+  'Nails':      { grades:['2"','2.5"','3"','4"'], unit:'kg', rates:{'2"':80,'2.5"':80,'3"':75,'4"':75} },
+  'Blocks':     { grades:['Standard','Treated'], unit:'nos', rates:{'Standard':5,'Treated':8} },
+  'Other':      { grades:['N/A'], unit:'nos', rates:{} }
+};
+
+function updateGradeOptions(){
+  const mat=document.getElementById('grn_material').value;
+  const gradeEl=document.getElementById('grn_grade');
+  gradeEl.innerHTML='<option value="">-- Select --</option>';
+  if(MATERIAL_CONFIG[mat]){
+    MATERIAL_CONFIG[mat].grades.forEach(g=>{
+      gradeEl.innerHTML+=`<option value="${g}">${g}</option>`;
+    });
+  }
+}
+function updateUnit(){
+  const mat=document.getElementById('grn_material').value;
+  document.getElementById('grn_unit').value = MATERIAL_CONFIG[mat]?.unit||'';
+  const rate=document.getElementById('grn_rate');
+  if(!rate.value && MATERIAL_CONFIG[mat]){
+    const grade=document.getElementById('grn_grade').value;
+    rate.value=MATERIAL_CONFIG[mat].rates[grade]||'';
+  }
+}
+document.getElementById('grn_qty').addEventListener('input',calcAmount);
+document.getElementById('grn_rate').addEventListener('input',calcAmount);
+function calcAmount(){
+  const q=parseFloat(document.getElementById('grn_qty').value)||0;
+  const r=parseFloat(document.getElementById('grn_rate').value)||0;
+  document.getElementById('grn_amount').value = q&&r ? '₹'+( q*r ).toLocaleString('en-IN',{minimumFractionDigits:2}) : '';
+}
+
+// ===== THICKNESS VARIANCE =====
+function calcThickVariance(){
+  const paper=parseFloat(document.getElementById('grn_paper_thick').value)||0;
+  const actual=parseFloat(document.getElementById('grn_actual_thick').value)||0;
+  if(!paper||!actual){
+    document.getElementById('grn_thick_variance').value='';
+    document.getElementById('grn_thick_status').value='';
+    document.getElementById('variance_alert').style.display='none';
+    return;
+  }
+  const variance=Math.abs(paper-actual).toFixed(2);
+  const variancePct=((Math.abs(paper-actual)/paper)*100).toFixed(1);
+  document.getElementById('grn_thick_variance').value = (actual<paper?'-':'+') + variance + ' mm';
+
+  let status, alertHtml;
+  if(Math.abs(paper-actual)<=2){
+    status='✅ OK';
+    alertHtml=`<div class="ok">✅ Thickness within acceptable range (variance: ${variance}mm = ${variancePct}%). Material accepted.</div>`;
+  } else if(Math.abs(paper-actual)<=5){
+    status='⚠️ WARNING';
+    alertHtml=`<div class="warn">⚠️ WARNING: Thickness variance is ${variance}mm (${variancePct}%). Paper says ${paper}mm, actual is ${actual}mm. Consider price adjustment or partial return.</div>`;
+  } else {
+    status='🚨 CRITICAL';
+    alertHtml=`<div class="alert">🚨 CRITICAL: Large thickness variance of ${variance}mm (${variancePct}%)! Paper says ${paper}mm, actual is ${actual}mm. Escalate to supervisor before accepting.</div>`;
+  }
+  document.getElementById('grn_thick_status').value=status;
+  document.getElementById('variance_alert').innerHTML=alertHtml;
+  document.getElementById('variance_alert').style.display='block';
+}
+
+// ===== SAVE GRN =====
+function saveGRN(){
+  const grn_no=document.getElementById('grn_no').value;
+  const date=document.getElementById('grn_date').value;
+  const supplier=document.getElementById('grn_supplier').value;
+  const material=document.getElementById('grn_material').value;
+  const grade=document.getElementById('grn_grade').value;
+  const qty=parseFloat(document.getElementById('grn_qty').value)||0;
+  if(!date||!supplier||!material||!grade||!qty){
+    showMsg('Fill all required fields: Date, Supplier, Material, Grade, Qty.','error');
+    return;
+  }
+  const paper_thick=parseFloat(document.getElementById('grn_paper_thick').value)||null;
+  const actual_thick=parseFloat(document.getElementById('grn_actual_thick').value)||null;
+  const variance = paper_thick&&actual_thick ? (Math.abs(paper_thick-actual_thick)).toFixed(2) : null;
+  const thick_status = variance ? (variance<=2?'OK':variance<=5?'WARNING':'CRITICAL') : 'N/A';
+
+  const obj = {
+    grn_no, date, supplier,
+    invoice:document.getElementById('grn_invoice').value,
+    vehicle:document.getElementById('grn_vehicle').value,
+    received_by:document.getElementById('grn_received_by').value,
+    material, grade, qty,
+    unit:document.getElementById('grn_unit').value,
+    rate:parseFloat(document.getElementById('grn_rate').value)||0,
+    amount:(parseFloat(document.getElementById('grn_qty').value)||0)*(parseFloat(document.getElementById('grn_rate').value)||0),
+    moisture:document.getElementById('grn_moisture').value,
+    paper_thick, actual_thick, variance, thick_status,
+    measure_tool:document.getElementById('grn_measure_tool').value,
+    pieces_measured:document.getElementById('grn_pieces_measured').value,
+    thick_action:document.getElementById('grn_thick_action').value,
+    qc:document.getElementById('grn_qc').value,
+    reject_reason:document.getElementById('grn_reject_reason').value,
+    location:document.getElementById('grn_location').value,
+    remarks:document.getElementById('grn_remarks').value
+  };
+  pushData('grn', obj);
+
+  // Post to GAS
+  gsPost({type:'rm_grn',...obj});
+
+  showMsg(`✅ GRN ${grn_no} saved! ${material} ${grade}: ${qty} ${obj.unit} from ${supplier}${variance&&thick_status!=='OK'?' | ⚠️ Thickness variance: '+variance+'mm':''}`, 'success');
+  document.getElementById('grn_no').value = genGRNNo();
+  clearGRN();
+}
+
+function clearGRN(){
+  ['grn_supplier','grn_invoice','grn_vehicle','grn_received_by','grn_qty','grn_rate','grn_amount',
+   'grn_moisture','grn_paper_thick','grn_actual_thick','grn_thick_variance','grn_thick_status',
+   'grn_reject_reason','grn_location','grn_remarks'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('variance_alert').style.display='none';
+  document.getElementById('grn_material').value='';
+  document.getElementById('grn_grade').innerHTML='<option value="">-- Select Material First --</option>';
+}
+
+// ===== ISSUE TO PRODUCTION =====
+const BOM_DATA = {
+  'Pallet':[
+    {component:'Top Deck Boards',material:'Eucalyptus',grade:'Grade A',qty_per:5,unit:'nos',cft_per:2.5},
+    {component:'Bottom Deck Boards',material:'Eucalyptus',grade:'Grade A',qty_per:5,unit:'nos',cft_per:2.5},
+    {component:'Blocks/Posts',material:'Pinewood',grade:'Grade B',qty_per:9,unit:'nos',cft_per:1.2},
+    {component:'Nails',material:'Nails',grade:'2.5"',qty_per:0.5,unit:'kg',cft_per:0},
+  ],
+  'Box':[
+    {component:'Base',material:'Pinewood',grade:'Grade B',qty_per:1,unit:'nos',cft_per:1.5},
+    {component:'Side Slats',material:'Pinewood',grade:'Grade B',qty_per:4,unit:'nos',cft_per:0.8},
+    {component:'End Slats',material:'Pinewood',grade:'Grade B',qty_per:2,unit:'nos',cft_per:0.4},
+    {component:'Top',material:'Pinewood',grade:'Grade B',qty_per:1,unit:'nos',cft_per:1.0},
+    {component:'Blocks (Corners)',material:'Pinewood',grade:'Grade C',qty_per:4,unit:'nos',cft_per:0.3},
+    {component:'Nails',material:'Nails',grade:'2"',qty_per:0.3,unit:'kg',cft_per:0},
+  ],
+  'Crate':[
+    {component:'Base',material:'Eucalyptus',grade:'Grade B',qty_per:1,unit:'nos',cft_per:2.0},
+    {component:'Side Slats',material:'Eucalyptus',grade:'Grade B',qty_per:4,unit:'nos',cft_per:1.2},
+    {component:'End Slats',material:'Eucalyptus',grade:'Grade B',qty_per:4,unit:'nos',cft_per:1.0},
+    {component:'Top',material:'Eucalyptus',grade:'Grade B',qty_per:1,unit:'nos',cft_per:2.0},
+    {component:'Blocks/Posts (Corners)',material:'Pinewood',grade:'Grade C',qty_per:4,unit:'nos',cft_per:0.6},
+    {component:'Nails',material:'Nails',grade:'3"',qty_per:0.5,unit:'kg',cft_per:0},
+  ]
+};
+
+const PRODUCT_SIZES = {
+  'Pallet': Array.from({length:20},(_,i)=>`PAL${String(i+1).padStart(3,'0')} - Size ${i+1} (${1250+i*50}×${1040+i*40}mm)`),
+  'Box':    Array.from({length:20},(_,i)=>`BOX${String(i+1).padStart(3,'0')} - Size ${i+1} (${630+i*30}×${420+i*20}mm)`),
+  'Crate':  Array.from({length:20},(_,i)=>`CRT${String(i+1).padStart(3,'0')} - Size ${i+1} (${1450+i*50}×${1240+i*40}mm)`)
+};
+
+function loadSizes(){
+  const pt=document.getElementById('iss_product_type').value;
+  const sel=document.getElementById('iss_product_id');
+  sel.innerHTML='<option value="">-- Select --</option>';
+  (PRODUCT_SIZES[pt]||[]).forEach(s=>sel.innerHTML+=`<option value="${s}">${s}</option>`);
+  document.getElementById('bom_section').style.display='none';
+}
+
+function loadBOM(){
+  const pt=document.getElementById('iss_product_type').value;
+  const qty=parseInt(document.getElementById('iss_qty_to_produce').value)||0;
+  if(!pt) return;
+  const boms=BOM_DATA[pt]||[];
+  const stock=getStockSummary();
+  let rows='';
+  boms.forEach(b=>{
+    const req_qty = b.qty_per*(qty||1);
+    const avail = stock[b.material]?.[b.grade]||0;
+    const ok = avail >= req_qty;
+    rows+=`<tr>
+      <td>${b.component}</td>
+      <td>${b.material}</td>
+      <td><span class="grade-tag g${b.grade.replace('Grade ','').replace(' ','')}">${b.grade}</span></td>
+      <td>${b.qty_per} ${b.unit}</td>
+      <td>${b.unit==='kg'||b.unit==='nos'?'-':b.cft_per+' CFT'}</td>
+      <td><b>${req_qty} ${b.unit}</b></td>
+      <td><input type="number" value="${req_qty}" min="0" step="0.01" style="width:80px;" class="iss_actual" data-component="${b.component}" data-material="${b.material}" data-grade="${b.grade}" data-unit="${b.unit}"></td>
+      <td>${avail} ${b.unit}</td>
+      <td><span class="badge ${ok?'ok':'alert'}">${ok?'✅ OK':'⚠️ LOW'}</span></td>
+    </tr>`;
+  });
+  document.getElementById('bom_rows').innerHTML=rows;
+  document.getElementById('bom_section').style.display='block';
+}
+
+document.getElementById('iss_qty_to_produce').addEventListener('input', function(){
+  if(document.getElementById('iss_product_id').value) loadBOM();
+});
+
+function saveIssue(){
+  const date=document.getElementById('iss_date').value;
+  const pt=document.getElementById('iss_product_type').value;
+  const pid=document.getElementById('iss_product_id').value;
+  const qty=document.getElementById('iss_qty_to_produce').value;
+  if(!date||!pt||!pid||!qty){showMsg('Fill all required fields.','error');return;}
+
+  const rows=document.querySelectorAll('.iss_actual');
+  const issues=[];
+  rows.forEach(inp=>{
+    const iss_qty=parseFloat(inp.value)||0;
+    if(iss_qty>0){
+      const obj={
+        date, product_type:pt, product_id:pid, qty_produced:qty,
+        jobcard:document.getElementById('iss_jobcard').value,
+        shift:document.getElementById('iss_shift').value,
+        issued_by:document.getElementById('iss_by').value,
+        component:inp.dataset.component,
+        material:inp.dataset.material,
+        grade:inp.dataset.grade,
+        quantity:iss_qty,
+        unit:inp.dataset.unit,
+        issue_type:'Production BOM'
+      };
+      pushData('issue', obj);
+      issues.push(obj);
+    }
+  });
+
+  if(issues.length>0){
+    // Post all to GAS
+    gsPost({type:'rm_issue_batch', date, product_type:pt, product_id:pid, qty_produced:qty, issues});
+    showMsg(`✅ Material issue saved for ${qty} ${pt}(s) [${pid}]. ${issues.length} material lines posted.`,'success');
+    document.getElementById('bom_section').style.display='none';
+    document.getElementById('iss_product_type').value='';
+    document.getElementById('iss_qty_to_produce').value='';
+  } else {
+    showMsg('No issue quantities entered.','error');
+  }
+}
+
+function updateManGrade(){
+  const mat=document.getElementById('man_material').value;
+  const gradeEl=document.getElementById('man_grade');
+  gradeEl.innerHTML='<option value="">-- Select Material First --</option>';
+  if(MATERIAL_CONFIG[mat]){
+    MATERIAL_CONFIG[mat].grades.forEach(g=>gradeEl.innerHTML+=`<option>${g}</option>`);
+    document.getElementById('man_unit').value=MATERIAL_CONFIG[mat].unit;
+  }
+}
+
+function saveManualIssue(){
+  const mat=document.getElementById('man_material').value;
+  const grade=document.getElementById('man_grade').value;
+  const qty=parseFloat(document.getElementById('man_qty').value)||0;
+  if(!mat||!qty){showMsg('Select material and enter quantity.','error');return;}
+  const obj={
+    date:document.getElementById('iss_date').value,
+    material:mat, grade, quantity:qty,
+    unit:document.getElementById('man_unit').value,
+    purpose:document.getElementById('man_purpose').value,
+    issued_to:document.getElementById('man_issued_to').value,
+    remarks:document.getElementById('man_remarks').value,
+    issue_type:'Manual'
+  };
+  pushData('issue', obj);
+  gsPost({type:'rm_issue',...obj});
+  showMsg(`✅ Manual issue saved: ${qty} ${obj.unit} of ${mat} ${grade}.`,'success');
+  ['man_material','man_grade','man_qty','man_purpose','man_issued_to','man_remarks'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('man_unit').value='';
+}
+
+// ===== STOCK CALCULATION =====
+function getStockSummary(){
+  const grns=getData('grn');
+  const issues=getData('issue');
+  const adjs=getData('adjustments');
+  const stock={};
+
+  // Opening balances from Settings (from the uploaded file)
+  const openings=[
+    {material:'Eucalyptus',grade:'Grade A',qty:1000,unit:'CFT',rate:90},
+    {material:'Eucalyptus',grade:'Grade B',qty:600,unit:'CFT',rate:70},
+    {material:'Pinewood',grade:'Grade A',qty:800,unit:'CFT',rate:85},
+    {material:'Pinewood',grade:'Grade B',qty:0,unit:'CFT',rate:70},
+    {material:'Pinewood',grade:'Grade C',qty:0,unit:'CFT',rate:50},
+    {material:'Plywood',grade:'MR (Commercial)',qty:1500,unit:'Sqft',rate:35},
+    {material:'Plywood',grade:'BWR (Water Resistant)',qty:1000,unit:'Sqft',rate:45},
+    {material:'Plywood',grade:'BWP (Water Proof)',qty:0,unit:'Sqft',rate:60},
+    {material:'Nails',grade:'2.5"',qty:500,unit:'kg',rate:80},
+    {material:'Blocks',grade:'Standard',qty:2000,unit:'nos',rate:5}
+  ];
+  openings.forEach(o=>{
+    if(!stock[o.material]) stock[o.material]={};
+    stock[o.material][o.grade]={opening:o.qty,received:0,issued:0,unit:o.unit,rate:o.rate};
+  });
+
+  grns.forEach(g=>{
+    const m=g.material, gr=g.grade;
+    if(!stock[m]) stock[m]={};
+    if(!stock[m][gr]) stock[m][gr]={opening:0,received:0,issued:0,unit:g.unit,rate:g.rate||0};
+    stock[m][gr].received += (parseFloat(g.qty)||0);
+  });
+  issues.forEach(i=>{
+    const m=i.material, gr=i.grade||'';
+    if(stock[m]&&stock[m][gr]) stock[m][gr].issued += (parseFloat(i.quantity)||0);
+  });
+  adjs.forEach(a=>{
+    const m=a.material, gr=a.grade||'';
+    if(stock[m]&&stock[m][gr]) stock[m][gr].received += (parseFloat(a.quantity)||0);
+  });
+
+  // Return simplified lookup
+  const result={};
+  Object.keys(stock).forEach(m=>{
+    result[m]={};
+    Object.keys(stock[m]).forEach(g=>{
+      const s=stock[m][g];
+      result[m][g]=s.opening+s.received-s.issued;
+    });
+  });
+  return result;
+}
+
+// ===== GRADE-WISE STOCK DISPLAY =====
+function loadGradeStock(){
+  const grns=getData('grn');
+  const issues=getData('issue');
+
+  const openings=[
+    {material:'Eucalyptus',grade:'Grade A',qty:1000,unit:'CFT',rate:90,reorder:500,cat:'wood'},
+    {material:'Eucalyptus',grade:'Grade B',qty:600,unit:'CFT',rate:70,reorder:300,cat:'wood'},
+    {material:'Pinewood',grade:'Grade A',qty:800,unit:'CFT',rate:85,reorder:400,cat:'wood'},
+    {material:'Pinewood',grade:'Grade B',qty:0,unit:'CFT',rate:70,reorder:200,cat:'wood'},
+    {material:'Pinewood',grade:'Grade C',qty:0,unit:'CFT',rate:50,reorder:100,cat:'wood'},
+  ];
+  const plyOpenings=[
+    {grade:'MR (Commercial)',thick:12,qty:1500,unit:'Sqft',rate:35,reorder:800},
+    {grade:'MR (Commercial)',thick:18,qty:0,unit:'Sqft',rate:40,reorder:400},
+    {grade:'BWR (Water Resistant)',thick:12,qty:500,unit:'Sqft',rate:45,reorder:300},
+    {grade:'BWR (Water Resistant)',thick:18,qty:500,unit:'Sqft',rate:52,reorder:300},
+    {grade:'BWP (Water Proof)',thick:12,qty:0,unit:'Sqft',rate:60,reorder:200},
+    {grade:'BWP (Water Proof)',thick:18,qty:0,unit:'Sqft',rate:70,reorder:200},
+  ];
+  const otherOpenings=[
+    {material:'Nails',grade:'2.5"',qty:500,unit:'kg',rate:80,reorder:100},
+    {material:'Nails',grade:'2"',qty:0,unit:'kg',rate:80,reorder:50},
+    {material:'Nails',grade:'3"',qty:0,unit:'kg',rate:75,reorder:50},
+    {material:'Blocks',grade:'Standard',qty:2000,unit:'nos',rate:5,reorder:500},
+    {material:'Blocks',grade:'Treated',qty:0,unit:'nos',rate:8,reorder:200},
+  ];
+
+  // Build stock from transactions
+  const received={}, issued={};
+  grns.forEach(g=>{ const k=g.material+'|'+g.grade; received[k]=(received[k]||0)+(parseFloat(g.qty)||0); });
+  issues.forEach(i=>{ const k=i.material+'|'+i.grade; issued[k]=(issued[k]||0)+(parseFloat(i.quantity)||0); });
+
+  // Wood table
+  let woodRows='';
+  openings.forEach(o=>{
+    const k=o.material+'|'+o.grade;
+    const closing=o.qty+(received[k]||0)-(issued[k]||0);
+    const value=(closing*o.rate).toLocaleString('en-IN');
+    const status=closing<o.reorder?'<span class="badge alert">⚠️ LOW</span>':'<span class="badge ok">✅ OK</span>';
+    const gc=o.grade==='Grade A'?'gA':o.grade==='Grade B'?'gB':'gC';
+    woodRows+=`<tr>
+      <td><b>${o.material}</b></td>
+      <td><span class="grade-tag ${gc}">${o.grade}</span></td>
+      <td>${o.qty} ${o.unit}</td>
+      <td>${received[k]||0} ${o.unit}</td>
+      <td>${issued[k]||0} ${o.unit}</td>
+      <td><b>${closing} ${o.unit}</b></td>
+      <td>${o.unit}</td>
+      <td>₹${o.rate}</td>
+      <td>₹${value}</td>
+      <td>${o.reorder} ${o.unit}</td>
+      <td>${status}</td>
+    </tr>`;
+  });
+  document.getElementById('wood_stock_body').innerHTML=woodRows||'<tr><td colspan="11" style="text-align:center;color:var(--muted)">No data</td></tr>';
+
+  // Plywood table (with thickness tracking)
+  const grn_ply_thick={}; const grn_ply_count={};
+  grns.filter(g=>g.material==='Plywood').forEach(g=>{
+    const k=g.grade+'|'+(g.paper_thick||'N/A');
+    if(g.actual_thick){ grn_ply_thick[k]=(grn_ply_thick[k]||0)+g.actual_thick; grn_ply_count[k]=(grn_ply_count[k]||0)+1; }
+  });
+  let plyRows='';
+  plyOpenings.forEach(o=>{
+    const k='Plywood|'+o.grade;
+    const closing=o.qty+(received[k]||0)-(issued[k]||0);
+    const value=(closing*o.rate).toLocaleString('en-IN');
+    const avgActual=grn_ply_count[o.grade+'|'+o.thick]?(grn_ply_thick[o.grade+'|'+o.thick]/grn_ply_count[o.grade+'|'+o.thick]).toFixed(1):'—';
+    const gc=o.grade.includes('MR')?'gMR':o.grade.includes('BWR')?'gBWR':'gBWP';
+    const status=closing<o.reorder?'<span class="badge alert">⚠️ LOW</span>':'<span class="badge ok">✅ OK</span>';
+    plyRows+=`<tr>
+      <td><span class="grade-tag ${gc}">${o.grade}</span></td>
+      <td>${o.thick}mm</td>
+      <td>${avgActual} mm</td>
+      <td>${o.qty}</td>
+      <td>${received[k]||0}</td>
+      <td>${issued[k]||0}</td>
+      <td><b>${closing}</b></td>
+      <td>${o.unit}</td>
+      <td>₹${o.rate}</td>
+      <td>₹${value}</td>
+      <td>${status}</td>
+    </tr>`;
+  });
+  document.getElementById('ply_stock_body').innerHTML=plyRows;
+
+  // Other
+  let otherRows='';
+  otherOpenings.forEach(o=>{
+    const k=o.material+'|'+o.grade;
+    const closing=o.qty+(received[k]||0)-(issued[k]||0);
+    const status=closing<o.reorder?'<span class="badge alert">⚠️ LOW</span>':'<span class="badge ok">✅ OK</span>';
+    otherRows+=`<tr>
+      <td>${o.material} — ${o.grade}</td>
+      <td>${o.qty}</td>
+      <td>${received[k]||0}</td>
+      <td>${issued[k]||0}</td>
+      <td><b>${closing}</b></td>
+      <td>${o.unit}</td>
+      <td>₹${o.rate}</td>
+      <td>₹${(closing*o.rate).toLocaleString('en-IN')}</td>
+      <td>${status}</td>
+    </tr>`;
+  });
+  document.getElementById('other_stock_body').innerHTML=otherRows;
+}
+
+// ===== COMPONENT STOCK =====
+const COMP_DATA = {
+  'Pallet':[
+    {comp:'Top Deck Boards',stage:'Stage 1 - Sawing',target:500},
+    {comp:'Bottom Deck Boards',stage:'Stage 1 - Sawing',target:500},
+    {comp:'Blocks/Posts',stage:'Stage 2 - Cutting',target:1000},
+  ],
+  'Box':[
+    {comp:'Base',stage:'Stage 1 - Sawing',target:300},
+    {comp:'Side Slats (4x)',stage:'Stage 1 - Sawing',target:600},
+    {comp:'End Slats (2x)',stage:'Stage 1 - Sawing',target:400},
+    {comp:'Top',stage:'Stage 1 - Sawing',target:300},
+    {comp:'Corner Blocks (4x)',stage:'Stage 2 - Cutting',target:600},
+  ],
+  'Crate':[
+    {comp:'Base',stage:'Stage 1 - Sawing',target:200},
+    {comp:'Side Slats (4x)',stage:'Stage 1 - Sawing',target:400},
+    {comp:'End Slats (4x)',stage:'Stage 1 - Sawing',target:400},
+    {comp:'Top',stage:'Stage 1 - Sawing',target:200},
+    {comp:'Corner Posts (4x)',stage:'Stage 2 - Cutting',target:400},
+  ]
+};
+
+function initCompStock(){
+  ['Pallet','Box','Crate'].forEach(pt=>{
+    const key=pt.toLowerCase();
+    const prevData=getData('comp_'+key);
+    const latest=prevData.length>0?prevData[prevData.length-1]:{};
+    let rows='';
+    COMP_DATA[pt].forEach((c,i)=>{
+      const prev=latest[c.comp]||{closing:0};
+      rows+=`<tr>
+        <td><b>${c.comp}</b></td>
+        <td style="font-size:10px;color:var(--muted)">${c.stage}</td>
+        <td>${pt}</td>
+        <td><input type="number" class="cs_open" data-pt="${pt}" data-i="${i}" value="${prev.closing||0}" min="0" style="width:70px" oninput="calcComp(this)"></td>
+        <td><input type="number" class="cs_prod" data-pt="${pt}" data-i="${i}" value="0" min="0" style="width:70px" oninput="calcComp(this)"></td>
+        <td><input type="number" class="cs_used" data-pt="${pt}" data-i="${i}" value="0" min="0" style="width:70px" oninput="calcComp(this)"></td>
+        <td><input type="number" class="cs_close" data-pt="${pt}" data-i="${i}" readonly style="width:70px;background:#f0f8ff;font-weight:bold"></td>
+        <td>nos</td>
+        <td>${c.target}</td>
+        <td id="cs_status_${pt}_${i}"><span class="badge blue">—</span></td>
+      </tr>`;
+    });
+    document.getElementById(`comp_${key}_body`).innerHTML=rows;
+  });
+}
+
+function calcComp(inp){
+  const pt=inp.dataset.pt, i=inp.dataset.i;
+  const open=parseFloat(document.querySelector(`.cs_open[data-pt="${pt}"][data-i="${i}"]`)?.value)||0;
+  const prod=parseFloat(document.querySelector(`.cs_prod[data-pt="${pt}"][data-i="${i}"]`)?.value)||0;
+  const used=parseFloat(document.querySelector(`.cs_used[data-pt="${pt}"][data-i="${i}"]`)?.value)||0;
+  const closing=open+prod-used;
+  const closeEl=document.querySelector(`.cs_close[data-pt="${pt}"][data-i="${i}"]`);
+  if(closeEl) closeEl.value=closing;
+  const target=COMP_DATA[pt][i].target;
+  const statusEl=document.getElementById(`cs_status_${pt}_${i}`);
+  if(statusEl) statusEl.innerHTML=closing<target*0.3?'<span class="badge alert">⚠️ LOW</span>':closing<target*0.6?'<span class="badge warn">⚡ MED</span>':'<span class="badge ok">✅ OK</span>';
+}
+
+function saveCompStock(){
+  const date=document.getElementById('cs_date').value;
+  const shift=document.getElementById('cs_shift').value;
+  const by=document.getElementById('cs_by').value;
+
+  ['Pallet','Box','Crate'].forEach(pt=>{
+    const key=pt.toLowerCase();
+    const stockObj={date,shift,by};
+    COMP_DATA[pt].forEach((c,i)=>{
+      const open=document.querySelector(`.cs_open[data-pt="${pt}"][data-i="${i}"]`)?.value||0;
+      const prod=document.querySelector(`.cs_prod[data-pt="${pt}"][data-i="${i}"]`)?.value||0;
+      const used=document.querySelector(`.cs_used[data-pt="${pt}"][data-i="${i}"]`)?.value||0;
+      const close=document.querySelector(`.cs_close[data-pt="${pt}"][data-i="${i}"]`)?.value||0;
+      stockObj[c.comp]={opening:+open,produced:+prod,used:+used,closing:+close};
+    });
+    pushData('comp_'+key, stockObj);
+    gsPost({type:'rm_comp_stock', product_type:pt, ...stockObj});
+  });
+  showMsg('✅ Component stock saved for all product types.','success');
+}
+
+function loadCompStock(){ initCompStock(); }
+
+// ===== THICKNESS LOG =====
+function loadThicknessLog(){
+  const grns=getData('grn').filter(g=>g.paper_thick||g.actual_thick);
+  const fromD=document.getElementById('tv_from').value;
+  const toD=document.getElementById('tv_to').value;
+  const mat=document.getElementById('tv_material').value;
+  const sts=document.getElementById('tv_status').value;
+
+  let filtered=grns;
+  if(fromD) filtered=filtered.filter(g=>g.date>=fromD);
+  if(toD) filtered=filtered.filter(g=>g.date<=toD);
+  if(mat) filtered=filtered.filter(g=>g.material===mat);
+  if(sts) filtered=filtered.filter(g=>g.thick_status===sts);
+
+  let total=filtered.length,critical=0,warn=0,ok=0;
+  let rows='';
+  filtered.forEach(g=>{
+    const v=parseFloat(g.variance)||0;
+    const pct=g.paper_thick?(v/g.paper_thick*100).toFixed(1):0;
+    const cls=g.thick_status==='CRITICAL'?'red':g.thick_status==='WARNING'?'orange':'green';
+    if(g.thick_status==='CRITICAL') critical++;
+    else if(g.thick_status==='WARNING') warn++;
+    else ok++;
+    rows+=`<tr>
+      <td>${g.grn_no}</td>
+      <td>${g.date}</td>
+      <td>${g.supplier}</td>
+      <td>${g.material}</td>
+      <td>${g.grade}</td>
+      <td style="text-align:center">${g.paper_thick||'—'}mm</td>
+      <td style="text-align:center">${g.actual_thick||'—'}mm</td>
+      <td style="text-align:center;font-weight:bold;color:var(--${cls})">${g.variance||'—'}mm</td>
+      <td style="text-align:center">${pct}%</td>
+      <td><span class="badge ${g.thick_status==='CRITICAL'?'alert':g.thick_status==='WARNING'?'warn':'ok'}">${g.thick_status||'—'}</span></td>
+      <td style="font-size:11px">${g.thick_action||'—'}</td>
+    </tr>`;
+  });
+
+  document.getElementById('thickness_log_body').innerHTML=rows||'<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">No records with thickness data found</td></tr>';
+  document.getElementById('tv_total').textContent=total;
+  document.getElementById('tv_critical').textContent=critical;
+  document.getElementById('tv_warn').textContent=warn;
+  document.getElementById('tv_ok').textContent=ok;
+}
+
+// ===== GRN LOG =====
+function loadGRNLog(){
+  const grns=getData('grn');
+  const fromD=document.getElementById('gr_from').value;
+  const toD=document.getElementById('gr_to').value;
+  const mat=document.getElementById('gr_mat').value;
+  const grade=document.getElementById('gr_grade').value;
+
+  let filtered=grns;
+  if(fromD) filtered=filtered.filter(g=>g.date>=fromD);
+  if(toD) filtered=filtered.filter(g=>g.date<=toD);
+  if(mat) filtered=filtered.filter(g=>g.material===mat);
+  if(grade) filtered=filtered.filter(g=>g.grade===grade);
+
+  let rows='';
+  filtered.forEach(g=>{
+    const amtFmt=g.amount?(g.amount).toLocaleString('en-IN',{minimumFractionDigits:2}):'—';
+    rows+=`<tr>
+      <td>${g.grn_no}</td><td>${g.date}</td><td>${g.supplier}</td>
+      <td>${g.material}</td><td>${g.grade}</td>
+      <td style="text-align:right">${g.qty}</td><td>${g.unit}</td>
+      <td style="text-align:right">₹${g.rate||'—'}</td>
+      <td style="text-align:right">₹${amtFmt}</td>
+      <td style="text-align:center">${g.paper_thick?g.paper_thick+'mm':'—'}</td>
+      <td style="text-align:center">${g.actual_thick?g.actual_thick+'mm':'—'}</td>
+      <td style="text-align:center;font-weight:bold">${g.variance?g.variance+'mm':'—'}</td>
+      <td><span class="badge ${g.thick_status==='CRITICAL'?'alert':g.thick_status==='WARNING'?'warn':g.thick_status==='OK'?'ok':'blue'}">${g.thick_status||'N/A'}</span></td>
+      <td><span class="badge ${g.qc==='Pass'?'ok':g.qc==='Reject'?'alert':'warn'}">${g.qc||'—'}</span></td>
+    </tr>`;
+  });
+  document.getElementById('grn_log_body').innerHTML=rows||'<tr><td colspan="14" style="text-align:center;color:var(--muted);padding:20px">No GRN records found</td></tr>';
+}
+
+function exportGRNCSV(){
+  const grns=getData('grn');
+  if(!grns.length){showMsg('No GRN data to export.','info');return;}
+  const headers=['GRN No','Date','Supplier','Invoice','Material','Grade','Qty','Unit','Rate','Amount','Paper Thick(mm)','Actual Thick(mm)','Variance(mm)','Thick Status','QC','Location','Remarks'];
+  const rows=grns.map(g=>[g.grn_no,g.date,g.supplier,g.invoice,g.material,g.grade,g.qty,g.unit,g.rate,g.amount,g.paper_thick,g.actual_thick,g.variance,g.thick_status,g.qc,g.location,g.remarks].join(','));
+  const csv=[headers.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='SSPI_GRN_Export_'+TODAY+'.csv';
+  a.click();
+}
+
+// ===== ADJUSTMENTS =====
+function updateAdjGrade(){
+  const mat=document.getElementById('adj_material').value;
+  const gradeEl=document.getElementById('adj_grade');
+  gradeEl.innerHTML='<option value="">-- Select --</option>';
+  if(MATERIAL_CONFIG[mat]){
+    MATERIAL_CONFIG[mat].grades.forEach(g=>gradeEl.innerHTML+=`<option>${g}</option>`);
+    document.getElementById('adj_unit').value=MATERIAL_CONFIG[mat].unit;
+  }
+}
+function saveAdjustment(){
+  const mat=document.getElementById('adj_material').value;
+  const reason=document.getElementById('adj_reason').value;
+  if(!mat||!reason){showMsg('Select material and enter reason.','error');return;}
+  const obj={
+    date:document.getElementById('adj_date').value,
+    type:document.getElementById('adj_type').value,
+    material:mat,
+    grade:document.getElementById('adj_grade').value,
+    quantity:parseFloat(document.getElementById('adj_qty').value)||0,
+    unit:document.getElementById('adj_unit').value,
+    authorised_by:document.getElementById('adj_auth').value,
+    reference:document.getElementById('adj_ref').value,
+    reason
+  };
+  pushData('adjustments', obj);
+  gsPost({type:'rm_adjustment',...obj});
+  showMsg('✅ Adjustment saved and logged.','success');
+  loadAdjLog();
+}
+function loadAdjLog(){
+  const adjs=getData('adjustments');
+  if(!adjs.length){
+    document.getElementById('adj_log_body').innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">No adjustments recorded yet</td></tr>';
+    return;
+  }
+  document.getElementById('adj_log_body').innerHTML=adjs.map(a=>`<tr>
+    <td>${a.date}</td><td>${a.type}</td><td>${a.material}</td><td>${a.grade}</td>
+    <td style="text-align:right;font-weight:bold;color:${a.quantity<0?'var(--red)':'var(--green)'}">${a.quantity>0?'+':''}${a.quantity} ${a.unit}</td>
+    <td>${a.unit}</td><td style="font-size:11px">${a.reason}</td>
+    <td>${a.authorised_by||'—'}</td><td>${a.reference||'—'}</td>
+  </tr>`).join('');
+}
+
+// ===== GAS POST =====
+function gsPost(payload){
+  const data={...payload, auth:AUTH, timestamp:new Date().toISOString()};
+  fetch(GAS_URL+'?type='+encodeURIComponent(data.type||'rm'),{
+    method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  }).catch(()=>{});
+}
+
+// ===== PRINT =====
+function printGRN(){
+  window.print();
+}
+function printThicknessReport(){
+  window.print();
+}
+function printStockStatement(){
+  window.print();
+}
+
+// ===== TOAST =====
+function showMsg(msg,type='info'){
+  const el=document.getElementById('msg');
+  el.textContent=msg;
+  el.className=type;
+  el.style.display='block';
+  setTimeout(()=>el.style.display='none',5000);
+}
+
+// Init
+loadGradeStock();
+</script>
+</body>
+</html>

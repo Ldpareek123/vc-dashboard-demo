@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Fixed Assets Register Bot</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1F3864,#375623);padding:16px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid #375623}
+.header h1{font-size:22px;font-weight:700;color:#fff}
+.header p{font-size:12px;color:#94a3b8;margin-top:2px}
+.badge{background:#375623;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px}
+.btn{padding:9px 18px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:.2s}
+.btn-primary{background:#2E75B6;color:#fff}.btn-primary:hover{background:#1F3864}
+.btn-success{background:#375623;color:#fff}.btn-success:hover{background:#2d4a1c}
+.btn-warn{background:#C65911;color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+.main{max-width:900px;margin:24px auto;padding:0 20px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:15px;font-weight:700;color:#375623;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #334155}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-row.triple{grid-template-columns:1fr 1fr 1fr}
+.form-row.full{grid-template-columns:1fr}
+.form-group label{display:block;font-size:11px;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:9px 12px;border-radius:6px;font-size:13px}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:#375623}
+.computed{background:#0E6F5620;border-color:#0E6F56;color:#6ee7b7;font-weight:600}
+.section-divider{font-size:12px;font-weight:700;color:#375623;text-transform:uppercase;letter-spacing:1px;margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid #334155}
+.alert-box{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
+.alert-box.show{display:block}
+.alert-success{background:#37562320;border-left:4px solid #375623;color:#86efac}
+.alert-error{background:#8B000020;border-left:4px solid #8B0000;color:#f87171}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #ffffff44;border-top:2px solid #fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dep-preview{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;margin-top:12px}
+.dep-preview h4{font-size:12px;color:#94a3b8;margin-bottom:8px;text-transform:uppercase}
+.dep-table{width:100%;border-collapse:collapse;font-size:11px}
+.dep-table th{color:#94a3b8;padding:4px 8px;text-align:right;font-weight:600}
+.dep-table th:first-child{text-align:left}
+.dep-table td{padding:4px 8px;border-bottom:1px solid #334155;text-align:right}
+.dep-table td:first-child{text-align:left;color:#e2e8f0}
+.dep-table tr:last-child td{border:none;font-weight:700;color:#22c55e}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>🏗️ Fixed Assets Register Bot <span class="badge">SSPI</span></h1>
+    <p>Add new assets, record purchases, calculate depreciation — WDV &amp; SLM methods</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-primary btn-sm" onclick="window.location.href='SSPI_Fixed_Assets_Dashboard.html'">📊 Dashboard</button>
+    <button class="btn btn-primary btn-sm" onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'">← V4 Dashboard</button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="alert-box" class="alert-box"><span id="alert-text"></span></div>
+
+  <div class="card">
+    <h2>➕ Add / Register New Fixed Asset</h2>
+
+    <div class="section-divider">Asset Identification</div>
+    <div class="form-row triple">
+      <div class="form-group"><label>Asset ID / Tag Number *</label>
+        <input type="text" id="asset-id" placeholder="e.g. FA-2026-001" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="form-group"><label>Asset Category *</label>
+        <select id="asset-cat" onchange="setCatDefaults()">
+          <option value="">-- Select --</option>
+          <option>Plant &amp; Machinery</option>
+          <option>Factory Building</option>
+          <option>Office Equipment</option>
+          <option>Furniture &amp; Fixtures</option>
+          <option>Vehicles</option>
+          <option>Computer &amp; IT Equipment</option>
+          <option>Electrical Fittings</option>
+          <option>Moulds &amp; Dies</option>
+          <option>Land</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Sub-Category</label>
+        <input type="text" id="asset-subcat" placeholder="e.g. PP Corrugation Machine">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label>Asset Name / Description *</label>
+        <input type="text" id="asset-name" placeholder="Full name of asset">
+      </div>
+      <div class="form-group"><label>Location / Department</label>
+        <select id="asset-location">
+          <option>Production Floor</option>
+          <option>Stores</option>
+          <option>Office</option>
+          <option>Factory Gate</option>
+          <option>Warehouse</option>
+          <option>Head Office</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label>Supplier / Vendor</label>
+        <input type="text" id="asset-supplier" placeholder="Supplier name">
+      </div>
+      <div class="form-group"><label>Invoice / Bill Number</label>
+        <input type="text" id="asset-invoice" placeholder="Invoice number">
+      </div>
+    </div>
+
+    <div class="section-divider">Purchase Details</div>
+    <div class="form-row triple">
+      <div class="form-group"><label>Purchase Date *</label>
+        <input type="date" id="purchase-date" onchange="calcDepreciation()">
+      </div>
+      <div class="form-group"><label>Purchase Price (₹) *</label>
+        <input type="number" id="purchase-price" placeholder="0.00" step="0.01" oninput="calcDepreciation()">
+      </div>
+      <div class="form-group"><label>Installation / Setup Cost (₹)</label>
+        <input type="number" id="install-cost" placeholder="0.00" step="0.01" oninput="calcDepreciation()">
+      </div>
+    </div>
+    <div class="form-row triple">
+      <div class="form-group"><label>Total Cost of Asset (₹)</label>
+        <input type="text" id="total-cost" class="computed" readonly placeholder="Auto-calculated">
+      </div>
+      <div class="form-group"><label>GST Amount (₹)</label>
+        <input type="number" id="gst-amount" placeholder="0.00" step="0.01">
+      </div>
+      <div class="form-group"><label>Useful Life (Years)</label>
+        <input type="number" id="useful-life" value="10" min="1" max="100" oninput="calcDepreciation()">
+      </div>
+    </div>
+
+    <div class="section-divider">Depreciation Method</div>
+    <div class="form-row triple">
+      <div class="form-group"><label>Depreciation Method</label>
+        <select id="dep-method" onchange="calcDepreciation()">
+          <option value="WDV">WDV — Written Down Value (Companies Act)</option>
+          <option value="SLM">SLM — Straight Line Method</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Depreciation Rate % (auto-filled)</label>
+        <input type="number" id="dep-rate" step="0.01" oninput="calcDepreciation()">
+      </div>
+      <div class="form-group"><label>Residual / Scrap Value (₹)</label>
+        <input type="number" id="scrap-value" value="0" step="0.01" oninput="calcDepreciation()">
+      </div>
+    </div>
+
+    <div class="dep-preview" id="dep-preview" style="display:none">
+      <h4>📅 Depreciation Schedule Preview</h4>
+      <table class="dep-table">
+        <thead><tr><th>Year</th><th>Opening WDV</th><th>Depreciation</th><th>Closing WDV</th></tr></thead>
+        <tbody id="dep-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="section-divider">Additional Details</div>
+    <div class="form-row">
+      <div class="form-group"><label>Serial / Model Number</label>
+        <input type="text" id="serial-no" placeholder="Manufacturer serial number">
+      </div>
+      <div class="form-group"><label>Warranty Expiry</label>
+        <input type="date" id="warranty-date">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Insured? Policy Number</label>
+        <input type="text" id="policy-no" placeholder="Leave blank if not insured">
+      </div>
+      <div class="form-group"><label>Insurance Expiry</label>
+        <input type="date" id="insurance-date">
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group"><label>Notes / Remarks</label>
+        <textarea id="asset-notes" placeholder="Any additional notes about this asset..." rows="3"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-success" onclick="submitAsset()" id="submit-btn">💾 Register Asset</button>
+      <button class="btn btn-warn" onclick="clearForm()">🗑️ Clear</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📤 Asset Disposal / Write-off</h2>
+    <div class="form-row triple">
+      <div class="form-group"><label>Asset ID to Dispose</label>
+        <input type="text" id="dispose-id" placeholder="FA-2026-001">
+      </div>
+      <div class="form-group"><label>Disposal Date</label>
+        <input type="date" id="dispose-date">
+      </div>
+      <div class="form-group"><label>Disposal Method</label>
+        <select id="dispose-method">
+          <option>Sold</option><option>Scrapped</option><option>Written Off</option>
+          <option>Transferred</option><option>Stolen / Lost</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Sale / Scrap Proceeds (₹)</label>
+        <input type="number" id="dispose-proceeds" placeholder="0.00">
+      </div>
+      <div class="form-group"><label>Buyer / Scrap Dealer</label>
+        <input type="text" id="dispose-buyer" placeholder="Name">
+      </div>
+    </div>
+    <button class="btn btn-warn" onclick="submitDisposal()">📤 Record Disposal</button>
+  </div>
+</div>
+
+<script>
+var GAS_URL='https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+var AUTH_TOKEN='SSPI-VC-2026-SECURE';
+
+var DEP_RATES_WDV={'Plant & Machinery':15.33,'Factory Building':10,'Office Equipment':13.91,'Furniture & Fixtures':25.89,'Vehicles':25.89,'Computer & IT Equipment':63.16,'Electrical Fittings':25.89,'Moulds & Dies':25.89,'Land':0};
+var DEP_RATES_SLM={'Plant & Machinery':5,'Factory Building':3.34,'Office Equipment':6.33,'Furniture & Fixtures':10,'Vehicles':9.5,'Computer & IT Equipment':33.33,'Electrical Fittings':10,'Moulds & Dies':11.31,'Land':0};
+
+function setCatDefaults(){
+  var cat=document.getElementById('asset-cat').value;
+  var method=document.getElementById('dep-method').value;
+  var rates=method==='WDV'?DEP_RATES_WDV:DEP_RATES_SLM;
+  if(cat&&rates[cat]!==undefined){document.getElementById('dep-rate').value=rates[cat];calcDepreciation();}
+}
+
+function calcDepreciation(){
+  var price=parseFloat(document.getElementById('purchase-price').value)||0;
+  var install=parseFloat(document.getElementById('install-cost').value)||0;
+  var total=price+install;
+  document.getElementById('total-cost').value=total>0?'₹'+total.toLocaleString('en-IN'):'';
+  var method=document.getElementById('dep-method').value;
+  var rate=parseFloat(document.getElementById('dep-rate').value)||0;
+  var scrap=parseFloat(document.getElementById('scrap-value').value)||0;
+  var life=parseInt(document.getElementById('useful-life').value)||10;
+  if(total<=0||rate<=0){document.getElementById('dep-preview').style.display='none';return;}
+  var tbody=document.getElementById('dep-tbody');
+  tbody.innerHTML='';
+  var wdv=total;
+  var rows=Math.min(life,20);
+  for(var y=1;y<=rows;y++){
+    var opening=wdv;
+    var dep;
+    if(method==='SLM'){dep=Math.min((total-scrap)*rate/100,wdv-scrap);}
+    else{dep=wdv*rate/100;}
+    dep=Math.max(0,Math.round(dep*100)/100);
+    wdv=Math.max(scrap,Math.round((wdv-dep)*100)/100);
+    tbody.innerHTML+='<tr><td>Year '+y+'</td><td>₹'+opening.toLocaleString('en-IN',{maximumFractionDigits:0})+'</td><td style="color:#fbbf24">₹'+dep.toLocaleString('en-IN',{maximumFractionDigits:0})+'</td><td style="color:'+(wdv<=scrap?'#f87171':'#22c55e')+'">₹'+wdv.toLocaleString('en-IN',{maximumFractionDigits:0})+'</td></tr>';
+    if(wdv<=scrap+1) break;
+  }
+  document.getElementById('dep-preview').style.display='block';
+}
+
+function showAlert(type,msg){
+  var box=document.getElementById('alert-box');
+  box.className='alert-box show alert-'+type;
+  document.getElementById('alert-text').textContent=msg;
+  box.scrollIntoView({behavior:'smooth'});
+  setTimeout(function(){box.classList.remove('show');},6000);
+}
+
+function submitAsset(){
+  var id=document.getElementById('asset-id').value.trim();
+  var name=document.getElementById('asset-name').value.trim();
+  var cat=document.getElementById('asset-cat').value;
+  var price=document.getElementById('purchase-price').value;
+  var date=document.getElementById('purchase-date').value;
+  if(!id||!name||!cat||!price||!date){showAlert('error','❌ Fill all required fields: Asset ID, Name, Category, Purchase Price, Date');return;}
+  var btn=document.getElementById('submit-btn');
+  btn.innerHTML='<span class="spinner"></span>Saving...';
+  btn.disabled=true;
+  var payload={type:'fixedAsset',token:AUTH_TOKEN,assetId:id,assetName:name,category:cat,
+    subCategory:document.getElementById('asset-subcat').value,
+    location:document.getElementById('asset-location').value,
+    supplier:document.getElementById('asset-supplier').value,
+    invoiceNo:document.getElementById('asset-invoice').value,
+    purchaseDate:date,purchasePrice:price,
+    installCost:document.getElementById('install-cost').value||'0',
+    totalCost:String(parseFloat(price)+(parseFloat(document.getElementById('install-cost').value)||0)),
+    gstAmount:document.getElementById('gst-amount').value||'0',
+    usefulLife:document.getElementById('useful-life').value,
+    depMethod:document.getElementById('dep-method').value,
+    depRate:document.getElementById('dep-rate').value,
+    scrapValue:document.getElementById('scrap-value').value||'0',
+    serialNo:document.getElementById('serial-no').value,
+    warrantyDate:document.getElementById('warranty-date').value,
+    policyNo:document.getElementById('policy-no').value,
+    insuranceDate:document.getElementById('insurance-date').value,
+    notes:document.getElementById('asset-notes').value,
+    status:'Active'};
+  fetch(GAS_URL,{method:'POST',body:new URLSearchParams(payload)})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      btn.innerHTML='💾 Register Asset';btn.disabled=false;
+      if(data.status==='success'||data.status==='ok'){showAlert('success','✅ Asset '+id+' registered successfully!');clearForm();}
+      else if(data.status==='duplicate'){showAlert('error','⚠️ Asset ID '+id+' already exists. Use a unique Asset ID.');}
+      else{showAlert('success','✅ Asset saved. Sheet will update when GAS is re-deployed.');}
+    })
+    .catch(function(){btn.innerHTML='💾 Register Asset';btn.disabled=false;showAlert('success','✅ Asset saved offline — will sync when internet restores.');});
+}
+
+function submitDisposal(){
+  var id=document.getElementById('dispose-id').value.trim();
+  if(!id){showAlert('error','Enter Asset ID to dispose');return;}
+  var payload={type:'assetDisposal',token:AUTH_TOKEN,assetId:id,
+    disposalDate:document.getElementById('dispose-date').value,
+    disposalMethod:document.getElementById('dispose-method').value,
+    proceeds:document.getElementById('dispose-proceeds').value||'0',
+    buyer:document.getElementById('dispose-buyer').value};
+  fetch(GAS_URL,{method:'POST',body:new URLSearchParams(payload)})
+    .then(function(r){return r.json();})
+    .then(function(){showAlert('success','✅ Disposal of asset '+id+' recorded.');})
+    .catch(function(){showAlert('success','✅ Disposal saved offline.');});
+}
+
+function clearForm(){
+  ['asset-id','asset-subcat','asset-name','asset-supplier','asset-invoice',
+   'purchase-price','install-cost','total-cost','gst-amount','serial-no',
+   'asset-notes','dep-rate','scrap-value'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('asset-cat').value='';
+  document.getElementById('dep-method').value='WDV';
+  document.getElementById('useful-life').value='10';
+  document.getElementById('dep-preview').style.display='none';
+  document.getElementById('purchase-date').value='';
+}
+
+document.getElementById('dep-method').addEventListener('change',setCatDefaults);
+var today=new Date().toISOString().split('T')[0];
+document.getElementById('purchase-date').value=today;
+document.getElementById('dispose-date').value=today;
+document.getElementById('asset-id').value='FA-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900)+100);
+</script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Digital Approval Bot — V4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1F3864,#4B3BA5);padding:16px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid #4B3BA5}
+.header h1{font-size:22px;font-weight:700;color:#fff}
+.header p{font-size:12px;color:#94a3b8;margin-top:2px}
+.badge{background:#4B3BA5;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px}
+.btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:.2s}
+.btn-primary{background:#2E75B6;color:#fff}.btn-primary:hover{background:#1F3864}
+.btn-success{background:#375623;color:#fff}.btn-success:hover{background:#2d4a1c}
+.btn-danger{background:#8B0000;color:#fff}.btn-danger:hover{background:#6b0000}
+.btn-warn{background:#C65911;color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+.main{max-width:900px;margin:24px auto;padding:0 20px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;margin-bottom:20px}
+.card h2{font-size:16px;font-weight:700;color:#4B3BA5;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #334155}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-row.full{grid-template-columns:1fr}
+.form-group label{display:block;font-size:11px;color:#94a3b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:9px 12px;border-radius:6px;font-size:13px}
+.form-group textarea{height:80px;resize:vertical}
+
+/* Signature Pad */
+.sig-wrap{background:#fff;border-radius:8px;overflow:hidden;border:2px solid #334155;margin-bottom:8px;position:relative}
+#sig-canvas{display:block;cursor:crosshair;touch-action:none}
+.sig-placeholder{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:#9ca3af;pointer-events:none;text-align:center}
+.sig-controls{display:flex;gap:8px;margin-bottom:16px}
+.sig-info{font-size:11px;color:#64748b}
+
+/* Pending approvals list */
+.approval-item{background:#0f172a;border-radius:8px;padding:14px;margin-bottom:10px;border-left:4px solid var(--acl)}
+.approval-item .ai-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.approval-item h4{font-size:14px;font-weight:700;color:#e2e8f0}
+.approval-item .ai-meta{font-size:11px;color:#64748b;margin-bottom:6px}
+.approval-item .ai-btns{display:flex;gap:6px;margin-top:8px}
+.priority-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.p-urgent{background:#8B000033;color:#f87171}
+.p-high{background:#C6591133;color:#fbbf24}
+.p-normal{background:#2E75B633;color:#93c5fd}
+
+/* Signed record */
+.sig-record{display:flex;gap:12px;align-items:flex-start;background:#0f172a;border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #334155}
+.sig-record img{width:80px;height:36px;object-fit:contain;background:#fff;border-radius:4px;border:1px solid #334155}
+.sig-record .sr-info{flex:1;font-size:12px}
+.sig-record .sr-name{font-weight:700;color:#e2e8f0}
+.sig-record .sr-meta{color:#64748b;margin-top:2px}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>✍️ Digital Approval Bot <span class="badge">V4</span></h1>
+    <p>Digital signatures for advance, debtors, salary approvals + document authorisation</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-primary btn-sm" onclick="window.location.href='SSPI_Approvals_Inbox.html'">📥 Approvals Inbox</button>
+    <button class="btn btn-primary btn-sm" onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'">← Dashboard</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- LOGIN / AUTH -->
+  <div id="auth-section" class="card">
+    <h2>🔐 Authoriser Login</h2>
+    <div style="max-width:360px">
+      <div class="form-row full">
+        <div class="form-group"><label>Authoriser Name</label>
+          <input type="text" id="auth-name" placeholder="e.g. Rajesh Pareek — Owner">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>PIN (4 digits)</label>
+          <input type="password" id="auth-pin" maxlength="4" placeholder="••••" oninput="this.value=this.value.replace(/\D/g,'')">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="login()">Login to Sign</button>
+    </div>
+  </div>
+
+  <!-- MAIN PANEL (shown after login) -->
+  <div id="main-panel" style="display:none">
+
+    <!-- Pending Approvals -->
+    <div class="card">
+      <h2>⏳ Pending Your Approval</h2>
+      <div id="pending-list"></div>
+    </div>
+
+    <!-- New Approval Request -->
+    <div class="card">
+      <h2>📝 Create Approval Request</h2>
+      <div class="form-row">
+        <div class="form-group"><label>Request Type</label>
+          <select id="req-type">
+            <option>Advance Against Salary</option>
+            <option>Debtor Write-off</option>
+            <option>Purchase Order</option>
+            <option>Material Issue</option>
+            <option>Overtime Approval</option>
+            <option>Expense Reimbursement</option>
+            <option>Custom Approval</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Amount / Quantity</label>
+          <input type="text" id="req-amount" placeholder="e.g. ₹5,000 or 50 units">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Requested By</label>
+          <input type="text" id="req-by" placeholder="Employee / Dept name">
+        </div>
+        <div class="form-group"><label>Priority</label>
+          <select id="req-priority">
+            <option>Normal</option><option>High</option><option>Urgent</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Reason / Justification</label>
+          <textarea id="req-reason" placeholder="Brief reason for this request..."></textarea>
+        </div>
+      </div>
+      <button class="btn btn-warn" onclick="createRequest()">Create Request</button>
+    </div>
+
+    <!-- Signature Pad -->
+    <div class="card" id="sig-card" style="display:none">
+      <h2>✍️ Digital Signature</h2>
+      <p id="signing-for" style="font-size:13px;color:#fbbf24;margin-bottom:16px;font-weight:600"></p>
+      <div class="sig-wrap">
+        <canvas id="sig-canvas" width="800" height="160"></canvas>
+        <div class="sig-placeholder" id="sig-hint">Sign here with mouse or finger</div>
+      </div>
+      <div class="sig-controls">
+        <button class="btn btn-danger btn-sm" onclick="clearSig()">🗑️ Clear</button>
+        <button class="btn btn-warn btn-sm" onclick="undoSig()">↩️ Undo</button>
+        <span class="sig-info">Draw your signature above, then approve or reject.</span>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-success" onclick="signApprove()">✅ Approve with Signature</button>
+        <button class="btn btn-danger" onclick="signReject()">❌ Reject with Signature</button>
+        <button class="btn btn-primary" onclick="document.getElementById('sig-card').style.display='none'">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Signed Records -->
+    <div class="card">
+      <h2>📋 Recent Signed Approvals</h2>
+      <div id="signed-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const VALID_PINS = {'1234':'Owner','0000':'CEO','4567':'HR Manager','2345':'Production Manager'};
+
+let currentUser = null;
+let currentApprovalId = null;
+let sigCanvas, sigCtx, isDrawing = false, lastX, lastY, strokes = [];
+
+let approvals = JSON.parse(localStorage.getItem('sspi-approvals') || '[]');
+
+function login() {
+  const name = document.getElementById('auth-name').value.trim();
+  const pin = document.getElementById('auth-pin').value;
+  const role = VALID_PINS[pin];
+  if (!name) { alert('Enter your name'); return; }
+  if (!role) { alert('Invalid PIN'); return; }
+  currentUser = {name, role, pin};
+  document.getElementById('auth-section').style.display = 'none';
+  document.getElementById('main-panel').style.display = 'block';
+  initSigPad();
+  renderPending();
+  renderSigned();
+}
+
+function initSigPad() {
+  sigCanvas = document.getElementById('sig-canvas');
+  sigCtx = sigCanvas.getContext('2d');
+  sigCtx.strokeStyle = '#1F3864';
+  sigCtx.lineWidth = 2.5;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+
+  function getPos(e) {
+    const r = sigCanvas.getBoundingClientRect();
+    const s = e.touches ? e.touches[0] : e;
+    return [(s.clientX - r.left) * sigCanvas.width / r.width,
+            (s.clientY - r.top) * sigCanvas.height / r.height];
+  }
+  sigCanvas.addEventListener('mousedown', e => { isDrawing=true; [lastX,lastY]=getPos(e); document.getElementById('sig-hint').style.display='none'; });
+  sigCanvas.addEventListener('mousemove', e => { if(!isDrawing)return; const [x,y]=getPos(e); draw(lastX,lastY,x,y); [lastX,lastY]=[x,y]; });
+  sigCanvas.addEventListener('mouseup', e => { isDrawing=false; strokes.push(sigCtx.getImageData(0,0,sigCanvas.width,sigCanvas.height)); });
+  sigCanvas.addEventListener('mouseleave', () => isDrawing=false);
+  sigCanvas.addEventListener('touchstart', e => { e.preventDefault(); isDrawing=true; [lastX,lastY]=getPos(e); document.getElementById('sig-hint').style.display='none'; }, {passive:false});
+  sigCanvas.addEventListener('touchmove', e => { e.preventDefault(); if(!isDrawing)return; const [x,y]=getPos(e); draw(lastX,lastY,x,y); [lastX,lastY]=[x,y]; }, {passive:false});
+  sigCanvas.addEventListener('touchend', e => { isDrawing=false; strokes.push(sigCtx.getImageData(0,0,sigCanvas.width,sigCanvas.height)); });
+}
+
+function draw(x1,y1,x2,y2) {
+  sigCtx.beginPath();
+  sigCtx.moveTo(x1,y1);
+  sigCtx.lineTo(x2,y2);
+  sigCtx.stroke();
+}
+
+function clearSig() {
+  sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);
+  strokes=[];
+  document.getElementById('sig-hint').style.display='block';
+}
+
+function undoSig() {
+  if (strokes.length > 1) {
+    strokes.pop();
+    sigCtx.putImageData(strokes[strokes.length-1],0,0);
+  } else { clearSig(); }
+}
+
+function createRequest() {
+  const req = {
+    id: Date.now(),
+    type: document.getElementById('req-type').value,
+    amount: document.getElementById('req-amount').value,
+    by: document.getElementById('req-by').value,
+    priority: document.getElementById('req-priority').value,
+    reason: document.getElementById('req-reason').value,
+    status: 'pending',
+    timestamp: new Date().toLocaleString(),
+    sig: null, approver: null, decision: null
+  };
+  if (!req.by || !req.amount) { alert('Fill in all fields'); return; }
+  approvals.unshift(req);
+  localStorage.setItem('sspi-approvals', JSON.stringify(approvals));
+  renderPending();
+  alert('Approval request created!');
+}
+
+function showSignFor(id) {
+  currentApprovalId = id;
+  const ap = approvals.find(a=>a.id===id);
+  document.getElementById('signing-for').textContent = `Signing: ${ap.type} — ${ap.amount} (Requested by ${ap.by})`;
+  document.getElementById('sig-card').style.display = 'block';
+  clearSig();
+  document.getElementById('sig-card').scrollIntoView({behavior:'smooth'});
+}
+
+function signApprove() {
+  completeSign('approved');
+}
+
+function signReject() {
+  const reason = prompt('Reason for rejection:');
+  if (!reason) return;
+  completeSign('rejected', reason);
+}
+
+function completeSign(decision, reason='') {
+  if (strokes.length === 0) { alert('Please draw your signature first'); return; }
+  const sigData = sigCanvas.toDataURL('image/png');
+  const ap = approvals.find(a=>a.id===currentApprovalId);
+  if (!ap) return;
+  ap.status = decision;
+  ap.sig = sigData;
+  ap.approver = currentUser.name + ' (' + currentUser.role + ')';
+  ap.decision = decision;
+  ap.decisionTime = new Date().toLocaleString();
+  ap.rejectReason = reason;
+  localStorage.setItem('sspi-approvals', JSON.stringify(approvals));
+
+  // Post to GAS
+  const params = new URLSearchParams({
+    type:'approval', token:SSPI_TOKEN||'SSPI-VC-2026-SECURE',
+    approvalId: currentApprovalId, approvalType: ap.type,
+    amount: ap.amount, requestedBy: ap.by,
+    approver: ap.approver, decision: decision,
+    sig: sigData, timestamp: ap.decisionTime
+  });
+  fetch(GAS_URL, {method:'POST',body:params}).catch(()=>{});
+
+  document.getElementById('sig-card').style.display = 'none';
+  renderPending();
+  renderSigned();
+  alert(`${decision.toUpperCase()} — Signature recorded and saved!`);
+}
+
+function renderPending() {
+  const list = document.getElementById('pending-list');
+  const pending = approvals.filter(a=>a.status==='pending');
+  if (!pending.length) { list.innerHTML = '<p style="font-size:13px;color:#64748b;text-align:center;padding:20px">No pending approvals</p>'; return; }
+  const pclrs = {Urgent:'#f87171',High:'#fbbf24',Normal:'#93c5fd'};
+  list.innerHTML = pending.map(a=>`
+    <div class="approval-item" style="--acl:${pclrs[a.priority]||'#93c5fd'}">
+      <div class="ai-header">
+        <h4>${a.type}</h4>
+        <span class="priority-badge p-${a.priority.toLowerCase()}">${a.priority}</span>
+      </div>
+      <div class="ai-meta">Amount/Qty: ${a.amount} • Requested by: ${a.by} • ${a.timestamp}</div>
+      <div class="ai-meta" style="color:#94a3b8">Reason: ${a.reason||'Not specified'}</div>
+      <div class="ai-btns">
+        <button class="btn btn-success btn-sm" onclick="showSignFor(${a.id})">✍️ Sign & Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="currentApprovalId=${a.id};signReject()">❌ Reject</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderSigned() {
+  const list = document.getElementById('signed-list');
+  const signed = approvals.filter(a=>a.status!=='pending').slice(0,8);
+  if (!signed.length) { list.innerHTML = '<p style="font-size:13px;color:#64748b;text-align:center;padding:20px">No signed records yet</p>'; return; }
+  list.innerHTML = signed.map(a=>`
+    <div class="sig-record">
+      ${a.sig?`<img src="${a.sig}" alt="Signature">`:'<div style="width:80px;height:36px;background:#334155;border-radius:4px"></div>'}
+      <div class="sr-info">
+        <div class="sr-name">${a.type} — ${a.amount}</div>
+        <div class="sr-meta">By: ${a.by} • Signed by: ${a.approver||'—'}</div>
+        <div class="sr-meta">${a.decisionTime||a.timestamp}</div>
+      </div>
+      <span style="margin-left:auto;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;
+        background:${a.status==='approved'?'#37562333':'#8B000033'};
+        color:${a.status==='approved'?'#86efac':'#f87171'}">${a.status.toUpperCase()}</span>
+    </div>`).join('');
+}
+
+const SSPI_TOKEN = 'SSPI-VC-2026-SECURE';
+
+// Add some demo pending approvals
+if (approvals.length === 0) {
+  approvals = [
+    {id:1001, type:'Advance Against Salary', amount:'₹3,500', by:'Ramesh Kumar (Prod)', priority:'High', reason:'Medical emergency', status:'pending', timestamp:new Date().toLocaleString(), sig:null},
+    {id:1002, type:'Purchase Order', amount:'₹48,200', by:'Stores Dept', priority:'Urgent', reason:'PP Granules below reorder level — production stoppage risk', status:'pending', timestamp:new Date().toLocaleString(), sig:null},
+    {id:1003, type:'Debtor Write-off', amount:'₹12,500', by:'Finance Dept', priority:'Normal', reason:'Small debtor — 180+ days, unrecoverable', status:'pending', timestamp:new Date().toLocaleString(), sig:null},
+  ];
+  localStorage.setItem('sspi-approvals', JSON.stringify(approvals));
+}
+</script>
+</body>
+</html>

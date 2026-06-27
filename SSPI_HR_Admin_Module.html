@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI HR &amp; Admin Module | Shree Shyam Packaging Industries</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+  :root{--primary:#0F6E56;--accent:#E8A020;--secondary:#0ea5e9;--success:#22c55e;--danger:#ef4444;--warn:#eab308;--purple:#a855f7;--bg1:#1e293b;--bg2:#0f172a;--bg3:#334155;--text1:#f1f5f9;--text2:#94a3b8;--border:#334155}
+  .header{background:linear-gradient(135deg,#1e293b,#0f172a);border-bottom:2px solid var(--primary);padding:0;position:sticky;top:0;z-index:100}
+  .header-top{display:flex;align-items:center;gap:16px;padding:10px 20px;background:rgba(15,110,86,0.10)}
+  .logo-area{display:flex;align-items:center;gap:12px}
+  .logo-circle{width:48px;height:48px;background:linear-gradient(135deg,var(--primary),#0a4a3c);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff}
+  .company-info h1{font-size:18px;font-weight:700;color:var(--primary)}
+  .company-info p{font-size:11px;color:var(--text2)}
+  .header-badges{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+  .badge{background:rgba(15,110,86,0.18);border:1px solid rgba(15,110,86,0.35);color:var(--primary);padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
+  .badge.gold{background:rgba(232,160,32,0.15);border-color:rgba(232,160,32,0.35);color:var(--accent)}
+  .badge.blue{background:rgba(14,165,233,0.15);border-color:rgba(14,165,233,0.3);color:var(--secondary)}
+  .nav{display:flex;gap:4px;padding:8px 20px;overflow-x:auto;background:#1e293b}
+  .nav-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all .2s}
+  .nav-btn:hover,.nav-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+  .content{padding:20px;max-width:1600px;margin:0 auto}
+  .section{display:none}
+  .section.active{display:block}
+  .sec-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+  .sec-header h2{font-size:20px;font-weight:700;color:var(--text1)}
+  .sec-header p{font-size:13px;color:var(--text2);margin-left:auto}
+  .cards{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:24px}
+  .card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .card.green::before{background:var(--primary)}
+  .card.gold::before{background:var(--accent)}
+  .card.blue::before{background:var(--secondary)}
+  .card.red::before{background:var(--danger)}
+  .card.purple::before{background:var(--purple)}
+  .card.yellow::before{background:var(--warn)}
+  .card-icon{font-size:28px;margin-bottom:8px}
+  .card-value{font-size:28px;font-weight:800;color:var(--text1)}
+  .card-label{font-size:12px;color:var(--text2);margin-top:2px}
+  .card-sub{font-size:11px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+  .table-wrap{background:var(--bg1);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+  .table-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px}
+  .table-head h3{font-size:14px;font-weight:700;color:var(--text1)}
+  table{width:100%;border-collapse:collapse}
+  th{background:#0f172a;color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:10px 14px;font-size:13px;color:var(--text1);border-bottom:1px solid rgba(51,65,85,.5)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(15,110,86,0.06)}
+  .tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700}
+  .tag.green{background:rgba(34,197,94,.15);color:var(--success)}
+  .tag.gold{background:rgba(232,160,32,.18);color:var(--accent)}
+  .tag.blue{background:rgba(14,165,233,.15);color:var(--secondary)}
+  .tag.red{background:rgba(239,68,68,.15);color:var(--danger)}
+  .tag.purple{background:rgba(168,85,247,.15);color:var(--purple)}
+  .tag.yellow{background:rgba(234,179,8,.15);color:var(--warn)}
+  .dept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;margin-bottom:20px}
+  .dept-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .dept-card-head{padding:14px 18px;display:flex;align-items:center;gap:10px}
+  .dept-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .dept-card-head h3{font-size:14px;font-weight:700;color:var(--text1)}
+  .dept-card-head p{font-size:11px;color:var(--text2)}
+  .dept-card-body{padding:0 18px 14px}
+  .dept-item{padding:6px 0;border-bottom:1px solid rgba(51,65,85,.4);font-size:12px;color:var(--text2);display:flex;justify-content:space-between}
+  .dept-item:last-child{border-bottom:none}
+  .dept-item span{color:var(--text1)}
+  .bot-card{background:var(--bg1);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:10px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .bot-card .icon{font-size:24px}
+  .bot-card .title{font-size:14px;font-weight:700;color:var(--text1)}
+  .bot-card .desc{font-size:11px;color:var(--text2);margin-top:2px;max-width:560px}
+  .approval-box{background:rgba(15,110,86,0.07);border:1px solid rgba(15,110,86,0.3);border-radius:10px;padding:14px 18px;margin-bottom:16px}
+  .approval-box h4{color:var(--primary);font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .approval-steps{display:flex;gap:10px;flex-wrap:wrap}
+  .apv-step{background:rgba(15,110,86,0.12);border:1px solid rgba(15,110,86,0.25);border-radius:8px;padding:6px 12px;text-align:center}
+  .apv-step .role{font-size:10px;color:var(--text2)}
+  .apv-step .action{font-size:11px;font-weight:700;color:var(--primary)}
+  .apv-arrow{color:var(--primary);font-size:16px;align-self:center}
+  .links-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+  .link-btn{background:var(--bg1);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+  .link-btn:hover{border-color:var(--primary);color:var(--primary)}
+  .btn{padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-secondary{background:var(--bg3);color:var(--text1)}
+  .pin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center}
+  .pin-overlay.open{display:flex}
+  .pin-box{background:#1e293b;border:1px solid var(--primary);border-radius:14px;padding:30px;width:340px;text-align:center}
+  .pin-box h3{color:var(--primary);font-size:16px;font-weight:700;margin-bottom:6px}
+  .pin-box p{font-size:12px;color:var(--text2);margin-bottom:16px}
+  .pin-box input{width:100%;background:#0f172a;border:1px solid var(--border);color:var(--text1);padding:10px;border-radius:8px;font-size:14px;text-align:center;letter-spacing:3px;margin-bottom:12px}
+  .pin-error{color:var(--danger);font-size:12px;margin-top:8px;display:none}
+  @media(max-width:768px){.cards{grid-template-columns:repeat(2,1fr)}.dept-grid{grid-template-columns:1fr}.header-badges{display:none}}
+</style>
+</head>
+<body>
+<div id="back_to_dashboard" style="background:#1E3A5F;color:#fff;padding:8px 20px;display:flex;align-items:center;gap:12px;font-size:12px;position:sticky;top:0;z-index:9999;box-shadow:0 2px 6px rgba(0,0,0,.35)">
+  <button onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">← Back to Dashboard</button>
+  <span style="opacity:.55;font-size:11px;">SSPI Operations Dashboard V4</span>
+</div>
+
+<!-- PIN GATE -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div style="font-size:36px;margin-bottom:10px">🧑‍💼</div>
+    <h3>HR &amp; Admin Module Access</h3>
+    <p>Shree Shyam Packaging Industries<br>Enter your authorization PIN to continue</p>
+    <input type="password" id="pinInput" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')verifyPin()">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:1" onclick="verifyPin()">🔓 Unlock</button>
+      <button class="btn btn-secondary" onclick="goBack()">✕ Cancel</button>
+    </div>
+    <p class="pin-error" id="pinError">❌ Invalid PIN. Please try again.</p>
+    <div style="margin-top:14px;font-size:10px;color:#475569">
+      OWNER@2026 · HR@2026 · ADMIN@2026 · VC-ADMIN-2026 · VC-HEAD-2026
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo-area">
+      <div class="logo-circle">SS</div>
+      <div class="company-info">
+        <h1>🧑‍💼 SSPI HR &amp; Admin Module</h1>
+        <p>Shree Shyam Packaging Industries, Bhiwadi · All HR &amp; Admin Reports, Company-Wide</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge">50 Employees</span>
+      <span class="badge gold">7 Departments</span>
+      <span class="badge blue">6 Vehicles</span>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showSection('overview')">📊 Overview</button>
+    <button class="nav-btn" onclick="showSection('directory')">👥 Employee Directory</button>
+    <button class="nav-btn" onclick="showSection('attendance')">🕒 Attendance</button>
+    <button class="nav-btn" onclick="showSection('payroll')">💰 Payroll &amp; Compliance</button>
+    <button class="nav-btn" onclick="showSection('appraisal')">🧾 KPI Appraisal</button>
+    <button class="nav-btn" onclick="showSection('admin')">✅ Admin &amp; Approvals</button>
+    <button class="nav-btn" onclick="showSection('vehicle')">🚗 Vehicle &amp; Assets</button>
+    <button class="nav-btn blue" onclick="showSection('reports')">📑 Reports</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+<div class="links-bar">
+  <a class="link-btn" 
+  <a class="link-btn" href="SSPI_Machine_Module.html" onclick="openBot(this.href);return false;">⚙️ Machine Module</a>
+  <a class="link-btn" href="SSPI_Manufacturing_Dashboard.html" onclick="openBot(this.href);return false;">🏗 Manufacturing Module</a>
+  <a class="link-btn" href="SSPI_COMBINED_DASHBOARD_V4.html" onclick="openBot(this.href);return false;">📊 Combined Dashboard</a>
+</div>
+
+<!-- ═══════════════ OVERVIEW ═══════════════ -->
+<div class="section active" id="overview">
+  <div class="sec-header">
+    <h2>📊 HR &amp; Admin Overview</h2>
+    <p>Shree Shyam Packaging Industries — Company-Wide, All Departments</p>
+  </div>
+  <div class="cards">
+    <div class="card green"><div class="card-icon">👥</div><div class="card-value">50</div><div class="card-label">Total Employees</div><div class="card-sub">Active staff, all departments</div></div>
+    <div class="card gold"><div class="card-icon">🕒</div><div class="card-value">94.2%</div><div class="card-label">Company Attendance Rate</div><div class="card-sub">Target: 95%</div></div>
+    <div class="card blue"><div class="card-icon">💰</div><div class="card-value">Done</div><div class="card-label">Payroll Status</div><div class="card-sub">Processed 25th June 2026</div></div>
+    <div class="card red"><div class="card-icon">🆕</div><div class="card-value">2</div><div class="card-label">Open Positions</div><div class="card-sub">Recruitment pending</div></div>
+    <div class="card purple"><div class="card-icon">🧾</div><div class="card-value">21</div><div class="card-label">Employees in KPI Scorecard</div><div class="card-sub">Production workforce</div></div>
+    <div class="card yellow"><div class="card-icon">🔐</div><div class="card-value">2</div><div class="card-label">Pending HR/Admin Approvals</div><div class="card-sub">Advance + Recruitment</div></div>
+  </div>
+
+  <div class="dept-grid">
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(15,110,86,.10)">
+        <div class="dept-icon" style="background:rgba(15,110,86,.18)">🏭</div>
+        <div><h3>Production (Workers)</h3><p>20 employees</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Present Days <span>488 / Absent 24 / Leave 8</span></div>
+        <div class="dept-item">Attendance % <span>94.2%</span></div>
+        <div class="dept-item">Status <span style="color:#eab308">⚠ Near Target</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(15,110,86,.10)">
+        <div class="dept-icon" style="background:rgba(15,110,86,.18)">👨‍🔧</div>
+        <div><h3>Production (Supervisors)</h3><p>10 employees</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Present Days <span>248 / Absent 8 / Leave 4</span></div>
+        <div class="dept-item">Attendance % <span>95.4%</span></div>
+        <div class="dept-item">Status <span style="color:#22c55e">✓ Good</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(15,110,86,.10)">
+        <div class="dept-icon" style="background:rgba(15,110,86,.18)">🧑‍💼</div>
+        <div><h3>HR</h3><p>3 employees</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Present Days <span>74 / Absent 2 / Leave 2</span></div>
+        <div class="dept-item">Attendance % <span>96.2%</span></div>
+        <div class="dept-item">Status <span style="color:#22c55e">✓ Good</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(15,110,86,.10)">
+        <div class="dept-icon" style="background:rgba(15,110,86,.18)">🧮</div>
+        <div><h3>Accounts</h3><p>4 employees</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Present Days <span>99 / Absent 3 / Leave 2</span></div>
+        <div class="dept-item">Attendance % <span>95.2%</span></div>
+        <div class="dept-item">Status <span style="color:#22c55e">✓ Good</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(15,110,86,.10)">
+        <div class="dept-icon" style="background:rgba(15,110,86,.18)">🏪</div>
+        <div><h3>Stores</h3><p>4 employees</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Present Days <span>98 / Absent 4 / Leave 2</span></div>
+        <div class="dept-item">Attendance % <span>94.2%</span></div>
+        <div class="dept-item">Status <span style="color:#eab308">⚠ Near Target</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(15,110,86,.10)">
+        <div class="dept-icon" style="background:rgba(15,110,86,.18)">🔍</div>
+        <div><h3>Quality</h3><p>4 employees</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Present Days <span>100 / Absent 2 / Leave 2</span></div>
+        <div class="dept-item">Attendance % <span>96.2%</span></div>
+        <div class="dept-item">Status <span style="color:#22c55e">✓ Good</span></div>
+      </div>
+    </div>
+    <div class="dept-card">
+      <div class="dept-card-head" style="background:rgba(15,110,86,.10)">
+        <div class="dept-icon" style="background:rgba(15,110,86,.18)">📈</div>
+        <div><h3>Sales + Purchase</h3><p>5 employees</p></div>
+      </div>
+      <div class="dept-card-body">
+        <div class="dept-item">Present Days <span>123 / Absent 5 / Leave 2</span></div>
+        <div class="dept-item">Attendance % <span>95.4%</span></div>
+        <div class="dept-item">Status <span style="color:#22c55e">✓ Good</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ EMPLOYEE DIRECTORY ═══════════════ -->
+<div class="section" id="directory">
+  <div class="sec-header"><h2>👥 Employee Directory — Company Wide</h2><p>50 employees across 7 departments</p></div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>Department Headcount Summary</h3><span class="tag green">50 Total Employees</span></div>
+    <table>
+      <thead><tr><th>Department</th><th>Headcount</th><th>Category</th><th>Dept Head / Lead</th></tr></thead>
+      <tbody>
+        <tr><td>🏭 Production (Workers)</td><td>20</td><td><span class="tag gold">Skilled / Unskilled</span></td><td>Raj Kumar Paswan (Wood), Ranjeet Singh (Steel), Sanjay (Nailless), Raj Kumar (Corrugation)</td></tr>
+        <tr><td>👨‍🔧 Production (Supervisors)</td><td>10</td><td><span class="tag blue">Supervisory</span></td><td>EMP011–EMP015 Operator/Supervisor codes</td></tr>
+        <tr><td>🧑‍💼 HR</td><td>3</td><td><span class="tag green">Staff</span></td><td>HR Manager</td></tr>
+        <tr><td>🧮 Accounts</td><td>4</td><td><span class="tag green">Staff</span></td><td>Accounts Head</td></tr>
+        <tr><td>🏪 Stores</td><td>4</td><td><span class="tag green">Staff</span></td><td>Store Incharge</td></tr>
+        <tr><td>🔍 Quality</td><td>4</td><td><span class="tag green">Staff</span></td><td>QC Inspector</td></tr>
+        <tr><td>📈 Sales + Purchase</td><td>5</td><td><span class="tag green">Staff</span></td><td>Sales &amp; Purchase Head</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bot-card" style="border-left-color:var(--accent)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🛠️</span>
+      <div>
+        <div class="title">Named Production Roster (21 Employees)</div>
+        <div class="desc">Emp Code, name, machine assignment, ESI/contract category for the shop-floor production workforce — maintained in the Machine Module's machine-linked register.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('SSPI_Manufacturing_Dashboard.html','_blank')">Open Roster ↗</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>📋 Open Positions — Recruitment Pipeline</h3><span class="tag red">2 Open</span></div>
+    <table>
+      <thead><tr><th>Position</th><th>Department</th><th>Raised By</th><th>Date Raised</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Helper / Unskilled Labour</td><td>🏭 Production</td><td>Production Head</td><td>05-Jun-2026</td><td><span class="tag yellow">Sourcing</span></td></tr>
+        <tr><td>Accounts Assistant</td><td>🧮 Accounts</td><td>Accounts Head</td><td>10-Jun-2026</td><td><span class="tag yellow">Interview Stage</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ ATTENDANCE ═══════════════ -->
+<div class="section" id="attendance">
+  <div class="sec-header"><h2>🕒 Attendance — Company Wide</h2><p>June 2026 · All Departments</p></div>
+  <div class="cards">
+    <div class="card green"><div class="card-icon">✅</div><div class="card-value">94.2%</div><div class="card-label">Overall Attendance Rate</div><div class="card-sub">Target: 95%</div></div>
+    <div class="card blue"><div class="card-icon">📅</div><div class="card-value">1,230</div><div class="card-label">Total Present Days (Month)</div></div>
+    <div class="card red"><div class="card-icon">❌</div><div class="card-value">48</div><div class="card-label">Total Absent Days (Month)</div></div>
+    <div class="card gold"><div class="card-icon">🏖️</div><div class="card-value">22</div><div class="card-label">Total Leave Days (Month)</div></div>
+  </div>
+
+  <div class="bot-card">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🕒</span>
+      <div>
+        <div class="title">Attendance Punch Correction Bot</div>
+        <div class="desc">Upload daily punching-machine export (Excel/CSV) — bot auto-detects punches, flags improper/missing punches, and produces a corrected Daily Attendance Log + Monthly Present Days/OT feed for payroll.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('Attendance_Punch_Correction_Bot.html','_blank')">🚀 Open Punch Correction Bot</button>
+  </div>
+
+  <!-- ═══ CSV UPLOAD PANEL ═══ -->
+  <div id="csvUploadPanel" style="background:linear-gradient(135deg,rgba(15,110,86,.07) 0%,rgba(30,58,95,.05) 100%);border:2px dashed #0F6E56;border-radius:12px;padding:18px;margin:16px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#1E3A5F">📂 Upload Punching Machine CSV / Excel Export</div>
+        <div style="font-size:11px;color:#555;margin-top:3px">Supports eSSL · ZKTeco · FingerPrint · any standard biometric export · Auto-detects columns</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="downloadAttTemplate()" style="font-size:11px;padding:5px 12px">⬇ Download Sample CSV</button>
+        <label class="btn btn-primary" style="font-size:11px;padding:5px 14px;cursor:pointer">📂 Choose File
+          <input type="file" id="attCsvFile" accept=".csv,.txt,.xls,.xlsx" style="display:none" onchange="parseAttCSV(event)">
+        </label>
+      </div>
+    </div>
+
+    <!-- drag-drop zone -->
+    <div id="attDropZone" ondragover="event.preventDefault();this.style.background='rgba(15,110,86,.12)'" ondragleave="this.style.background=''" ondrop="attFileDrop(event)"
+      style="border:2px dashed #b0c4bc;border-radius:8px;padding:20px;text-align:center;font-size:12px;color:#666;cursor:pointer;margin-bottom:12px;transition:.2s" onclick="document.getElementById('attCsvFile').click()">
+      🖱 Drag &amp; drop CSV here &nbsp;·&nbsp; or click to browse
+    </div>
+
+    <!-- Column mapper (shown after file loads) -->
+    <div id="attColMapper" style="display:none;background:#fff;border-radius:8px;padding:12px;border:1px solid #ddd;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#1E3A5F;margin-bottom:8px">🗂 Column Mapping — map your file's columns to system fields</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px" id="attColMapGrid"></div>
+      <button class="btn btn-primary" onclick="applyColMapping()" style="margin-top:10px;font-size:12px">✅ Apply Mapping &amp; Preview</button>
+    </div>
+
+    <!-- Status bar -->
+    <div id="attCsvStatus" style="display:none;font-size:12px;font-weight:600;padding:8px 12px;border-radius:6px;margin-bottom:10px"></div>
+
+    <!-- Preview table -->
+    <div id="attPreviewWrap" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:13px;font-weight:700;color:#1E3A5F">👁 Preview — <span id="attPreviewCount">0</span> records parsed</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="filterAttPreview('all')"   id="attF_all"   style="font-size:11px;padding:4px 10px">All</button>
+          <button class="btn btn-secondary" onclick="filterAttPreview('flag')"  id="attF_flag"  style="font-size:11px;padding:4px 10px;color:#dc2626">⚠ Issues</button>
+          <button class="btn btn-secondary" onclick="filterAttPreview('ok')"    id="attF_ok"    style="font-size:11px;padding:4px 10px;color:#16a34a">✓ OK</button>
+          <button class="btn btn-secondary" onclick="filterAttPreview('absent')" id="attF_absent" style="font-size:11px;padding:4px 10px;color:#6b7280">Absent</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:340px;overflow-y:auto;border-radius:8px;border:1px solid #e2e8f0">
+        <table style="width:100%;border-collapse:collapse;font-size:11px" id="attPreviewTable">
+          <thead style="position:sticky;top:0;z-index:2">
+            <tr style="background:#1E3A5F;color:#fff">
+              <th style="padding:7px 10px;text-align:left">Emp ID</th>
+              <th style="padding:7px 10px;text-align:left">Name</th>
+              <th style="padding:7px 10px;text-align:left">Date</th>
+              <th style="padding:7px 10px;text-align:left">In Time</th>
+              <th style="padding:7px 10px;text-align:left">Out Time</th>
+              <th style="padding:7px 10px;text-align:left">Hrs</th>
+              <th style="padding:7px 10px;text-align:left">OT</th>
+              <th style="padding:7px 10px;text-align:left">Status</th>
+            </tr>
+          </thead>
+          <tbody id="attPreviewBody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="saveAttToGAS()" style="font-size:12px">💾 Save All to Google Sheets</button>
+        <button class="btn btn-secondary" onclick="downloadAttCleaned()" style="font-size:12px">⬇ Download Cleaned CSV</button>
+        <button class="btn btn-secondary" onclick="printAttReport()" style="font-size:12px">🖨 Print Report</button>
+        <button class="btn btn-secondary" onclick="clearAttUpload()" style="font-size:12px;color:#dc2626">✕ Clear</button>
+      </div>
+    </div>
+  </div>
+  <!-- ═══ END CSV UPLOAD PANEL ═══ -->
+
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>Department Attendance Summary <span class="tag blue">June 2026</span></h3></div>
+    <table>
+      <thead><tr><th>Department</th><th>Headcount</th><th>Present Days</th><th>Absent Days</th><th>Leave Days</th><th>Attendance %</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Production (Workers)</td><td>20</td><td>488</td><td>24</td><td>8</td><td><span class="tag yellow">94.2%</span></td><td><span class="tag yellow">⚠ Near</span></td></tr>
+        <tr><td>Production (Supervisors)</td><td>10</td><td>248</td><td>8</td><td>4</td><td><span class="tag green">95.4%</span></td><td><span class="tag green">✓ Good</span></td></tr>
+        <tr><td>HR</td><td>3</td><td>74</td><td>2</td><td>2</td><td><span class="tag green">96.2%</span></td><td><span class="tag green">✓ Good</span></td></tr>
+        <tr><td>Accounts</td><td>4</td><td>99</td><td>3</td><td>2</td><td><span class="tag green">95.2%</span></td><td><span class="tag green">✓ Good</span></td></tr>
+        <tr><td>Stores</td><td>4</td><td>98</td><td>4</td><td>2</td><td><span class="tag yellow">94.2%</span></td><td><span class="tag yellow">⚠ Near</span></td></tr>
+        <tr><td>Quality</td><td>4</td><td>100</td><td>2</td><td>2</td><td><span class="tag green">96.2%</span></td><td><span class="tag green">✓ Good</span></td></tr>
+        <tr><td>Sales + Purchase</td><td>5</td><td>123</td><td>5</td><td>2</td><td><span class="tag green">95.4%</span></td><td><span class="tag green">✓ Good</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ PAYROLL & COMPLIANCE ═══════════════ -->
+<div class="section" id="payroll">
+  <div class="sec-header"><h2>💰 Payroll &amp; Statutory Compliance</h2><p>Salary, ESI/EPF, and advance management — company wide</p></div>
+
+  <div class="cards">
+    <div class="card green"><div class="card-icon">✅</div><div class="card-value">Done</div><div class="card-label">Payroll Status</div><div class="card-sub">Processed 25-Jun-2026</div></div>
+    <div class="card blue"><div class="card-icon">👥</div><div class="card-value">137</div><div class="card-label">Employees on Salary Master</div><div class="card-sub">SALARY_MASTER_SHEET.xlsx</div></div>
+    <div class="card gold"><div class="card-icon">🛡️</div><div class="card-value">100%</div><div class="card-label">ESI/EPF Filed On Time</div><div class="card-sub">June 2026 cycle</div></div>
+    <div class="card red"><div class="card-icon">💸</div><div class="card-value">5</div><div class="card-label">Active Salary Advances</div><div class="card-sub">Outstanding balances below</div></div>
+  </div>
+
+  <!-- ⚡ ONE-CLICK MONTHLY PAYROLL BOT — TOP PRIORITY -->
+  <div class="bot-card" style="border-left-color:#22C55E;background:linear-gradient(135deg,rgba(34,197,94,.06) 0%,#fff 60%)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon" style="background:rgba(34,197,94,.15);color:#16a34a;">⚡</span>
+      <div>
+        <div class="title" style="color:#166534;">Monthly Payroll Pack — One Click (Salary + ESIC + EPFO)</div>
+        <div class="desc">Select month → click ⚡ Generate → instantly get: ① Monthly Salary &amp; Wages Register with all deductions ② ESIC Contribution Statement with challan amount (0.75% + 3.25%) ③ EPFO ECR Statement with A/C-wise challan (12% EPF + EPS + EDLI + Admin). All auto-calculated. Print-ready.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="background:#22C55E;" onclick="window.open('SSPI_Monthly_Payroll_Bot.html','_blank')">⚡ Open Monthly Payroll Bot</button>
+  </div>
+
+  <div class="bot-card">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🧾</span>
+      <div>
+        <div class="title">SSPI Salary Master Dashboard &amp; Data Entry Bot</div>
+        <div class="desc">Monthly salary entry, employee master, salary revisions, advances &amp; payroll dashboard for 137 employees — linked to SALARY_MASTER_SHEET.xlsx</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('SSPI_Salary_Data_Entry_Bot.html','_blank')">🚀 Open Salary Dashboard</button>
+  </div>
+
+  <div class="bot-card" style="border-left-color:#1E3A5F">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🛡️</span>
+      <div>
+        <div class="title">ESIC &amp; EPF Compliance Bot</div>
+        <div class="desc">Calculates statutory ESI + EPF contributions from Monthly Gross Salary, and pushes Net Pay (Final) back to the salary sheet.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('ESIC_EPF_Compliance_Bot.html','_blank')">🚀 Open Compliance Bot</button>
+  </div>
+
+  <div class="bot-card" style="border-left-color:#8B4500">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">💸</span>
+      <div>
+        <div class="title">Advance Against Salary Bot</div>
+        <div class="desc">Logs advance disbursements &amp; recoveries, tracks outstanding balance per employee, suggests this month's deduction. Approval routed through Approvals Inbox.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('Advance_Against_Salary_Bot.html','_blank')">🚀 Open Advance Bot</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>📊 Active Advance Ledger</h3><span class="tag red">5 employees</span></div>
+    <table>
+      <thead><tr><th>Emp Code</th><th>Employee</th><th>Department</th><th>Advance Amount</th><th>Recovered</th><th>Outstanding</th><th>This Month's Deduction</th></tr></thead>
+      <tbody>
+        <tr><td>EMP-002</td><td>Sunil</td><td>🪵 Wood</td><td>₹15,000</td><td>₹6,000</td><td>₹9,000</td><td>₹1,500</td></tr>
+        <tr><td>EMP-005</td><td>Manjeet</td><td>📦 Corrugation</td><td>₹10,000</td><td>₹4,000</td><td>₹6,000</td><td>₹1,000</td></tr>
+        <tr><td>EMP-007</td><td>Ladies Team Lead</td><td>🔩 Nailless</td><td>₹8,000</td><td>₹2,000</td><td>₹6,000</td><td>₹800</td></tr>
+        <tr><td>EMP-009</td><td>Hari Shankar</td><td>🔧 Steel</td><td>₹20,000</td><td>₹12,000</td><td>₹8,000</td><td>₹2,000</td></tr>
+        <tr><td>EMP-014</td><td>Helper (Contract)</td><td>🏭 Production</td><td>₹5,000</td><td>₹1,000</td><td>₹4,000</td><td>₹500</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>🛡️ ESI / EPF Compliance Status</h3></div>
+    <table>
+      <thead><tr><th>Cycle</th><th>Employees Covered</th><th>ESI Contribution</th><th>EPF Contribution</th><th>Filing Due</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>June 2026</td><td>137</td><td>₹1.2L (Employer + Employee)</td><td>₹2.1L (Employer + Employee)</td><td>15-Jul-2026</td><td><span class="tag green">✅ On Track</span></td></tr>
+        <tr><td>May 2026</td><td>135</td><td>₹1.18L</td><td>₹2.05L</td><td>15-Jun-2026</td><td><span class="tag green">✅ Filed</span></td></tr>
+        <tr><td>April 2026</td><td>134</td><td>₹1.15L</td><td>₹2.0L</td><td>15-May-2026</td><td><span class="tag green">✅ Filed</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ KPI APPRAISAL ═══════════════ -->
+<div class="section" id="appraisal">
+  <div class="sec-header"><h2>🧾 Employee KPI Appraisal</h2><p>Linked to Job Card Register &amp; NCR Log · Companion: Employee_KPI_Appraisal_Workbook.xlsx</p></div>
+  <div class="cards">
+    <div class="card purple"><div class="card-icon">👤</div><div class="card-value">21</div><div class="card-label">Employees in Scorecard</div><div class="card-sub">SSPI Production Workers</div></div>
+    <div class="card gold"><div class="card-icon">🔗</div><div class="card-value">5 / 5</div><div class="card-label">Mapped Operators</div><div class="card-sub">Job Card operator codes</div></div>
+    <div class="card green"><div class="card-icon">📋</div><div class="card-value">12</div><div class="card-label">Job Cards Linked</div><div class="card-sub">From Job Card Register</div></div>
+    <div class="card red"><div class="card-icon">⚠️</div><div class="card-value">5</div><div class="card-label">Open NCRs</div><div class="card-sub">From NCR Log</div></div>
+  </div>
+
+  <div class="table-wrap" style="padding:18px">
+    <h3 style="margin-bottom:10px">📝 How this works</h3>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7">
+      1. The Job Card Register assigns work to <b style="color:var(--text1)">operator codes</b> (EMP011–EMP015 — Production Supervisors / machine operators).<br>
+      2. Each operator code is mapped to the corresponding employee in the 21-person Appraisal Scorecard.<br>
+      3. <b style="color:var(--text1)">Productivity</b> (avg. job completion %) and <b style="color:var(--text1)">Quality</b> (linked NCR count) are auto-calculated per employee — the same evidence used in the Excel workbook.<br>
+      4. Supervisors enter the final 1–5 KPI scores in the Excel/Word scorecards — these figures are supporting evidence, not the final score.
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>🔗 Operator Code → Appraisal Employee Mapping</h3></div>
+    <table>
+      <thead><tr><th>Operator Code</th><th>Operator Name</th><th>Job Cards Assigned</th><th>Avg Completion %</th><th>Linked NCR Qty</th><th>Mapped Employee</th></tr></thead>
+      <tbody>
+        <tr><td>EMP011</td><td>Ramesh Kumar</td><td>3</td><td>91%</td><td>1</td><td>Sunil (EMP-002)</td></tr>
+        <tr><td>EMP012</td><td>Suresh Patel</td><td>2</td><td>88%</td><td>0</td><td>May Pet (EMP-003)</td></tr>
+        <tr><td>EMP013</td><td>Vijay Singh</td><td>3</td><td>95%</td><td>0</td><td>Manjeet (EMP-005)</td></tr>
+        <tr><td>EMP014</td><td>Manoj Sharma</td><td>2</td><td>82%</td><td>2</td><td>Hari Shankar (EMP-009)</td></tr>
+        <tr><td>EMP015</td><td>Arun Gupta</td><td>2</td><td>90%</td><td>2</td><td>Ranjeet Singh (EMP-008)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>👤 Per-Employee KPI Evidence Summary <span class="tag blue">June 2026</span></h3></div>
+    <table>
+      <thead><tr><th>Emp Code</th><th>Employee Name</th><th>Mapped Operator</th><th>Productivity (Avg Completion %)</th><th>Quality (NCR Qty Linked)</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>EMP-002</td><td>Sunil</td><td>EMP011</td><td>91%</td><td>1</td><td><span class="tag green">✓ On Track</span></td></tr>
+        <tr><td>EMP-003</td><td>May Pet</td><td>EMP012</td><td>88%</td><td>0</td><td><span class="tag green">✓ On Track</span></td></tr>
+        <tr><td>EMP-005</td><td>Manjeet</td><td>EMP013</td><td>95%</td><td>0</td><td><span class="tag green">✓ Excellent</span></td></tr>
+        <tr><td>EMP-009</td><td>Hari Shankar</td><td>EMP014</td><td>82%</td><td>2</td><td><span class="tag yellow">⚠ Watch — Quality</span></td></tr>
+        <tr><td>EMP-008</td><td>Ranjeet Singh</td><td>EMP015</td><td>90%</td><td>2</td><td><span class="tag yellow">⚠ Watch — Quality</span></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:10px;color:var(--text2);margin-top:10px;padding:0 18px 14px">Productivity = average (Completed Qty / Target Qty) across job cards assigned to the mapped operator code. Quality = total quantity rejected on NCRs raised against products made by the mapped operator code.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ ADMIN & APPROVALS ═══════════════ -->
+<div class="section" id="admin">
+  <div class="sec-header"><h2>✅ Admin &amp; Approval Channels</h2><p>No HR/Admin request proceeds without the required authorization</p></div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-bottom:20px">
+    <div class="approval-box">
+      <h4>💸 Salary Advance Request</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Raise</div><div class="action">Employee / Supervisor</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Verify</div><div class="action">Accounts</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Approve</div><div class="action">Owner / Accounts Head</div></div>
+      </div>
+    </div>
+    <div class="approval-box">
+      <h4>🏖️ Leave / Attendance Correction</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Raise</div><div class="action">Employee</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Approve</div><div class="action">Dept Head</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Update</div><div class="action">HR</div></div>
+      </div>
+    </div>
+    <div class="approval-box">
+      <h4>🆕 New Recruitment / Open Position</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Raise</div><div class="action">Dept Head</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Screen</div><div class="action">HR</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Approve</div><div class="action">Owner / MD</div></div>
+      </div>
+    </div>
+    <div class="approval-box">
+      <h4>🚗 Vehicle Trip / Expense</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Log</div><div class="action">Driver</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Review</div><div class="action">Admin</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Approve (high value)</div><div class="action">Owner / MD</div></div>
+      </div>
+    </div>
+    <div class="approval-box">
+      <h4>🛡️ ESI/EPF Statutory Filing</h4>
+      <div class="approval-steps">
+        <div class="apv-step"><div class="role">Prepare</div><div class="action">HR</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Verify</div><div class="action">Accounts</div></div>
+        <div class="apv-arrow">→</div>
+        <div class="apv-step"><div class="role">Sign-off</div><div class="action">Owner / MD</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bot-card" style="border-left-color:#9a3412">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">🔐</span>
+      <div>
+        <div class="title">Approvals Inbox</div>
+        <div class="desc">Every pending request from Advance, Recruitment, Debtors Escalation, Credit Limit Change, Route Card and RM Substitution lands here for Owner/Accounts Head to Approve or Reject.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('SSPI_Approvals_Inbox.html','_blank')">🚀 Open Approvals Inbox</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>📋 Pending HR/Admin Approval Requests</h3><span class="tag yellow">2 pending</span></div>
+    <table>
+      <thead><tr><th>Request Type</th><th>Reference</th><th>Raised By</th><th>Date</th><th>Approver</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Salary Advance</td><td>EMP-014 — ₹5,000</td><td>Production Head</td><td>17-Jun-2026</td><td>Owner / Accounts Head</td><td><span class="tag yellow">Pending</span></td></tr>
+        <tr><td>Recruitment — Accounts Assistant</td><td>REQ-HR-002</td><td>Accounts Head</td><td>10-Jun-2026</td><td>Owner / MD</td><td><span class="tag yellow">Interview Stage</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════ VEHICLE & ASSETS ═══════════════ -->
+<div class="section" id="vehicle">
+  <div class="sec-header"><h2>🚗 Vehicle &amp; Admin Asset Logbook</h2><p>Entered by: Driver / Transport In-Charge · Reviewed by: Admin</p></div>
+  <div class="cards">
+    <div class="card blue"><div class="card-icon">🚗</div><div class="card-value">6</div><div class="card-label">Total Vehicles</div><div class="card-sub">In fleet</div></div>
+    <div class="card green"><div class="card-icon">🛣️</div><div class="card-value">4,280</div><div class="card-label">Km This Month</div><div class="card-sub">All vehicles</div></div>
+    <div class="card gold"><div class="card-icon">⛽</div><div class="card-value">₹38,400</div><div class="card-label">Fuel Cost (Month)</div><div class="card-sub">₹9/km avg</div></div>
+    <div class="card red"><div class="card-icon">🔧</div><div class="card-value">2</div><div class="card-label">Service Due</div><div class="card-sub">Vehicles overdue</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head"><h3>🚗 Vehicle Register</h3></div>
+    <table>
+      <thead><tr><th>Vehicle No.</th><th>Type</th><th>Assigned Driver</th><th>Km This Month</th><th>Fuel Cost</th><th>Service Status</th></tr></thead>
+      <tbody>
+        <tr><td>MH-14-AB-1234</td><td>Car — Swift</td><td>Driver 1</td><td>1,050</td><td>₹9,450</td><td><span class="tag green">✓ OK</span></td></tr>
+        <tr><td>RJ-14-GA-5678</td><td>Truck — Tata 407</td><td>Driver 2</td><td>1,420</td><td>₹14,200</td><td><span class="tag red">🔴 Service Due</span></td></tr>
+        <tr><td>RJ-45-BC-9012</td><td>Bike — Splendor</td><td>Driver 3</td><td>380</td><td>₹2,280</td><td><span class="tag green">✓ OK</span></td></tr>
+        <tr><td>MH-04-XY-3456</td><td>Van — Eeco</td><td>Driver 4</td><td>890</td><td>₹8,010</td><td><span class="tag green">✓ OK</span></td></tr>
+        <tr><td>RJ-02-PQ-7890</td><td>Truck — Bolero</td><td>Driver 5</td><td>540</td><td>₹4,460</td><td><span class="tag red">🔴 Service Due</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bot-card" style="border-left-color:var(--secondary)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="icon">📝</span>
+      <div>
+        <div class="title">Trip Log Entry — by Driver / Admin</div>
+        <div class="desc">Auto-calculates distance, fuel efficiency, and cost per km for every trip. Full trip log and entry form is maintained inside the Combined Dashboard's Vehicle Logbook section.</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="window.open('SSPI_COMBINED_DASHBOARD_V4.html','_blank')">🚀 Open Trip Log Entry</button>
+  </div>
+</div>
+
+<!-- ═══════════════ REPORTS ═══════════════ -->
+<div class="section" id="reports">
+  <div class="sec-header"><h2>📑 HR &amp; Admin Reports</h2><p>Printable / exportable reports — click to generate</p></div>
+  <div class="cards">
+    <div class="card green"><div class="card-icon">👥</div><div class="card-value">50</div><div class="card-label">Employees Covered</div></div>
+    <div class="card gold"><div class="card-icon">🛡️</div><div class="card-value">137</div><div class="card-label">On Salary Master / ESI-EPF</div></div>
+    <div class="card blue"><div class="card-icon">🚗</div><div class="card-value">6</div><div class="card-label">Vehicles Tracked</div></div>
+    <div class="card red"><div class="card-icon">🔐</div><div class="card-value">2</div><div class="card-label">Pending Approvals</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">👥</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">Employee Directory Report</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Department headcount, category, dept head — all 50 employees</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptDirectory()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">🕒</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">Attendance Summary Report</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Present/absent/leave days and % by department</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptAttendance()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">💰</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">Payroll &amp; Compliance Report</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Advance ledger + ESI/EPF filing status, last 3 cycles</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptPayroll()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">🧾</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">KPI Appraisal Report</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Per-employee productivity &amp; quality evidence summary</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptAppraisal()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">🚗</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">Vehicle Logbook Report</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Fleet register, km, fuel cost, service status</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptVehicle()">Generate ↗</button>
+    </div>
+    <div class="table-wrap" style="padding:16px;margin-bottom:0">
+      <div style="font-size:22px;margin-bottom:6px">📋</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:4px">HR &amp; Admin Summary (MIS)</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">One-page executive summary — all KPIs across this module</div>
+      <button class="btn btn-primary" style="width:100%" onclick="rptModuleSummary()">Generate ↗</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+const VALID_PINS = ['OWNER@2026','HR@2026','ADMIN@2026','VC-ADMIN-2026','VC-HEAD-2026','CEO@2026'];
+
+window.onload = function(){
+  document.getElementById('pinOverlay').classList.add('open');
+  document.getElementById('pinInput').focus();
+};
+
+function verifyPin(){
+  const pin = document.getElementById('pinInput').value.trim();
+  if(VALID_PINS.includes(pin)){
+    document.getElementById('pinOverlay').classList.remove('open');
+  } else {
+    document.getElementById('pinError').style.display='block';
+    document.getElementById('pinInput').value='';
+    document.getElementById('pinInput').focus();
+  }
+}
+function goBack(){ window.location.href = 'SSPI_COMBINED_DASHBOARD_V4.html'; }
+
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.classList.remove('active');
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+
+function rptOpen(title, html){
+  const w = window.open('', '_blank', 'width=980,height=720,scrollbars=yes');
+  if (!w) { alert('⚠ Popup blocked — allow popups for this page'); return; }
+  w.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
+  <style>body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#1e293b}
+  h2{color:#1e293b;border-bottom:2px solid #0F6E56;padding-bottom:6px}
+  table{width:100%;border-collapse:collapse;margin:12px 0}
+  th{background:#1e293b;color:white;padding:7px 10px;text-align:left;font-size:11px}
+  td{padding:6px 10px;border-bottom:1px solid #e2e8f0;font-size:11px}
+  tr:nth-child(even){background:#f8fafc}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold}
+  @media print{button{display:none}}</style></head><body>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div><h2>${title}</h2><div style="font-size:11px;color:#64748b">Printed: ${new Date().toLocaleString()}</div></div>
+    <button onclick="window.print()" style="padding:6px 16px;background:#0F6E56;color:white;border:none;border-radius:6px;cursor:pointer">🖨 Print</button>
+  </div>${html}
+${'<script>'}
+function openBot(url){
+  if(!url||url==='#')return false;
+  if(window.location.protocol==='file:'){window.location.href=url;return false;}
+  try{var w=window.open(url,'_blank');if(!w||w.closed||typeof w.closed==='undefined'){window.location.href=url;}}catch(e){window.location.href=url;}
+  return false;
+}
+${'</'+'script>'}
+</body></html>`);
+  w.document.close();
+}
+
+function tableFromSection(selector){
+  const t = document.querySelector(selector);
+  return t ? t.outerHTML : '<p>No data found.</p>';
+}
+
+function rptDirectory(){
+  const html = tableFromSection('#directory .table-wrap table');
+  rptOpen('Employee Directory Report — SSPI Bhiwadi (50 Employees)', html);
+}
+
+function rptAttendance(){
+  const tables = document.querySelectorAll('#attendance table');
+  let html = '';
+  tables.forEach(t => { html += t.outerHTML; });
+  rptOpen('Attendance Summary Report — SSPI Bhiwadi', html);
+}
+
+function rptPayroll(){
+  const tables = document.querySelectorAll('#payroll table');
+  let html = '<h3>Active Advance Ledger</h3>' + tables[0].outerHTML + '<h3 style="margin-top:16px">ESI / EPF Compliance Status</h3>' + tables[1].outerHTML;
+  rptOpen('Payroll & Compliance Report — SSPI Bhiwadi', html);
+}
+
+function rptAppraisal(){
+  const tables = document.querySelectorAll('#appraisal .table-wrap table');
+  let html = '<h3>Operator Code → Appraisal Employee Mapping</h3>' + tables[0].outerHTML + '<h3 style="margin-top:16px">Per-Employee KPI Evidence Summary</h3>' + tables[1].outerHTML;
+  rptOpen('KPI Appraisal Report — SSPI Bhiwadi', html);
+}
+
+function rptVehicle(){
+  const html = tableFromSection('#vehicle .table-wrap table');
+  rptOpen('Vehicle Logbook Report — SSPI Bhiwadi', html);
+}
+
+function rptModuleSummary(){
+  const html = `
+  <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+  <tr><td>Total Employees</td><td>50 (20 Production Workers · 12 Departments · 3 Shifts</td></tr>
+  <tr><td>Total Active Job Cards</td><td>12 WIP across all departments</td></tr>
+  <tr><td>Payroll Month</td><td>${new Date().toLocaleString('default',{month:'long',year:'numeric'})}</td></tr>
+  </tbody></table>`;
+  rptOpen('HR Module Summary Report — SSPI Bhiwadi', html);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ATTENDANCE CSV UPLOAD ENGINE
+// ═══════════════════════════════════════════════════════════
+const GAS_URL_HR = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const AUTH_TOKEN_HR = 'SSPI-VC-2026-SECURE';
+
+let _attRawRows = [];   // all parsed rows
+let _attHeaders = [];   // CSV headers
+let _attColMap  = {};   // field -> col-index mapping
+let _attParsed  = [];   // final normalised rows
+
+// ── Column name synonyms (auto-detect) ──────────────────────
+const COL_SYNONYMS = {
+  empId   : ['emp code','empcode','emp id','empid','employee id','employee code','id','ac-no','ac no','user id','userid','enroll no','enroll_no','no.','no'],
+  name    : ['name','employee name','emp name','empname','user name','username'],
+  date    : ['date','att date','attendance date','punch date','log date'],
+  inTime  : ['in time','intime','in-time','check in','checkin','first in','punch in','entry time','time in','login','in'],
+  outTime : ['out time','outtime','out-time','check out','checkout','last out','punch out','exit time','time out','logout','out'],
+  punch   : ['date/time','datetime','time','punch time','punch_time','log time']  // raw single-punch format
+};
+
+function attFileDrop(e){
+  e.preventDefault();
+  document.getElementById('attDropZone').style.background = '';
+  const file = e.dataTransfer.files[0];
+  if(file) processAttFile(file);
+}
+
+function parseAttCSV(event){
+  const file = event.target.files[0];
+  if(file) processAttFile(file);
+}
+
+function processAttFile(file){
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(['xls','xlsx'].includes(ext)){
+    attStatus('⚠ Excel files: please open in Excel → Save As → CSV → re-upload', 'warning');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if(lines.length < 2){ attStatus('⚠ File appears empty or invalid', 'error'); return; }
+    // Parse CSV respecting quoted commas
+    _attRawRows = lines.map(l => parseCSVLine(l));
+    _attHeaders = _attRawRows[0].map(h => h.trim());
+    _attRawRows = _attRawRows.slice(1).filter(r => r.some(c => c.trim()));
+    autoDetectAndMap();
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVLine(line){
+  const result = []; let cur = ''; let inQ = false;
+  for(let i=0;i<line.length;i++){
+    const c = line[i];
+    if(c==='"'){ inQ=!inQ; continue; }
+    if(c===','&&!inQ){ result.push(cur); cur=''; continue; }
+    cur+=c;
+  }
+  result.push(cur);
+  return result.map(s=>s.trim());
+}
+
+function autoDetectAndMap(){
+  const map = {};
+  const headers_lc = _attHeaders.map(h => h.toLowerCase());
+
+  Object.keys(COL_SYNONYMS).forEach(field => {
+    COL_SYNONYMS[field].forEach(syn => {
+      if(map[field]!==undefined) return;
+      const idx = headers_lc.findIndex(h => h===syn || h.includes(syn));
+      if(idx>=0) map[field] = idx;
+    });
+  });
+
+  _attColMap = map;
+
+  const allFound = ['empId','name','date'].every(f => map[f]!==undefined) &&
+                   (['inTime','outTime'].every(f=>map[f]!==undefined) || map['punch']!==undefined);
+
+  if(allFound){
+    buildParsedRows();
+    renderPreview(_attParsed);
+  } else {
+    showColMapper();
+  }
+}
+
+function showColMapper(){
+  const grid = document.getElementById('attColMapGrid');
+  const fields = [
+    {key:'empId',   label:'Employee ID *'},
+    {key:'name',    label:'Employee Name'},
+    {key:'date',    label:'Date *'},
+    {key:'inTime',  label:'In Time'},
+    {key:'outTime', label:'Out Time'},
+    {key:'punch',   label:'Punch DateTime (raw log)'}
+  ];
+  grid.innerHTML = fields.map(f => `
+    <div>
+      <label style="font-size:10px;font-weight:700;color:#555;display:block;margin-bottom:3px">${f.label}</label>
+      <select id="map_${f.key}" style="width:100%;padding:5px;border-radius:5px;border:1px solid #ccc;font-size:11px">
+        <option value="">— not in file —</option>
+        ${_attHeaders.map((h,i)=>`<option value="${i}" ${_attColMap[f.key]===i?'selected':''}>${h}</option>`).join('')}
+      </select>
+    </div>`).join('');
+  document.getElementById('attColMapper').style.display = 'block';
+}
+
+function applyColMapping(){
+  ['empId','name','date','inTime','outTime','punch'].forEach(f => {
+    const sel = document.getElementById('map_'+f);
+    if(sel && sel.value!=='') _attColMap[f] = parseInt(sel.value);
+  });
+  document.getElementById('attColMapper').style.display = 'none';
+  buildParsedRows();
+  renderPreview(_attParsed);
+}
+
+function getCell(row, field){
+  const idx = _attColMap[field];
+  return (idx!==undefined && row[idx]!==undefined) ? row[idx].trim() : '';
+}
+
+function buildParsedRows(){
+  // Handle raw punch-log format (single datetime per row) → group by empId+date
+  if(_attColMap['punch']!==undefined && _attColMap['inTime']===undefined){
+    const grouped = {};
+    _attRawRows.forEach(row => {
+      const id   = getCell(row,'empId');
+      const name = getCell(row,'name');
+      const dtRaw= getCell(row,'punch');
+      const {date,time} = splitDateTime(dtRaw);
+      const key = id + '|' + date;
+      if(!grouped[key]) grouped[key] = {empId:id, name, date, punches:[]};
+      if(time) grouped[key].punches.push(time);
+    });
+    _attParsed = Object.values(grouped).map(g => {
+      g.punches.sort();
+      return normalise({empId:g.empId, name:g.name, date:g.date,
+        inTime:g.punches[0]||'', outTime:g.punches[g.punches.length-1]||''});
+    });
+  } else {
+    _attParsed = _attRawRows.map(row => {
+      const d = getCell(row,'date') || (getCell(row,'punch').split(' ')[0]||'');
+      return normalise({
+        empId   : getCell(row,'empId'),
+        name    : getCell(row,'name'),
+        date    : d,
+        inTime  : getCell(row,'inTime'),
+        outTime : getCell(row,'outTime')
+      });
+    }).filter(r => r.empId);
+  }
+}
+
+function splitDateTime(dtStr){
+  const m = dtStr.match(/^(\d{1,4}[-\/]\d{1,2}[-\/]\d{1,4})\s+(\d{1,2}:\d{2}(?::\d{2})?.*)$/);
+  if(m) return {date:m[1], time:m[2]};
+  const p = dtStr.split(/\s+/);
+  return {date:p[0]||'', time:p.slice(1).join(' ')||''};
+}
+
+function normalise(r){
+  const work  = calcHours(r.inTime, r.outTime);
+  const late  = isLate(r.inTime);
+  const ot    = calcOT(work);
+  let status, flag;
+  if(!r.inTime && !r.outTime){ status='Absent'; flag='absent'; }
+  else if(!r.outTime || !r.inTime){ status='⚠ Missing Punch'; flag='flag'; }
+  else if(late){ status='⚠ Late'; flag='flag'; }
+  else if(work < 4){ status='⚠ Half Day'; flag='flag'; }
+  else { status='✓ Present'; flag='ok'; }
+  return {...r, work:work>0?work.toFixed(1):'—', ot:ot>0?ot.toFixed(1):'0', status, flag};
+}
+
+function calcHours(inT, outT){
+  if(!inT||!outT) return 0;
+  const toMins = s => { const p=s.match(/(\d{1,2}):(\d{2})/); return p?parseInt(p[1])*60+parseInt(p[2]):-1; };
+  const i=toMins(inT), o=toMins(outT);
+  if(i<0||o<0) return 0;
+  const diff=(o-i)/60;
+  return diff>0?diff:diff+24;
+}
+
+function calcOT(hrs){ return Math.max(0, hrs-9); }
+
+function isLate(inT){
+  if(!inT) return false;
+  const m=inT.match(/(\d{1,2}):(\d{2})/);
+  if(!m) return false;
+  const mins=parseInt(m[1])*60+parseInt(m[2]);
+  return mins > 9*60+10; // late if after 09:10
+}
+
+function renderPreview(rows){
+  const tbody = document.getElementById('attPreviewBody');
+  tbody.innerHTML = rows.map((r,i) => {
+    const bg = r.flag==='flag'?'#fef2f2':r.flag==='absent'?'#f9fafb':'';
+    const ic = r.flag==='flag'?'🔴':r.flag==='absent'?'⚫':'🟢';
+    return `<tr style="background:${bg}">
+      <td style="padding:5px 8px">${r.empId}</td>
+      <td style="padding:5px 8px">${r.name||'—'}</td>
+      <td style="padding:5px 8px;white-space:nowrap">${r.date}</td>
+      <td style="padding:5px 8px">${r.inTime||'—'}</td>
+      <td style="padding:5px 8px">${r.outTime||'—'}</td>
+      <td style="padding:5px 8px">${r.work}</td>
+      <td style="padding:5px 8px">${r.ot}</td>
+      <td style="padding:5px 8px;font-size:10px;font-weight:600">${ic} ${r.status}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('attPreviewCount').textContent = rows.length + ' / ' + _attParsed.length;
+  document.getElementById('attPreviewWrap').style.display = 'block';
+
+  const flags   = _attParsed.filter(r=>r.flag==='flag').length;
+  const absent  = _attParsed.filter(r=>r.flag==='absent').length;
+  const ok      = _attParsed.filter(r=>r.flag==='ok').length;
+  attStatus(`✅ Parsed ${_attParsed.length} records — ✓ ${ok} OK · ⚠ ${flags} issues · ⚫ ${absent} absent`, 'success');
+}
+
+function filterAttPreview(type){
+  ['all','flag','ok','absent'].forEach(t => {
+    const b = document.getElementById('attF_'+t);
+    if(b) b.style.fontWeight = t===type?'700':'400';
+  });
+  const rows = type==='all' ? _attParsed : _attParsed.filter(r=>r.flag===type);
+  renderPreview(rows);
+}
+
+function attStatus(msg, type){
+  const el = document.getElementById('attCsvStatus');
+  el.style.display = 'block';
+  el.style.background = type==='error'?'#fef2f2':type==='warning'?'#fffbeb':type==='success'?'rgba(15,110,86,.1)':'#f0f9ff';
+  el.style.color = type==='error'?'#dc2626':type==='warning'?'#92400e':type==='success'?'#065f46':'#1E3A5F';
+  el.textContent = msg;
+}
+
+function saveAttToGAS(){
+  if(!_attParsed.length){ alert('No data to save.'); return; }
+  let saved=0, errors=0;
+  _attParsed.forEach(r => {
+    const payload = {
+      type:'attendance', auth:AUTH_TOKEN_HR,
+      empId:r.empId, name:r.name||'', date:r.date,
+      inTime:r.inTime||'', outTime:r.outTime||'',
+      workHrs:r.work, ot:r.ot, status:r.status
+    };
+    const sc = encodeURIComponent(JSON.stringify(payload));
+    const cb = 'attCB_'+r.empId.replace(/\W/g,'')+'_'+(Date.now()%99999);
+    window[cb] = res => { if(res&&!res.error) saved++; else errors++; delete window[cb]; };
+    const s = document.createElement('script');
+    s.src = GAS_URL_HR + '?callback=' + cb + '&payload=' + sc;
+    document.head.appendChild(s);
+    setTimeout(()=>{ try{document.head.removeChild(s);}catch(e){} }, 8000);
+  });
+  setTimeout(()=>{
+    attStatus(`💾 Saved to Google Sheets — ${saved} records synced${errors?' · '+errors+' errors':''}`, 'success');
+    showToastHR('Attendance saved to Google Sheets ✓');
+  }, 2000);
+}
+
+function downloadAttCleaned(){
+  if(!_attParsed.length){ alert('No data.'); return; }
+  const headers = ['Emp ID','Name','Date','In Time','Out Time','Work Hrs','OT Hrs','Status'];
+  const rows = _attParsed.map(r=>[r.empId,r.name||'',r.date,r.inTime||'',r.outTime||'',r.work,r.ot,r.status]);
+  const csv = [headers,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='SSPI_Attendance_Cleaned_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+function downloadAttTemplate(){
+  const csv = 'Emp Code,Name,Date,In Time,Out Time\nEMP001,Raj Kumar Paswan,26-06-2026,09:00,18:00\nEMP002,Sunil Kumar,26-06-2026,09:15,18:30\nEMP003,Manjeet Singh,26-06-2026,,\n';
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='SSPI_Attendance_Template.csv';
+  a.click();
+}
+
+function printAttReport(){
+  if(!_attParsed.length){ alert('No data.'); return; }
+  const tbody = _attParsed.map(r=>
+    `<tr><td>${r.empId}</td><td>${r.name||'—'}</td><td>${r.date}</td><td>${r.inTime||'—'}</td><td>${r.outTime||'—'}</td><td>${r.work}</td><td>${r.ot}</td><td>${r.status}</td></tr>`
+  ).join('');
+  const flags=_attParsed.filter(r=>r.flag==='flag').length, absent=_attParsed.filter(r=>r.flag==='absent').length, ok=_attParsed.filter(r=>r.flag==='ok').length;
+  const html = `<h3>Attendance Summary: ${ok} Present · ${flags} Issues · ${absent} Absent · ${_attParsed.length} Total</h3>
+  <table><thead><tr><th>Emp ID</th><th>Name</th><th>Date</th><th>In</th><th>Out</th><th>Hrs</th><th>OT</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table>`;
+  rptOpen('Daily Attendance Report — SSPI Bhiwadi', html);
+}
+
+function clearAttUpload(){
+  _attRawRows=[]; _attHeaders=[]; _attColMap={}; _attParsed=[];
+  document.getElementById('attPreviewWrap').style.display='none';
+  document.getElementById('attCsvStatus').style.display='none';
+  document.getElementById('attColMapper').style.display='none';
+  document.getElementById('attDropZone').style.background='';
+  document.getElementById('attCsvFile').value='';
+}
+
+function showToastHR(msg){
+  let t=document.getElementById('hrToast');
+  if(!t){
+    t=document.createElement('div');t.id='hrToast';
+    t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1E3A5F;color:#fff;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:99999;display:none';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;t.style.display='block';
+  clearTimeout(window._hrToast);window._hrToast=setTimeout(()=>{t.style.display='none';},3500);
+}
+// ═══════════════════════════════════════════════════════════
+</script>
+</body>
+</html>

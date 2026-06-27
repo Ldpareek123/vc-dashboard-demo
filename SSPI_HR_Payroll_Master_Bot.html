@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SSPI HR & Payroll Master Bot</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0f1117;color:#e0e6f0;min-height:100vh}
+.hdr{background:linear-gradient(135deg,#1a237e,#283593);padding:12px 24px;display:flex;align-items:center;gap:16px;border-bottom:2px solid #3949ab}
+.hdr-logo{width:42px;height:42px;background:#ffd700;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#1a237e;font-size:14px}
+.hdr h1{font-size:18px;font-weight:700;color:#fff}
+.hdr small{font-size:11px;color:#9fa8da;display:block}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.month-sel{background:#283593;border:1px solid #3949ab;color:#fff;padding:6px 10px;border-radius:6px;font-size:13px}
+.auth-badge{font-size:10px;color:#81c784;background:#1b5e20;padding:3px 8px;border-radius:10px}
+
+/* TABS */
+.tabs{display:flex;background:#141820;border-bottom:2px solid #1e2a45;overflow-x:auto;flex-wrap:nowrap}
+.tab-btn{padding:11px 16px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:#7986cb;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s}
+.tab-btn:hover{color:#c5cae9;background:#1a2035}
+.tab-btn.active{color:#ffd700;border-bottom-color:#ffd700;background:#1e2840}
+.tab-content{display:none;padding:20px;animation:fadeIn .2s}
+.tab-content.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:#151c2e;border:1px solid #1e2a45;border-radius:10px;padding:16px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:700;color:#7986cb;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* FORMS */
+.form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.form-group{flex:1;min-width:160px}
+.form-group label{display:block;font-size:11px;color:#9fa8da;margin-bottom:4px;font-weight:600}
+input,select,textarea{width:100%;background:#0f1525;border:1px solid #2a3550;color:#e0e6f0;padding:8px 10px;border-radius:6px;font-size:13px;transition:border .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#5c6bc0}
+input[type=file]{padding:6px;cursor:pointer}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#3949ab;color:#fff}.btn-primary:hover{background:#5c6bc0}
+.btn-success{background:#2e7d32;color:#fff}.btn-success:hover{background:#43a047}
+.btn-warning{background:#f57f17;color:#fff}.btn-warning:hover{background:#fb8c00}
+.btn-danger{background:#b71c1c;color:#fff}.btn-danger:hover{background:#e53935}
+.btn-info{background:#01579b;color:#fff}.btn-info:hover{background:#0277bd}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid #1e2a45}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#1a2540;color:#9fa8da;padding:9px 10px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:2px solid #2a3550}
+td{padding:8px 10px;border-bottom:1px solid #1a2035;vertical-align:middle}
+tr:hover td{background:#1a2240}
+.badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.badge-bank{background:#1565c0;color:#fff}
+.badge-cash{background:#e65100;color:#fff}
+.badge-esi{background:#1b5e20;color:#90ee90}
+.badge-active{background:#1b5e20;color:#90ee90}
+.badge-inactive{background:#7f0000;color:#ff8a80}
+
+/* TOGGLE */
+.toggle-wrap{display:flex;gap:4px;align-items:center}
+.toggle-bank,.toggle-cash{padding:3px 10px;border:1px solid;border-radius:12px;font-size:10px;font-weight:700;cursor:pointer;transition:all .2s}
+.toggle-bank{border-color:#1565c0;color:#90caf9}.toggle-bank.on{background:#1565c0;color:#fff}
+.toggle-cash{border-color:#e65100;color:#ffcc80}.toggle-cash.on{background:#e65100;color:#fff}
+
+/* SUB-TABS */
+.sub-tabs{display:flex;gap:0;margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid #2a3550}
+.sub-tab{padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;background:#151c2e;color:#7986cb;border:none;flex:1;transition:all .2s}
+.sub-tab.active{background:#1e2840;color:#ffd700;border-bottom:2px solid #ffd700}
+
+/* SEARCH */
+.search-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.search-bar input{max-width:260px}
+
+/* STAT BOXES */
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.stat-box{flex:1;min-width:130px;background:#1a2035;border-radius:8px;padding:12px;border-left:3px solid #3949ab;text-align:center}
+.stat-box .val{font-size:22px;font-weight:700;color:#ffd700}
+.stat-box .lbl{font-size:11px;color:#9fa8da;margin-top:2px}
+
+/* DRAG-DROP */
+.drop-zone{border:2px dashed #3949ab;border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;background:#0f1525}
+.drop-zone:hover,.drop-zone.drag-over{border-color:#7986cb;background:#141c30}
+.drop-zone p{color:#9fa8da;font-size:13px}
+.drop-zone .ico{font-size:32px;margin-bottom:8px}
+
+/* SIGNATURE BOX */
+.sig-box{width:120px;height:36px;border:1px solid #555;border-radius:4px;display:inline-block}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:#263238;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;display:none;border-left:4px solid #43a047;max-width:320px}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal-box{background:#151c2e;border:1px solid #2a3550;border-radius:12px;padding:24px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-box h3{color:#ffd700;margin-bottom:16px;font-size:15px}
+.modal-close{float:right;cursor:pointer;color:#9fa8da;font-size:18px;margin-top:-4px}
+
+/* SUMMARY ROW */
+.sum-row{background:#1a2540;font-weight:700}
+.sum-row td{color:#ffd700;border-top:2px solid #3949ab}
+
+/* PRINT STYLES */
+@media print{
+  .hdr,.tabs,.btn-group,.btn,.search-bar,.stat-row,.drop-zone,#toast,.modal{display:none!important}
+  body{background:#fff;color:#000}
+  table{font-size:11px}
+  th{background:#e0e0e0!important;color:#000!important}
+  td{border:1px solid #ccc!important;color:#000!important}
+  .sig-box{border:1px solid #000!important}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-logo">SSPI</div>
+  <div>
+    <h1>HR & Payroll Master Bot</h1>
+    <small>Unified: Salary · Attendance · Advances · Compliance</small>
+  </div>
+  <div class="hdr-right">
+    <a href="SSPI_COMBINED_DASHBOARD_V4.html" style="text-decoration:none">
+      <button class="btn btn-sm" style="background:#1a237e;color:#ffd700;border:1px solid #ffd700">🏠 Dashboard</button>
+    </a>
+    <div>
+      <label style="font-size:10px;color:#9fa8da">Month</label>
+      <select class="month-sel" id="globalMonth" onchange="onMonthChange()">
+        <option value="2026-04">Apr 2026</option>
+        <option value="2026-05">May 2026</option>
+        <option value="2026-06" selected>Jun 2026</option>
+        <option value="2026-07">Jul 2026</option>
+      </select>
+    </div>
+    <span class="auth-badge">🔒 SSPI-VC-2026-SECURE</span>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('master')">👥 Employee Master</button>
+  <button class="tab-btn" onclick="showTab('att')">📅 Attendance</button>
+  <button class="tab-btn" onclick="showTab('correct')">⚠️ Corrections</button>
+  <button class="tab-btn" onclick="showTab('bank')">🏦 Bank Salary</button>
+  <button class="tab-btn" onclick="showTab('cash')">💵 Cash Salary</button>
+  <button class="tab-btn" onclick="showTab('compliance')">🏥 ESIC & EPFO</button>
+  <button class="tab-btn" onclick="showTab('advances')">💸 Advances</button>
+  <button class="tab-btn" onclick="showTab('reports')">📊 Reports</button>
+  <button class="tab-btn" onclick="showTab('locations')">🏭 Locations</button>
+</div>
+
+<!-- =================== TAB: EMPLOYEE MASTER =================== -->
+<div id="tab_master" class="tab-content active">
+
+  <div class="stat-row" id="masterStats"></div>
+
+  <!-- Import Options -->
+  <div class="card">
+    <div class="card-title">📥 Import / Add Employees</div>
+    <div class="btn-group">
+      <button class="btn btn-primary btn-sm" onclick="document.getElementById('xlsxUpload').click()">📊 Upload XLSX</button>
+      <button class="btn btn-info btn-sm" onclick="document.getElementById('csvUpload').click()">📄 Upload CSV</button>
+      <button class="btn btn-warning btn-sm" onclick="document.getElementById('imgUpload').click()">🖼️ Upload Image</button>
+      <button class="btn btn-success btn-sm" onclick="openAddModal()">➕ Add Individual</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="exportMasterCSV()">💾 Export CSV</button>
+      <button class="btn btn-sm" style="background:#4a148c;color:#fff" onclick="resetToDefault()">🔄 Reset to Master Data</button>
+      <input type="file" id="xlsxUpload" accept=".xlsx,.xls" style="display:none" onchange="importMasterXLSX(event)">
+      <input type="file" id="csvUpload" accept=".csv,.txt" style="display:none" onchange="importMasterCSV(event)">
+      <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="importMasterImage(event)">
+    </div>
+    <div id="importStatus" style="font-size:12px;color:#81c784;min-height:18px"></div>
+  </div>
+
+  <!-- Search & Filter -->
+  <div class="search-bar">
+    <input type="text" id="masterSearch" placeholder="Search by name or code…" oninput="renderMaster()" style="max-width:280px">
+    <select id="masterFilter" onchange="renderMaster()" style="max-width:160px">
+      <option value="">All Employees</option>
+      <option value="Bank">Bank Only</option>
+      <option value="Cash">Cash Only</option>
+      <option value="Active">Active Only</option>
+      <option value="Inactive">Inactive</option>
+    </select>
+    <select id="masterLocFilter" onchange="renderMaster()" style="max-width:180px;font-size:12px"><option value="">All Locations</option></select>
+    <span id="masterCount" style="font-size:12px;color:#9fa8da;margin-left:8px"></span>
+  </div>
+
+  <div class="tbl-wrap">
+    <table id="masterTable">
+      <thead>
+        <tr>
+          <th>#</th><th>Emp Code</th><th>Name</th><th>Dept/Category</th>
+          <th>Base Salary (₹)</th><th>Base Days</th><th>OT Rate (₹/hr)</th>
+          <th>Payment Mode</th><th>ESI</th><th>Location</th><th>Status</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="masterTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- =================== TAB: ATTENDANCE =================== -->
+<div id="tab_att" class="tab-content">
+
+  <!-- Location Filter -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <label style="font-size:11px;color:#9fa8da;font-weight:600">Filter by Location:</label>
+    <select id="attLocFilter" onchange="renderAtt()" style="max-width:200px;font-size:12px">
+      <option value="">All Locations</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📁 Upload Punch Machine CSV</div>
+    <div class="drop-zone" id="attDrop" ondragover="ev.preventDefault();this.classList.add('drag-over')" 
+         ondragleave="this.classList.remove('drag-over')" ondrop="dropAtt(event)" onclick="document.getElementById('attFile').click()">
+      <div class="ico">📂</div>
+      <p>Drag & drop punch machine CSV here, or click to browse</p>
+      <p style="font-size:11px;margin-top:4px;color:#7986cb">Supports: eSSL · ZKTeco · FingerPrint · Raw punch log</p>
+      <input type="file" id="attFile" accept=".csv,.txt,.xls,.xlsx" style="display:none" onchange="loadAttFile(event)">
+    </div>
+    <div id="attStatus" style="font-size:12px;color:#81c784;margin-top:8px;min-height:18px"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✏️ Manual Attendance Entry</div>
+    <div class="form-row">
+      <div class="form-group" style="max-width:200px">
+        <label>Employee Code</label>
+        <input type="text" id="attEmpCode" placeholder="EMP001" oninput="attAutoFill()" list="empCodeList">
+        <datalist id="empCodeList"></datalist>
+      </div>
+      <div class="form-group" style="max-width:200px"><label>Employee Name</label><input type="text" id="attEmpName" readonly></div>
+      <div class="form-group" style="max-width:120px"><label>Present Days</label><input type="number" id="attPresent" min="0" max="31" step="0.5"></div>
+      <div class="form-group" style="max-width:120px"><label>OT Hours</label><input type="number" id="attOT" min="0" step="0.5" value="0"></div>
+      <div class="form-group" style="max-width:140px"><label>Date (if single)</label><input type="date" id="attDate"></div>
+    </div>
+    <button class="btn btn-success btn-sm" onclick="addManualAtt()">➕ Add / Update Row</button>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary btn-sm" onclick="saveAttToGAS()">☁️ Save to GAS</button>
+    <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="downloadAttCSV()">💾 Download CSV</button>
+    <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="clearAtt()">🗑️ Clear</button>
+  </div>
+
+  <div class="tbl-wrap">
+    <table id="attTable">
+      <thead>
+        <tr><th>Code</th><th>Name</th><th>Pay Mode</th><th>Present Days</th><th>OT Hours</th><th>In Time</th><th>Out Time</th><th>Flag</th><th>Action</th></tr>
+      </thead>
+      <tbody id="attTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- =================== TAB: CORRECTIONS =================== -->
+<div id="tab_correct" class="tab-content">
+
+  <!-- Location Filter -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <label style="font-size:11px;color:#9fa8da;font-weight:600">Filter by Location:</label>
+    <select id="corrLocFilter" onchange="renderCorrections()" style="max-width:200px;font-size:12px">
+      <option value="">All Locations</option>
+    </select>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="val" id="cntMissing">0</div><div class="lbl">Missing Punch</div></div>
+    <div class="stat-box"><div class="val" id="cntLate">0</div><div class="lbl">Late Entries</div></div>
+    <div class="stat-box"><div class="val" id="cntApproved">0</div><div class="lbl">Approved</div></div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-success btn-sm" onclick="approveAll()">✅ Approve All Flagged</button>
+    <button class="btn btn-warning btn-sm" onclick="showCorrectFilter('all')">All</button>
+    <button class="btn btn-warning btn-sm" onclick="showCorrectFilter('missing')">Missing Punch</button>
+    <button class="btn btn-warning btn-sm" onclick="showCorrectFilter('late')">Late</button>
+  </div>
+  <div class="tbl-wrap">
+    <table id="correctTable">
+      <thead>
+        <tr><th>Code</th><th>Name</th><th>Date</th><th>Flag</th><th>In Time</th><th>Out Time</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody id="correctTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- =================== TAB: BANK SALARY =================== -->
+<div id="tab_bank" class="tab-content">
+
+  <!-- Location Filter -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <label style="font-size:11px;color:#9fa8da;font-weight:600">Filter by Location:</label>
+    <select id="bankLocFilter" onchange="renderBankSalary()" style="max-width:200px;font-size:12px">
+      <option value="">All Locations</option>
+    </select>
+  </div>
+
+  <div class="stat-row" id="bankStats"></div>
+  <div class="btn-group">
+    <button class="btn btn-primary btn-sm" onclick="calcBankSalary()">⚙️ Calculate Salary</button>
+    <button class="btn btn-success btn-sm" onclick="saveSalaryToGAS('Bank')">☁️ Save to GAS</button>
+    <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="printBankSalary()">🖨️ Print Sheet</button>
+    <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="downloadSalaryCSV('Bank')">💾 Download CSV</button>
+  </div>
+  <div class="tbl-wrap">
+    <table id="bankTable">
+      <thead>
+        <tr>
+          <th>#</th><th>Emp Code</th><th>Name</th><th>Base Salary</th><th>Base Days</th>
+          <th>Present Days</th><th>OT Hrs</th><th>Gross (₹)</th>
+          <th>EPF 12% (₹)</th><th>ESIC 0.75% (₹)</th>
+          <th>Advance (₹)</th><th>Other Dedn (₹)</th><th>Net Pay (₹)</th><th>Bank A/C</th>
+        </tr>
+      </thead>
+      <tbody id="bankTbody"></tbody>
+      <tfoot><tr class="sum-row" id="bankTotals"></tr></tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- =================== TAB: CASH SALARY =================== -->
+<div id="tab_cash" class="tab-content">
+
+  <!-- Location Filter -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <label style="font-size:11px;color:#9fa8da;font-weight:600">Filter by Location:</label>
+    <select id="cashLocFilter" onchange="renderCashSalary()" style="max-width:200px;font-size:12px">
+      <option value="">All Locations</option>
+    </select>
+  </div>
+
+  <div class="stat-row" id="cashStats"></div>
+  <div class="btn-group">
+    <button class="btn btn-warning btn-sm" onclick="calcCashSalary()">⚙️ Calculate Salary</button>
+    <button class="btn btn-success btn-sm" onclick="saveSalaryToGAS('Cash')">☁️ Save to GAS</button>
+    <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="printCashSalary()">🖨️ Print with Signatures</button>
+    <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="downloadSalaryCSV('Cash')">💾 Download CSV</button>
+  </div>
+  <p style="font-size:11px;color:#ef9a9a;margin-bottom:10px">⚠️ Cash employees are completely excluded from PF &amp; ESIC calculations.</p>
+  <div class="tbl-wrap">
+    <table id="cashTable">
+      <thead>
+        <tr>
+          <th>#</th><th>Emp Code</th><th>Name</th><th>Base Salary</th><th>Base Days</th>
+          <th>Present Days</th><th>OT Hrs</th><th>Gross (₹)</th>
+          <th>Advance (₹)</th><th>Other Dedn (₹)</th><th>Net Payable (₹)</th>
+          <th>Employee Signature</th>
+        </tr>
+      </thead>
+      <tbody id="cashTbody"></tbody>
+      <tfoot><tr class="sum-row" id="cashTotals"></tr></tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- =================== TAB: ESIC & EPFO =================== -->
+<div id="tab_compliance" class="tab-content">
+
+  <!-- Location Filter -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <label style="font-size:11px;color:#9fa8da;font-weight:600">Filter by Location:</label>
+    <select id="compLocFilter" onchange="calcCompliance()" style="max-width:200px;font-size:12px">
+      <option value="">All Locations</option>
+    </select>
+  </div>
+
+  <p style="font-size:11px;color:#81c784;margin-bottom:12px">✅ Only Bank employees are included. Cash employees are fully excluded.</p>
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="showCompSub('esic')">🏥 ESIC Challan</button>
+    <button class="sub-tab" onclick="showCompSub('epfo')">🏛️ EPFO / ECR</button>
+  </div>
+
+  <div id="comp_esic">
+    <div class="btn-group">
+      <button class="btn btn-primary btn-sm" onclick="calcCompliance()">⚙️ Generate</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="printESIC()">🖨️ Print ESIC</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="downloadESICCSV()">💾 Download CSV</button>
+    </div>
+    <div class="tbl-wrap">
+      <table id="esicTable">
+        <thead>
+          <tr><th>#</th><th>Emp Code</th><th>Name</th><th>IP No.</th><th>Gross (₹)</th>
+          <th>Emp ESIC 0.75% (₹)</th><th>Emp'r ESIC 3.25% (₹)</th><th>Total ESIC (₹)</th></tr>
+        </thead>
+        <tbody id="esicTbody"></tbody>
+        <tfoot><tr class="sum-row" id="esicTotals"></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div id="comp_epfo" style="display:none">
+    <div class="btn-group">
+      <button class="btn btn-primary btn-sm" onclick="calcCompliance()">⚙️ Generate</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="printEPFO()">🖨️ Print EPFO</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="downloadEPFOCSV()">💾 Download ECR</button>
+    </div>
+    <div class="tbl-wrap">
+      <table id="epfoTable">
+        <thead>
+          <tr><th>#</th><th>Emp Code</th><th>Name</th><th>UAN</th><th>Gross (₹)</th>
+          <th>Basic (₹)</th><th>Emp EPF 12% (₹)</th><th>Emp'r EPF 12% (₹)</th><th>Total EPF (₹)</th></tr>
+        </thead>
+        <tbody id="epfoTbody"></tbody>
+        <tfoot><tr class="sum-row" id="epfoTotals"></tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- =================== TAB: ADVANCES =================== -->
+<div id="tab_advances" class="tab-content">
+
+  <!-- Location Filter -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <label style="font-size:11px;color:#9fa8da;font-weight:600">Filter by Location:</label>
+    <select id="advLocFilter" onchange="renderAdvances()" style="max-width:200px;font-size:12px">
+      <option value="">All Locations</option>
+    </select>
+  </div>
+
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="showAdvSub('bank')">🏦 Bank Employee Advances</button>
+    <button class="sub-tab" onclick="showAdvSub('cash')">💵 Cash Employee Advances</button>
+  </div>
+
+  <!-- Log New Advance -->
+  <div class="card">
+    <div class="card-title">➕ Log New Advance</div>
+    <div class="form-row">
+      <div class="form-group" style="max-width:180px">
+        <label>Employee Code</label>
+        <input type="text" id="advCode" placeholder="EMP001" oninput="advAutoFill()" list="empCodeList">
+      </div>
+      <div class="form-group" style="max-width:200px"><label>Employee Name</label><input type="text" id="advName" readonly></div>
+      <div class="form-group" style="max-width:130px"><label>Pay Mode</label><input type="text" id="advMode" readonly></div>
+      <div class="form-group" style="max-width:140px"><label>Amount (₹)</label><input type="number" id="advAmt" min="0" placeholder="5000"></div>
+      <div class="form-group" style="max-width:140px"><label>Date</label><input type="date" id="advDate"></div>
+      <div class="form-group" style="max-width:200px"><label>Reason</label><input type="text" id="advReason" placeholder="Medical / Personal…"></div>
+      <div class="form-group" style="max-width:140px"><label>Monthly Recovery (₹)</label><input type="number" id="advRecovery" min="0" placeholder="1000"></div>
+    </div>
+    <button class="btn btn-success btn-sm" onclick="logAdvance()">💾 Save Advance</button>
+  </div>
+
+  <div id="adv_bank">
+    <div class="stat-row" id="advBankStats"></div>
+    <div class="btn-group">
+      <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="printAdvReport('Bank')">🖨️ Print Bank Advance Report</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="downloadAdvCSV('Bank')">💾 Download CSV</button>
+    </div>
+    <div class="tbl-wrap">
+      <table id="advBankTable">
+        <thead>
+          <tr><th>#</th><th>Code</th><th>Name</th><th>Date</th><th>Advance (₹)</th><th>Reason</th><th>Monthly Recovery</th><th>Recovered</th><th>Outstanding</th><th>Action</th></tr>
+        </thead>
+        <tbody id="advBankTbody"></tbody>
+        <tfoot><tr class="sum-row" id="advBankTotals"></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div id="adv_cash" style="display:none">
+    <div class="stat-row" id="advCashStats"></div>
+    <div class="btn-group">
+      <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="printAdvReport('Cash')">🖨️ Print Cash Advance Report</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff" onclick="downloadAdvCSV('Cash')">💾 Download CSV</button>
+    </div>
+    <div class="tbl-wrap">
+      <table id="advCashTable">
+        <thead>
+          <tr><th>#</th><th>Code</th><th>Name</th><th>Date</th><th>Advance (₹)</th><th>Reason</th><th>Monthly Recovery</th><th>Recovered</th><th>Outstanding</th><th>Action</th></tr>
+        </thead>
+        <tbody id="advCashTbody"></tbody>
+        <tfoot><tr class="sum-row" id="advCashTotals"></tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- =================== TAB: REPORTS =================== -->
+<div id="tab_reports" class="tab-content">
+
+  <!-- Location Filter -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+    <label style="font-size:11px;color:#9fa8da;font-weight:600">Filter by Location:</label>
+    <select id="rptLocFilter" onchange="renderReportStats()" style="max-width:200px;font-size:12px">
+      <option value="">All Locations</option>
+    </select>
+  </div>
+
+  <div class="stat-row" id="reportStats"></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
+    <div class="card" style="text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">🏦</div>
+      <div style="font-weight:700;color:#90caf9;margin-bottom:6px">Bank Salary Register</div>
+      <p style="font-size:11px;color:#9fa8da;margin-bottom:10px">PF + ESIC included. Bank employees only.</p>
+      <button class="btn btn-primary btn-sm" onclick="printBankSalary()">🖨️ Print</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff;margin-top:6px" onclick="downloadSalaryCSV('Bank')">💾 CSV</button>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">💵</div>
+      <div style="font-weight:700;color:#ffcc80;margin-bottom:6px">Cash Salary Register</div>
+      <p style="font-size:11px;color:#9fa8da;margin-bottom:10px">No PF/ESIC. With employee signature column.</p>
+      <button class="btn btn-warning btn-sm" onclick="printCashSalary()">🖨️ Print</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff;margin-top:6px" onclick="downloadSalaryCSV('Cash')">💾 CSV</button>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">🏥</div>
+      <div style="font-weight:700;color:#a5d6a7;margin-bottom:6px">ESIC Challan</div>
+      <p style="font-size:11px;color:#9fa8da;margin-bottom:10px">Employee 0.75% + Employer 3.25%</p>
+      <button class="btn btn-success btn-sm" onclick="showTab('compliance');showCompSub('esic');printESIC()">🖨️ Print</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff;margin-top:6px" onclick="downloadESICCSV()">💾 CSV</button>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">🏛️</div>
+      <div style="font-weight:700;color:#ce93d8;margin-bottom:6px">EPFO / ECR</div>
+      <p style="font-size:11px;color:#9fa8da;margin-bottom:10px">Employee + Employer EPF 12% each</p>
+      <button class="btn btn-primary btn-sm" onclick="showTab('compliance');showCompSub('epfo');printEPFO()">🖨️ Print</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff;margin-top:6px" onclick="downloadEPFOCSV()">💾 ECR File</button>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">💳</div>
+      <div style="font-weight:700;color:#90caf9;margin-bottom:6px">Bank Advance Report</div>
+      <p style="font-size:11px;color:#9fa8da;margin-bottom:10px">Outstanding advances — bank employees.</p>
+      <button class="btn btn-primary btn-sm" onclick="printAdvReport('Bank')">🖨️ Print</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff;margin-top:6px" onclick="downloadAdvCSV('Bank')">💾 CSV</button>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">💰</div>
+      <div style="font-weight:700;color:#ffcc80;margin-bottom:6px">Cash Advance Report</div>
+      <p style="font-size:11px;color:#9fa8da;margin-bottom:10px">Outstanding advances — cash employees.</p>
+      <button class="btn btn-warning btn-sm" onclick="printAdvReport('Cash')">🖨️ Print</button>
+      <button class="btn btn-sm" style="background:#37474f;color:#fff;margin-top:6px" onclick="downloadAdvCSV('Cash')">💾 CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD EMPLOYEE MODAL -->
+<div class="modal" id="addModal">
+  <div class="modal-box">
+    <span class="modal-close" onclick="closeModal('addModal')">✕</span>
+    <h3>➕ Add / Edit Employee</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Emp Code *</label><input type="text" id="me_code" placeholder="EMP153"></div>
+      <div class="form-group"><label>Full Name *</label><input type="text" id="me_name"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Department / Category</label><input type="text" id="me_dept" placeholder="Production"></div>
+      <div class="form-group"><label>Base Salary (₹)</label><input type="number" id="me_sal" placeholder="12000"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Base Days</label><input type="number" id="me_bdays" placeholder="26" value="26"></div>
+      <div class="form-group"><label>OT Rate (₹/hr)</label><input type="number" id="me_otrate" placeholder="auto"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Payment Mode</label>
+        <select id="me_paymode"><option value="Bank">Bank</option><option value="Cash">Cash</option></select>
+      </div>
+      <div class="form-group">
+        <label>ESI Applicable</label>
+        <select id="me_esi"><option value="yes">Yes</option><option value="no">No</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Bank A/C No.</label><input type="text" id="me_bank"></div>
+      <div class="form-group"><label>UAN (EPFO)</label><input type="text" id="me_uan"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>IP No. (ESIC)</label><input type="text" id="me_ip"></div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="me_status"><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+      </div>
+    </div>
+    <div class="form-row"><div class="form-group"><label>Location</label><select id="me_location"><option value="Main Plant">Main Plant</option></select></div></div>
+    <button class="btn btn-success" onclick="saveEmployee()" style="width:100%;margin-top:8px">💾 Save Employee</button>
+  </div>
+</div>
+
+<!-- IMAGE IMPORT MODAL -->
+<div class="modal" id="imgModal">
+  <div class="modal-box" style="max-width:700px">
+    <span class="modal-close" onclick="closeModal('imgModal')">✕</span>
+    <h3>🖼️ Image Import — Preview & Map</h3>
+    <img id="imgPreview" style="max-width:100%;border-radius:6px;margin-bottom:12px;border:1px solid #2a3550">
+    <p style="font-size:12px;color:#9fa8da;margin-bottom:10px">Image uploaded. Detected text will be shown below. Map columns and confirm import.</p>
+    <textarea id="imgExtracted" rows="6" style="width:100%;background:#0f1525;color:#e0e6f0;border:1px solid #2a3550;border-radius:6px;padding:8px;font-size:12px;font-family:monospace" placeholder="Extracted text appears here…"></textarea>
+    <p style="font-size:11px;color:#ef9a9a;margin-top:8px">Note: For best results, upload a clear table image. Manual correction may be needed after import.</p>
+    <button class="btn btn-warning" onclick="parseImgText()" style="margin-top:10px;width:100%">🔍 Parse & Import Rows</button>
+  </div>
+</div>
+
+
+<!-- =================== TAB: LOCATIONS =================== -->
+<div id="tab_locations" class="tab-content">
+  <div class="card">
+    <div class="card-title">🏭 Location Master</div>
+    <p style="font-size:12px;color:#9fa8da;margin-bottom:12px">Add factory/branch locations. All reports and attendance can be filtered by location. Remote staff should select their location when entering data.</p>
+    <div class="form-row">
+      <div class="form-group" style="max-width:300px">
+        <label>New Location Name</label>
+        <input type="text" id="newLocName" placeholder="e.g. Badli Plant, Delhi Branch…">
+      </div>
+      <div class="form-group" style="max-width:140px;display:flex;align-items:flex-end">
+        <button class="btn btn-success" onclick="addLocation()" style="width:100%">➕ Add Location</button>
+      </div>
+    </div>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Location Name</th><th>Total Employees</th><th>Bank</th><th>Cash</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="locTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const AUTH_TOKEN='SSPI-VC-2026-SECURE';
+const GAS_URL='https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+
+const EMP_MASTER_DEFAULT=[
+  {code:'EMP001',name:'SATVEER SINGH',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP002',name:'AMAR CHAND',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP003',name:'NAND PRATAP',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP004',name:'BHARAT/RAM ADHAR',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP005',name:'RAJ KUMAR PASWAN',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP006',name:'SACHINE s/o manoj',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP007',name:'SHYAM PASWAN',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP008',name:'RAM VILAS',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP009',name:'SATISH AGRA',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP010',name:'MANJEET',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP011',name:'RAJEEV',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP012',name:'Prem chand',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP013',name:'MANOJ',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP014',name:'Harendara singh',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP015',name:'SANJEEV',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP016',name:'Vikas PRAJAPAT',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP017',name:'JAIKISAN RAM',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP018',name:'SANJEET',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP019',name:'HARI SHANKAR',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP020',name:'VIRENDER',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP021',name:'ANKIT YADAV',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP022',name:'SATYNARAN',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP023',name:'RAJ KUMAR III',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP024',name:'AMARJEET',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP025',name:'SANJAYE SINGH',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP026',name:'ASHA KUMARI',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP027',name:'SHIWANI',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP028',name:'DINESH KUMAR',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP029',name:'SUKHARI SAW',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP030',name:'KULDEEP 2',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP031',name:'KANCHAN',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP032',name:'ASHA DEVI',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP033',name:'SAVITA PANDEY',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP034',name:'PARMILA',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP035',name:'PAPU YADW',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP036',name:'REKHA kumari 1',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP037',name:'PINKI DEVI',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP038',name:'ANU DEVI',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP039',name:'SANDHA DEVI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP040',name:'KISNAWATI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP041',name:'BABITA DEVI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP042',name:'AMRINDER pal',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP043',name:'arati kumari',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP044',name:'REENA KUMARI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP045',name:'SONI KUMARI',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP046',name:'NITU',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP047',name:'ROSANI DEVI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP048',name:'REKHA devi II(SARWAN)',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP049',name:'MAMATA',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP050',name:'BABITA  DEVI II',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP051',name:'KHUSBU DEVI',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP052',name:'SHILA DEVI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP053',name:'PINKI DEVI II',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP054',name:'AJEET KUMAR',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP055',name:'RAM PUKAR',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP056',name:'NARENDER',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP057',name:'JAGDISH',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP058',name:'KULDEEP 1',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP059',name:'sunil pal',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP060',name:'DHIRAJ sitapur',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP061',name:'NAND KISHOR',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP062',name:'SUSHIL KUMAR',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP063',name:'ANKUL',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP064',name:'AMREESH',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP065',name:'ROHIT  SITAPUR',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP066',name:'BRIJESH',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP067',name:'SIVRAJ',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP068',name:'AMAR NATH',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP069',name:'GOVIND PASWAN',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP070',name:'RAKESH GODARA',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP071',name:'RAM CHANDAR',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP072',name:'SANT KUMAR',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP073',name:'SHOBHA DEVI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP074',name:'MAHENDER',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP075',name:'ushadevi ii',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP076',name:'ABJEET',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP077',name:'BHUPENDER',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP078',name:'SARWAN KUMAR',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP079',name:'balveer',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP080',name:'MUKESH RAM',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP081',name:'NAGENDER BELDER',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP082',name:'Munendar',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP083',name:'Subhod kumar belder',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP084',name:'PANKAJ',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP085',name:'SACHINE S/o subod',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP086',name:'SURYAPARKAS',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP087',name:'PINTU',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP088',name:'viky',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP089',name:'TEJ SINGH',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP090',name:'CHINTU KUMAR',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP091',name:'KUNAL KUMAR',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP092',name:'SINTURAM',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP093',name:'GANESH RAJBHAR',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP094',name:'SONU',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP095',name:'mithune',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP096',name:'deep paswan',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP097',name:'SHIWAM PAL',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP098',name:'SHIWAM',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP099',name:'RAHUL KUMAR PASWAN',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP100',name:'GUDU KUMAR',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP101',name:'Geeta hk',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP102',name:'TIGER',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP103',name:'SUNIL',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP104',name:'DEVPARKA',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP105',name:'BITU',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP106',name:'RUKAM PAL',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP107',name:'JAGDISH II',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP108',name:'RADHA CHARN',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP109',name:'AMAR PAL(WELDER)',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP110',name:'VIJENDER PAL(WELDER)',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP111',name:'DIWARI LAL',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP112',name:'JASWANT',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP113',name:'MITHILESH',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP114',name:'VINISH (welder)',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP115',name:'VIPINE',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP116',name:'SUMAN DEVI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP117',name:'PRABHAT',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP118',name:'AMARDEEP',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP119',name:'RAJAN SHRI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP120',name:'BINLESH DEVI V',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP121',name:'SHIV RAM',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP122',name:'ASHIS II',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP123',name:'CHANCHAL',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP124',name:'SURYEKANTI DEI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP125',name:'Reta devi',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP126',name:'ANITA DEVI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP127',name:'JULI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP128',name:'ANJALI',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP129',name:'AKASH RAMPUKAR',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP130',name:'DHANAN',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP131',name:'RAJAN KUMAR',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP132',name:'SACHINE /aaramachine',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP133',name:'RINKU',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP134',name:'ANKIT KUMAR',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP135',name:'SANKAR PASWAN',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP136',name:'SUNIL MISTRI',esi:true,status:'Active',stype:'Regular'},
+  {code:'EMP137',name:'KARISANA',esi:false,status:'Active',stype:'Regular'},
+  {code:'EMP138',name:'BRIJESH KUMAR',esi:false,status:'Active',stype:''},
+  {code:'EMP139',name:'ANKUSH',esi:false,status:'Active',stype:''},
+  {code:'EMP140',name:'MANY',esi:false,status:'Active',stype:''},
+  {code:'EMP141',name:'JOTY',esi:false,status:'Active',stype:''},
+  {code:'EMP142',name:'gayanti devi',esi:false,status:'Active',stype:''},
+  {code:'EMP143',name:'KUSHUM DEVI II',esi:false,status:'Active',stype:''},
+  {code:'EMP144',name:'RAJ KUMAR 2',esi:false,status:'Active',stype:''},
+  {code:'EMP145',name:'ASHISH SITAPUR',esi:false,status:'Active',stype:''},
+  {code:'EMP146',name:'SANJAYE  h.k',esi:false,status:'Active',stype:''},
+  {code:'EMP147',name:'NAN BACHA',esi:true,status:'Active',stype:''},
+  {code:'EMP148',name:'VIKAS MANDAL',esi:true,status:'Active',stype:''},
+  {code:'EMP149',name:'ARUNE',esi:false,status:'Active',stype:''},
+  {code:'EMP150',name:'RISHI BELDER',esi:false,status:'Active',stype:''},
+  {code:'EMP151',name:'SURAJ',esi:false,status:'Active',stype:''},
+  {code:'EMP152',name:'INDARJEET',esi:false,status:'Active',stype:''},
+];
+
+function ls(k){try{return JSON.parse(localStorage.getItem(k))||null}catch(e){return null}}
+function lsSet(k,v){localStorage.setItem(k,JSON.stringify(v))}
+
+var _sd=ls('sspi_employees');
+var employees=(_sd&&_sd.length>0)?_sd:EMP_MASTER_DEFAULT.map(function(e){return Object.assign({},e,{dept:'',baseSal:0,baseDays:26,otRate:0,payMode:'Bank',bankAcc:'',uan:'',ipNo:'',location:'Main Plant'});});
+var locations=ls('sspi_locations')||['Main Plant'];
+var attData=ls('sspi_att')||{};
+var corrections=ls('sspi_corr')||[];
+var advances=ls('sspi_advances')||[];
+var salaryData=ls('sspi_salary')||{};
+
+function saveAll(){lsSet('sspi_employees',employees);lsSet('sspi_locations',locations);lsSet('sspi_att',attData);lsSet('sspi_corr',corrections);lsSet('sspi_advances',advances);lsSet('sspi_salary',salaryData);}
+function getEmp(code){return employees.find(function(e){return e.code===code.trim().toUpperCase();})||null;}
+function curMonth(){return document.getElementById('globalMonth').value;}
+function fmt(n){return (Math.round((n||0)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function num(v){return parseFloat(v)||0;}
+function getLocFilter(id){var el=document.getElementById(id);return el?el.value:'';}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(window._tt);window._tt=setTimeout(function(){t.style.display='none';},3000);}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function downloadText(filename,text){var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(text);a.download=filename;a.click();}
+
+function showTab(id){
+  document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('tab_'+id).classList.add('active');
+  var btns=[].slice.call(document.querySelectorAll('.tab-btn'));
+  var map={master:0,att:1,correct:2,bank:3,cash:4,compliance:5,advances:6,reports:7,locations:8};
+  if(map[id]!==undefined) btns[map[id]].classList.add('active');
+  if(id==='master')renderMaster();
+  if(id==='att')renderAtt();
+  if(id==='correct')renderCorrections();
+  if(id==='bank')renderBankSalary();
+  if(id==='cash')renderCashSalary();
+  if(id==='advances')renderAdvances();
+  if(id==='reports')renderReportStats();
+  if(id==='locations')renderLocations();
+}
+function onMonthChange(){renderAtt();renderBankSalary();renderCashSalary();}
+
+function refreshLocDropdowns(){
+  var opts='<option value="">All Locations</option>'+locations.map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('');
+  ['masterLocFilter','attLocFilter','bankLocFilter','cashLocFilter','compLocFilter','advLocFilter','rptLocFilter','corrLocFilter'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){var cur=el.value;el.innerHTML=opts;if(cur)el.value=cur;}
+  });
+  var ml=document.getElementById('me_location');
+  if(ml) ml.innerHTML=locations.map(function(l){return '<option value="'+l+'">'+l+'</option>';}).join('');
+}
+function renderLocations(){
+  var tb=document.getElementById('locTbody');if(!tb)return;
+  tb.innerHTML=locations.map(function(l,i){
+    return '<tr><td>'+(i+1)+'</td><td><b style="color:#90caf9">'+l+'</b></td>'
+      +'<td>'+employees.filter(function(e){return e.location===l;}).length+'</td>'
+      +'<td>'+employees.filter(function(e){return e.location===l&&e.payMode==="Bank";}).length+'</td>'
+      +'<td>'+employees.filter(function(e){return e.location===l&&e.payMode==="Cash";}).length+'</td>'
+      +'<td><button class="btn btn-primary btn-sm" onclick="editLocation('+i+')">&#9998; Rename</button>'
+      +(locations.length>1?'<button class="btn btn-danger btn-sm" onclick="deleteLocation('+i+')">&#128465;</button>':'')
+      +'</td></tr>';
+  }).join('');
+  refreshLocDropdowns();
+}
+function addLocation(){
+  var n=document.getElementById('newLocName').value.trim();
+  if(!n){toast('Enter location name');return;}
+  if(locations.indexOf(n)>-1){toast('Already exists');return;}
+  locations.push(n);saveAll();renderLocations();document.getElementById('newLocName').value='';toast('Added: '+n);
+}
+function editLocation(i){
+  var n=prompt('Rename:',locations[i]);
+  if(!n||n===locations[i])return;
+  var old=locations[i];locations[i]=n;
+  employees.forEach(function(e){if(e.location===old)e.location=n;});
+  saveAll();renderLocations();toast('Renamed to '+n);
+}
+function deleteLocation(i){
+  if(locations.length<=1){toast('Cannot delete last location');return;}
+  if(!confirm('Delete? Employees moved to '+locations[0]))return;
+  var old=locations[i];
+  employees.forEach(function(e){if(e.location===old)e.location=locations[0];});
+  locations.splice(i,1);saveAll();renderLocations();toast('Deleted: '+old);
+}
+
+function renderMaster(){
+  var q=(document.getElementById('masterSearch').value||'').toLowerCase();
+  var f=document.getElementById('masterFilter').value;
+  var locF=getLocFilter('masterLocFilter');
+  var rows=employees.filter(function(e){
+    var match=e.name.toLowerCase().indexOf(q)>-1||e.code.toLowerCase().indexOf(q)>-1;
+    var modeOk=!f||(f==='Bank'&&e.payMode==='Bank')||(f==='Cash'&&e.payMode==='Cash')||(f==='Active'&&e.status==='Active')||(f==='Inactive'&&e.status==='Inactive');
+    var locOk=!locF||e.location===locF;
+    return match&&modeOk&&locOk;
+  });
+  document.getElementById('masterCount').textContent=rows.length+' shown';
+  document.getElementById('masterStats').innerHTML=
+    '<div class="stat-box"><div class="val">'+employees.length+'</div><div class="lbl">Total</div></div>'
+    +'<div class="stat-box"><div class="val">'+employees.filter(function(e){return e.payMode==="Bank";}).length+'</div><div class="lbl">Bank</div></div>'
+    +'<div class="stat-box"><div class="val">'+employees.filter(function(e){return e.payMode==="Cash";}).length+'</div><div class="lbl">Cash</div></div>'
+    +'<div class="stat-box"><div class="val">'+employees.filter(function(e){return e.status==="Active";}).length+'</div><div class="lbl">Active</div></div>'
+    +'<div class="stat-box"><div class="val">'+locations.length+'</div><div class="lbl">Locations</div></div>';
+  var tb=document.getElementById('masterTbody');
+  tb.innerHTML=rows.map(function(e,i){
+    var c=e.code;
+    return '<tr data-code="'+c+'">'
+      +'<td>'+(i+1)+'</td>'
+      +'<td><b style="color:#90caf9">'+c+'</b></td>'
+      +'<td>'+e.name+'</td>'
+      +'<td><input type="text" value="'+(e.dept||'')+'" style="width:110px;font-size:11px" data-code="'+c+'" data-field="dept" onchange="updateEmp(this.dataset.code,this.dataset.field,this.value)"></td>'
+      +'<td><input type="number" value="'+(e.baseSal||'')+'" style="width:90px;font-size:11px" data-code="'+c+'" data-field="baseSal" onchange="updateEmp(this.dataset.code,this.dataset.field,parseFloat(this.value)||0)"></td>'
+      +'<td><input type="number" value="'+(e.baseDays||26)+'" style="width:60px;font-size:11px" data-code="'+c+'" data-field="baseDays" onchange="updateEmp(this.dataset.code,this.dataset.field,parseFloat(this.value)||26)"></td>'
+      +'<td><input type="number" value="'+(e.otRate||'')+'" style="width:70px;font-size:11px" data-code="'+c+'" data-field="otRate" onchange="updateEmp(this.dataset.code,this.dataset.field,parseFloat(this.value)||0)"></td>'
+      +'<td><div class="toggle-wrap">'
+        +'<span class="toggle-bank '+(e.payMode==="Bank"?'on':'')+'" data-code="'+c+'" data-mode="Bank" onclick="setPayMode(this.dataset.code,this.dataset.mode)">BANK</span>'
+        +'<span class="toggle-cash '+(e.payMode==="Cash"?'on':'')+'" data-code="'+c+'" data-mode="Cash" onclick="setPayMode(this.dataset.code,this.dataset.mode)">CASH</span>'
+      +'</div></td>'
+      +'<td><span class="badge '+(e.esi?'badge-esi':'')+'">'+(e.esi?'ESI':'-')+'</span></td>'
+      +'<td><span style="font-size:11px;color:#9fa8da">'+(e.location||'Main Plant')+'</span></td>'
+      +'<td><span class="badge '+(e.status==="Active"?'badge-active':'badge-inactive')+'">'+e.status+'</span></td>'
+      +'<td>'
+        +'<button class="btn btn-primary btn-sm" data-code="'+c+'" onclick="editEmployee(this.dataset.code)">&#9998;</button>'
+        +'<button class="btn btn-danger btn-sm" data-code="'+c+'" onclick="toggleStatus(this.dataset.code)">'+(e.status==="Active"?'&#128683;':'&#9989;')+'</button>'
+      +'</td>'
+    +'</tr>';
+  }).join('');
+  var dl=document.getElementById('empCodeList');
+  if(dl) dl.innerHTML=employees.map(function(e){return '<option value="'+e.code+'">'+e.name+'</option>';}).join('');
+}
+function updateEmp(code,field,val){var e=getEmp(code);if(!e)return;e[field]=val;saveAll();}
+function setPayMode(code,mode){var e=getEmp(code);if(!e)return;e.payMode=mode;saveAll();renderMaster();}
+function toggleStatus(code){var e=getEmp(code);if(!e)return;e.status=e.status==='Active'?'Inactive':'Active';saveAll();renderMaster();}
+
+function openAddModal(code){
+  var e=code?getEmp(code):null;
+  document.getElementById('me_code').value=e?e.code:'';
+  document.getElementById('me_name').value=e?e.name:'';
+  document.getElementById('me_dept').value=e?e.dept:'';
+  document.getElementById('me_sal').value=e?e.baseSal:'';
+  document.getElementById('me_bdays').value=e?e.baseDays:26;
+  document.getElementById('me_otrate').value=e?e.otRate:'';
+  document.getElementById('me_paymode').value=e?e.payMode:'Bank';
+  document.getElementById('me_esi').value=e?(e.esi?'yes':'no'):'yes';
+  document.getElementById('me_bank').value=e?e.bankAcc:'';
+  document.getElementById('me_uan').value=e?e.uan:'';
+  document.getElementById('me_ip').value=e?e.ipNo:'';
+  document.getElementById('me_status').value=e?e.status:'Active';
+  var ml=document.getElementById('me_location');
+  if(ml){ml.innerHTML=locations.map(function(l){return '<option value="'+l+'"'+(e&&e.location===l?' selected':'')+'>'+l+'</option>';}).join('');}
+  document.getElementById('addModal').classList.add('open');
+}
+function editEmployee(code){openAddModal(code);}
+function saveEmployee(){
+  var code=document.getElementById('me_code').value.trim().toUpperCase();
+  if(!code){toast('Emp Code required');return;}
+  var e=getEmp(code);
+  if(!e){e={code:code,name:'',esi:false,status:'Active',stype:'Regular',dept:'',baseSal:0,baseDays:26,otRate:0,payMode:'Bank',bankAcc:'',uan:'',ipNo:'',location:'Main Plant'};employees.push(e);}
+  e.name=document.getElementById('me_name').value.trim();
+  e.dept=document.getElementById('me_dept').value.trim();
+  e.baseSal=num(document.getElementById('me_sal').value);
+  e.baseDays=num(document.getElementById('me_bdays').value)||26;
+  e.otRate=num(document.getElementById('me_otrate').value);
+  e.payMode=document.getElementById('me_paymode').value;
+  e.esi=document.getElementById('me_esi').value==='yes';
+  e.bankAcc=document.getElementById('me_bank').value.trim();
+  e.uan=document.getElementById('me_uan').value.trim();
+  e.ipNo=document.getElementById('me_ip').value.trim();
+  e.status=document.getElementById('me_status').value;
+  var lEl=document.getElementById('me_location');
+  if(lEl)e.location=lEl.value;
+  saveAll();closeModal('addModal');renderMaster();toast('Saved: '+code);
+}
+function resetToDefault(){
+  if(!confirm('Reset all employee data to master defaults? This will clear local changes.'))return;
+  localStorage.removeItem('sspi_employees');
+  employees=EMP_MASTER_DEFAULT.map(function(e){return Object.assign({},e,{dept:'',baseSal:0,baseDays:26,otRate:0,payMode:'Bank',bankAcc:'',uan:'',ipNo:'',location:'Main Plant'});});
+  saveAll();renderMaster();toast('Reset to master data ('+employees.length+' employees)');
+}
+function exportMasterCSV(){
+  var hdr='Emp Code,Name,Department,Base Salary,Base Days,OT Rate,Payment Mode,ESI,Bank A/C,UAN,IP No,Location,Status';
+  var rows=employees.map(function(e){return [e.code,'"'+e.name+'"',e.dept,e.baseSal,e.baseDays,e.otRate,e.payMode,e.esi?'Yes':'No',e.bankAcc,e.uan,e.ipNo,e.location,e.status].join(',');});
+  downloadText('SSPI_Employee_Master.csv',[hdr].concat(rows).join('\n'));
+}
+
+function importMasterXLSX(ev){
+  var file=ev.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=new Uint8Array(e.target.result);
+      var wb=XLSX.read(data,{type:'array'});
+      var sheet=wb.Sheets[wb.SheetNames[0]];
+      for(var i=0;i<wb.SheetNames.length;i++){var sn=wb.SheetNames[i];if(sn.toLowerCase().indexOf('employee')>-1||sn.toLowerCase().indexOf('master')>-1){sheet=wb.Sheets[sn];break;}}
+      var rows=XLSX.utils.sheet_to_json(sheet,{defval:''});
+      var added=0,updated=0;
+      rows.forEach(function(row){
+        var code=String(row['Emp Code']||row['emp_code']||row['Code']||'').trim().toUpperCase();
+        var name=String(row['Employee Name']||row['Name']||'').trim();
+        if(!code||!name)return;
+        var e=getEmp(code);
+        if(!e){e={code:code,name:name,esi:false,status:'Active',stype:'Regular',dept:'',baseSal:0,baseDays:26,otRate:0,payMode:'Bank',bankAcc:'',uan:'',ipNo:'',location:'Main Plant'};employees.push(e);added++;}
+        else updated++;
+        e.name=name;
+        e.dept=String(row['Category']||row['Dept']||row['Department']||e.dept||'');
+        var sal=parseFloat(row['Base Salary as on April']||row['BaseSalary']||row['Salary']||0);if(sal)e.baseSal=sal;
+        var bd=parseFloat(row['Salary Base Days']||row['BaseDays']||0);if(bd)e.baseDays=bd;
+        e.esi=String(row['ESI']||'').toLowerCase()==='esi'||String(row['ESI Applicable']||'').toLowerCase()==='yes';
+        if(row['Payment Mode'])e.payMode=String(row['Payment Mode']).trim();
+        if(row['Status'])e.status=String(row['Status']).trim();
+        if(row['Location'])e.location=String(row['Location']||'Main Plant').trim();
+      });
+      saveAll();renderMaster();
+      document.getElementById('importStatus').textContent='OK: '+added+' added, '+updated+' updated';
+      toast('XLSX imported');
+    }catch(err){document.getElementById('importStatus').textContent='Error: '+err.message;}
+  };
+  reader.readAsArrayBuffer(file);ev.target.value='';
+}
+
+function importMasterCSV(ev){
+  var file=ev.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var lines=e.target.result.split('\n').filter(function(l){return l.trim();});
+    if(!lines.length)return;
+    var headers=lines[0].split(',').map(function(h){return h.trim().replace(/"/g,'');});
+    var added=0,updated=0;
+    for(var i=1;i<lines.length;i++){
+      var vals=lines[i].split(',').map(function(v){return v.trim().replace(/"/g,'');});
+      var row={};headers.forEach(function(h,j){row[h]=vals[j]||'';});
+      var code=String(row['Emp Code']||row['Code']||'').trim().toUpperCase();
+      var name=String(row['Employee Name']||row['Name']||'').trim();
+      if(!code||!name)continue;
+      var e=getEmp(code);
+      if(!e){e={code:code,name:name,esi:false,status:'Active',stype:'Regular',dept:'',baseSal:0,baseDays:26,otRate:0,payMode:'Bank',bankAcc:'',uan:'',ipNo:'',location:'Main Plant'};employees.push(e);added++;}
+      else updated++;
+      e.name=name;
+      if(row['Department']||row['Dept']||row['Category'])e.dept=row['Department']||row['Dept']||row['Category']||e.dept;
+      var sal=parseFloat(row['Base Salary']||0);if(sal)e.baseSal=sal;
+      var bd=parseFloat(row['Base Days']||0);if(bd)e.baseDays=bd;
+      if(row['Payment Mode'])e.payMode=row['Payment Mode'].trim();
+      if(row['ESI'])e.esi=row['ESI'].toLowerCase()==='yes'||row['ESI'].toLowerCase()==='esi';
+      if(row['Status'])e.status=row['Status'].trim();
+      if(row['Location'])e.location=row['Location'].trim();
+    }
+    saveAll();renderMaster();
+    document.getElementById('importStatus').textContent='OK: '+added+' added, '+updated+' updated';
+    toast('CSV imported');
+  };
+  reader.readAsText(file);ev.target.value='';
+}
+
+function importMasterImage(ev){
+  var file=ev.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('imgPreview').src=e.target.result;
+    document.getElementById('imgExtracted').value='';
+    document.getElementById('imgModal').classList.add('open');
+  };
+  reader.readAsDataURL(file);ev.target.value='';
+}
+function parseImgText(){
+  var raw=document.getElementById('imgExtracted').value.trim();
+  if(!raw){toast('Paste extracted text first');return;}
+  var lines=raw.split('\n').filter(function(l){return l.trim();});
+  var added=0;
+  lines.forEach(function(line){
+    var parts=line.split(/\t|,|\|/).map(function(p){return p.trim();}).filter(Boolean);
+    if(parts.length<2)return;
+    var code=parts[0].toUpperCase();var name=parts[1];
+    if(!code||!name)return;
+    var e=getEmp(code);
+    if(!e){e={code:code,name:name,esi:false,status:'Active',stype:'Regular',dept:'',baseSal:0,baseDays:26,otRate:0,payMode:'Bank',bankAcc:'',uan:'',ipNo:'',location:'Main Plant'};employees.push(e);added++;}
+    if(parts[2])e.dept=parts[2];
+    if(parts[3])e.baseSal=parseFloat(parts[3])||e.baseSal;
+  });
+  saveAll();closeModal('imgModal');renderMaster();toast('Image import: '+added+' added');
+}
+
+function attAutoFill(){var e=getEmp(document.getElementById('attEmpCode').value.trim().toUpperCase());document.getElementById('attEmpName').value=e?e.name:'';}
+function renderAtt(){
+  var month=curMonth();var locF=getLocFilter('attLocFilter');
+  var data=attData[month]||{};
+  var filtered=employees.filter(function(e){return !locF||e.location===locF;});
+  document.getElementById('attTbody').innerHTML=filtered.map(function(e){
+    var d=data[e.code]||{present:0,ot:0,inTime:'',outTime:'',flags:[]};
+    var flag=d.flags&&d.flags.length?'<span style="color:#ef9a9a;font-size:10px">'+d.flags.join(', ')+'</span>':'<span style="color:#81c784;font-size:10px">OK</span>';
+    var c=e.code;
+    return '<tr>'
+      +'<td><b style="color:#90caf9">'+c+'</b></td><td>'+e.name+'</td>'
+      +'<td><span class="badge badge-'+e.payMode.toLowerCase()+'">'+e.payMode+'</span></td>'
+      +'<td><input type="number" value="'+(d.present||0)+'" min="0" max="31" step="0.5" style="width:70px;font-size:11px" data-code="'+c+'" data-field="present" onchange="updateAtt(this.dataset.code,this.dataset.field,parseFloat(this.value)||0)"></td>'
+      +'<td><input type="number" value="'+(d.ot||0)+'" min="0" step="0.5" style="width:60px;font-size:11px" data-code="'+c+'" data-field="ot" onchange="updateAtt(this.dataset.code,this.dataset.field,parseFloat(this.value)||0)"></td>'
+      +'<td><input type="time" value="'+(d.inTime||'')+'" style="width:90px;font-size:11px" data-code="'+c+'" data-field="inTime" onchange="updateAtt(this.dataset.code,this.dataset.field,this.value)"></td>'
+      +'<td><input type="time" value="'+(d.outTime||'')+'" style="width:90px;font-size:11px" data-code="'+c+'" data-field="outTime" onchange="updateAtt(this.dataset.code,this.dataset.field,this.value)"></td>'
+      +'<td>'+flag+'</td>'
+      +'<td><button class="btn btn-danger btn-sm" data-code="'+c+'" onclick="clearAttRow(this.dataset.code)">X</button></td>'
+    +'</tr>';
+  }).join('');
+}
+function updateAtt(code,field,val){
+  var month=curMonth();if(!attData[month])attData[month]={};
+  if(!attData[month][code])attData[month][code]={present:0,ot:0,inTime:'',outTime:'',flags:[]};
+  attData[month][code][field]=val;saveAll();
+}
+function clearAttRow(code){var m=curMonth();if(attData[m])delete attData[m][code];saveAll();renderAtt();}
+function addManualAtt(){
+  var code=document.getElementById('attEmpCode').value.trim().toUpperCase();
+  var e=getEmp(code);if(!e){toast('Not found');return;}
+  var month=curMonth();if(!attData[month])attData[month]={};
+  attData[month][code]={present:num(document.getElementById('attPresent').value),ot:num(document.getElementById('attOT').value),inTime:'',outTime:'',flags:[]};
+  saveAll();renderAtt();
+  document.getElementById('attEmpCode').value='';document.getElementById('attEmpName').value='';
+  document.getElementById('attPresent').value='';document.getElementById('attOT').value='0';
+  toast('Saved: '+e.name);
+}
+function dropAtt(ev){ev.preventDefault();document.getElementById('attDrop').classList.remove('drag-over');var f=ev.dataTransfer.files[0];if(f)processAttFile(f);}
+function loadAttFile(ev){var f=ev.target.files[0];if(f)processAttFile(f);ev.target.value='';}
+function processAttFile(file){var r=new FileReader();r.onload=function(e){parseAttCSV(e.target.result);};r.readAsText(file);}
+var SYNONYMS={empCode:['empcode','emp_code','employee code','id','userid','card no','enroll no'],name:['name','employee name'],date:['date','att date','checktime','datetime','time','punch time'],inTime:['in time','check in','time in','punch in'],outTime:['out time','check out','time out','punch out'],present:['present','days','present days'],ot:['ot','ot hours','overtime']};
+function detectCol(headers){
+  var map={};
+  headers.forEach(function(h,i){
+    var hl=h.toLowerCase().trim();
+    for(var f in SYNONYMS){if(SYNONYMS[f].some(function(s){return hl.indexOf(s)>-1;})&&map[f]===undefined)map[f]=i;}
+  });
+  return map;
+}
+function parseAttCSV(text){
+  var lines=text.split('\n').filter(function(l){return l.trim();});if(!lines.length)return;
+  var headers=lines[0].split(',').map(function(h){return h.trim().replace(/"/g,'');});
+  var map=detectCol(headers);
+  var month=curMonth();if(!attData[month])attData[month]={};
+  var imp=0;var punches={};
+  for(var i=1;i<lines.length;i++){
+    var vals=lines[i].split(',').map(function(v){return v.trim().replace(/"/g,'');});
+    var codeRaw=map.empCode!==undefined?vals[map.empCode]:'';
+    var dateRaw=map.date!==undefined?vals[map.date]:'';
+    if(!codeRaw&&!dateRaw)continue;
+    if(map.present!==undefined){
+      var code=codeRaw.toUpperCase();if(!getEmp(code))continue;
+      attData[month][code]={present:num(vals[map.present]),ot:map.ot!==undefined?num(vals[map.ot]):0,inTime:map.inTime!==undefined?vals[map.inTime]:'',outTime:map.outTime!==undefined?vals[map.outTime]:'',flags:[]};
+      imp++;
+    } else if(codeRaw&&dateRaw){
+      var key=codeRaw+'_'+dateRaw.substring(0,10);
+      if(!punches[key])punches[key]=[];punches[key].push(dateRaw);
+    }
+  }
+  for(var key in punches){
+    var times=punches[key];var ec=key.split('_')[0];var emp=getEmp(ec.toUpperCase());if(!emp)continue;
+    times.sort();var inT=times[0].split(' ')[1]||'';var outT=times[times.length-1].split(' ')[1]||'';
+    var ec2=ec.toUpperCase();
+    if(!attData[month][ec2])attData[month][ec2]={present:0,ot:0,inTime:'',outTime:'',flags:[]};
+    var rec=attData[month][ec2];
+    rec.inTime=rec.inTime||inT;rec.outTime=rec.outTime||outT;rec.present=(rec.present||0)+1;
+    if(!inT||!outT)rec.flags.push('missing');imp++;
+  }
+  saveAll();renderAtt();document.getElementById('attStatus').textContent='Imported '+imp+' records';toast('Attendance imported');
+}
+function saveAttToGAS(){gsPost({type:'attendance',month:curMonth(),data:attData[curMonth()]||{},token:AUTH_TOKEN});toast('Sent to GAS');}
+function downloadAttCSV(){
+  var m=curMonth();var data=attData[m]||{};
+  var hdr='Emp Code,Name,Location,Pay Mode,Present Days,OT Hours';
+  var rows=employees.map(function(e){var d=data[e.code]||{};return[e.code,'"'+e.name+'"',e.location,e.payMode,d.present||0,d.ot||0].join(',');});
+  downloadText('SSPI_Attendance_'+m+'.csv',[hdr].concat(rows).join('\n'));
+}
+function clearAtt(){if(!confirm('Clear attendance?'))return;delete attData[curMonth()];saveAll();renderAtt();toast('Cleared');}
+
+function renderCorrections(){
+  var locF=getLocFilter('corrLocFilter');
+  var filtered=corrections.filter(function(c){var e=getEmp(c.code);return !locF||(e&&e.location===locF);});
+  document.getElementById('cntMissing').textContent=filtered.filter(function(c){return c.flag==='missing';}).length;
+  document.getElementById('cntLate').textContent=filtered.filter(function(c){return c.flag==='late';}).length;
+  document.getElementById('cntApproved').textContent=filtered.filter(function(c){return c.status==='approved';}).length;
+  document.getElementById('correctTbody').innerHTML=filtered.map(function(c){
+    var idx=corrections.indexOf(c);
+    return '<tr style="'+(c.status==='approved'?'opacity:.6':'')+'">'+
+      '<td><b style="color:#90caf9">'+c.code+'</b></td><td>'+c.name+'</td><td>'+c.date+'</td>'+
+      '<td><span style="color:'+(c.flag==='missing'?'#ef9a9a':'#ffcc80')+'">'+c.flag+'</span></td>'+
+      '<td><input type="time" value="'+(c.inTime||'')+'" style="width:90px;font-size:11px" data-idx="'+idx+'" onchange="corrections[parseInt(this.dataset.idx)].inTime=this.value;saveAll()"></td>'+
+      '<td><input type="time" value="'+(c.outTime||'')+'" style="width:90px;font-size:11px" data-idx="'+idx+'" onchange="corrections[parseInt(this.dataset.idx)].outTime=this.value;saveAll()"></td>'+
+      '<td><span class="badge '+(c.status==='approved'?'badge-active':'badge-inactive')+'">'+(c.status||'pending')+'</span></td>'+
+      '<td><button class="btn btn-success btn-sm" data-idx="'+idx+'" onclick="approveCorr(parseInt(this.dataset.idx))"'+(c.status==='approved'?' disabled':'')+'>OK</button></td>'+
+    '</tr>';
+  }).join('');
+}
+function approveCorr(i){corrections[i].status='approved';saveAll();renderCorrections();}
+function approveAll(){corrections.forEach(function(c){c.status='approved';});saveAll();renderCorrections();toast('All approved');}
+
+function calcGross(e,month){
+  var d=(attData[month]||{})[e.code]||{};
+  var present=num(d.present);var ot=num(d.ot);
+  var base=num(e.baseSal);var bdays=num(e.baseDays)||26;
+  var otRate=num(e.otRate)||(base/(bdays*8)*2);
+  return{present:present,ot:ot,gross:Math.round((base/bdays*present+ot*otRate)*100)/100,base:base,bdays:bdays};
+}
+function getAdvDeduction(code){
+  var outstanding=advances.filter(function(a){return a.code===code;}).reduce(function(s,a){return s+(a.amt-(a.recovered||0));},0);
+  var rec=advances.find(function(a){return a.code===code&&a.recovery>0&&(a.amt-(a.recovered||0))>0;});
+  return rec?Math.min(rec.recovery,outstanding):0;
+}
+
+function renderBankSalary(){
+  var month=curMonth();var locF=getLocFilter('bankLocFilter');
+  var bankEmps=employees.filter(function(e){return e.payMode==='Bank'&&e.status==='Active'&&(!locF||e.location===locF);});
+  var tG=0,tE=0,tI=0,tA=0,tO=0,tN=0;
+  document.getElementById('bankTbody').innerHTML=bankEmps.map(function(e,i){
+    var g=calcGross(e,month);var gross=g.gross;
+    var basic=Math.min(gross,15000);
+    var epf=gross>0?Math.round(basic*0.12):0;
+    var esicGross=gross<=21000&&e.esi?gross:0;
+    var esic=Math.round(esicGross*0.0075);
+    var sal=(salaryData[month]||{})[e.code]||{};
+    var advDedn=num(sal.advDedn)||getAdvDeduction(e.code);
+    var otherDedn=num(sal.otherDedn);
+    var net=Math.max(0,gross-epf-esic-advDedn-otherDedn);
+    tG+=gross;tE+=epf;tI+=esic;tA+=advDedn;tO+=otherDedn;tN+=net;
+    if(!salaryData[month])salaryData[month]={};
+    salaryData[month][e.code]=Object.assign(sal,{gross:gross,epf:epf,esic:esic,advDedn:advDedn,otherDedn:otherDedn,net:net});
+    var c=e.code;
+    return '<tr>'
+      +'<td>'+(i+1)+'</td><td><b style="color:#90caf9">'+c+'</b></td><td>'+e.name+'</td>'
+      +'<td>&#8377;'+fmt(e.baseSal)+'</td><td>'+e.baseDays+'</td><td>'+g.present+'</td><td>'+g.ot+'</td>'
+      +'<td><b style="color:#81c784">&#8377;'+fmt(gross)+'</b></td>'
+      +'<td>&#8377;'+fmt(epf)+'</td><td>&#8377;'+fmt(esic)+'</td>'
+      +'<td><input type="number" value="'+advDedn+'" style="width:80px;font-size:11px" data-code="'+c+'" data-field="advDedn" onchange="updateSalField(this.dataset.code,this.dataset.field,parseFloat(this.value)||0)"></td>'
+      +'<td><input type="number" value="'+otherDedn+'" style="width:80px;font-size:11px" data-code="'+c+'" data-field="otherDedn" onchange="updateSalField(this.dataset.code,this.dataset.field,parseFloat(this.value)||0)"></td>'
+      +'<td><b style="color:#ffd700">&#8377;'+fmt(net)+'</b></td>'
+      +'<td style="font-size:10px">'+(e.bankAcc||'-')+'</td>'
+    +'</tr>';
+  }).join('');
+  document.getElementById('bankTotals').innerHTML='<td colspan="7"><b>TOTAL</b></td>'
+    +'<td><b>&#8377;'+fmt(tG)+'</b></td><td><b>&#8377;'+fmt(tE)+'</b></td><td><b>&#8377;'+fmt(tI)+'</b></td>'
+    +'<td><b>&#8377;'+fmt(tA)+'</b></td><td><b>&#8377;'+fmt(tO)+'</b></td><td><b>&#8377;'+fmt(tN)+'</b></td><td></td>';
+  document.getElementById('bankStats').innerHTML=
+    '<div class="stat-box"><div class="val">'+bankEmps.length+'</div><div class="lbl">Bank Employees</div></div>'
+    +'<div class="stat-box"><div class="val">&#8377;'+Math.round(tG).toLocaleString('en-IN')+'</div><div class="lbl">Total Gross</div></div>'
+    +'<div class="stat-box"><div class="val">&#8377;'+Math.round(tE).toLocaleString('en-IN')+'</div><div class="lbl">Total EPF</div></div>'
+    +'<div class="stat-box"><div class="val">&#8377;'+Math.round(tN).toLocaleString('en-IN')+'</div><div class="lbl">Net Payable</div></div>';
+  saveAll();
+}
+function calcBankSalary(){renderBankSalary();toast('Bank salary calculated');}
+function updateSalField(code,field,val){
+  var month=curMonth();
+  if(!salaryData[month])salaryData[month]={};
+  if(!salaryData[month][code])salaryData[month][code]={};
+  salaryData[month][code][field]=val;saveAll();renderBankSalary();
+}
+
+function renderCashSalary(){
+  var month=curMonth();var locF=getLocFilter('cashLocFilter');
+  var cashEmps=employees.filter(function(e){return e.payMode==='Cash'&&e.status==='Active'&&(!locF||e.location===locF);});
+  var tG=0,tA=0,tO=0,tN=0;
+  document.getElementById('cashTbody').innerHTML=cashEmps.map(function(e,i){
+    var g=calcGross(e,month);var gross=g.gross;
+    var sal=(salaryData[month]||{})[e.code]||{};
+    var advDedn=num(sal.advDedn)||getAdvDeduction(e.code);
+    var otherDedn=num(sal.otherDedn);
+    var net=Math.max(0,gross-advDedn-otherDedn);
+    tG+=gross;tA+=advDedn;tO+=otherDedn;tN+=net;
+    if(!salaryData[month])salaryData[month]={};
+    salaryData[month][e.code]=Object.assign(sal,{gross:gross,epf:0,esic:0,advDedn:advDedn,otherDedn:otherDedn,net:net});
+    var c=e.code;
+    return '<tr>'
+      +'<td>'+(i+1)+'</td><td><b style="color:#ffcc80">'+c+'</b></td><td>'+e.name+'</td>'
+      +'<td>&#8377;'+fmt(e.baseSal)+'</td><td>'+e.baseDays+'</td><td>'+g.present+'</td><td>'+g.ot+'</td>'
+      +'<td><b style="color:#81c784">&#8377;'+fmt(gross)+'</b></td>'
+      +'<td><input type="number" value="'+advDedn+'" style="width:80px;font-size:11px" data-code="'+c+'" data-field="advDedn" onchange="updateCashSalField(this.dataset.code,this.dataset.field,parseFloat(this.value)||0)"></td>'
+      +'<td><input type="number" value="'+otherDedn+'" style="width:80px;font-size:11px" data-code="'+c+'" data-field="otherDedn" onchange="updateCashSalField(this.dataset.code,this.dataset.field,parseFloat(this.value)||0)"></td>'
+      +'<td><b style="color:#ffd700">&#8377;'+fmt(net)+'</b></td>'
+      +'<td><div class="sig-box"></div></td>'
+    +'</tr>';
+  }).join('');
+  document.getElementById('cashTotals').innerHTML='<td colspan="7"><b>TOTAL</b></td>'
+    +'<td><b>&#8377;'+fmt(tG)+'</b></td><td><b>&#8377;'+fmt(tA)+'</b></td>'
+    +'<td><b>&#8377;'+fmt(tO)+'</b></td><td><b>&#8377;'+fmt(tN)+'</b></td><td></td>';
+  document.getElementById('cashStats').innerHTML=
+    '<div class="stat-box"><div class="val">'+cashEmps.length+'</div><div class="lbl">Cash Employees</div></div>'
+    +'<div class="stat-box"><div class="val">&#8377;'+Math.round(tG).toLocaleString('en-IN')+'</div><div class="lbl">Total Gross</div></div>'
+    +'<div class="stat-box"><div class="val">&#8377;'+Math.round(tN).toLocaleString('en-IN')+'</div><div class="lbl">Net Payable</div></div>';
+  saveAll();
+}
+function calcCashSalary(){renderCashSalary();toast('Cash salary calculated');}
+function updateCashSalField(code,field,val){
+  var month=curMonth();
+  if(!salaryData[month])salaryData[month]={};
+  if(!salaryData[month][code])salaryData[month][code]={};
+  salaryData[month][code][field]=val;saveAll();renderCashSalary();
+}
+
+function showCompSub(sub){
+  document.getElementById('comp_esic').style.display=sub==='esic'?'':'none';
+  document.getElementById('comp_epfo').style.display=sub==='epfo'?'':'none';
+  document.querySelectorAll('#tab_compliance .sub-tab').forEach(function(b,i){b.classList.toggle('active',(sub==='esic'&&i===0)||(sub==='epfo'&&i===1));});
+}
+function calcCompliance(){
+  var month=curMonth();var locF=getLocFilter('compLocFilter');
+  var allBank=employees.filter(function(e){return e.payMode==='Bank'&&e.status==='Active'&&(!locF||e.location===locF);});
+  var esicRows='';var tEmpE=0,tEmrE=0,tTotE=0;
+  allBank.filter(function(e){return e.esi;}).forEach(function(e,i){
+    var gross=num(((salaryData[month]||{})[e.code]||{}).gross)||calcGross(e,month).gross;
+    if(gross>21000)return;
+    var empE=Math.round(gross*0.0075);var emrE=Math.round(gross*0.0325);var tot=empE+emrE;
+    tEmpE+=empE;tEmrE+=emrE;tTotE+=tot;
+    esicRows+='<tr><td>'+(i+1)+'</td><td>'+e.code+'</td><td>'+e.name+'</td><td>'+(e.ipNo||'-')+'</td>'
+      +'<td>&#8377;'+fmt(gross)+'</td><td>&#8377;'+fmt(empE)+'</td><td>&#8377;'+fmt(emrE)+'</td><td><b>&#8377;'+fmt(tot)+'</b></td></tr>';
+  });
+  document.getElementById('esicTbody').innerHTML=esicRows;
+  document.getElementById('esicTotals').innerHTML='<td colspan="5"><b>TOTAL</b></td><td><b>&#8377;'+fmt(tEmpE)+'</b></td><td><b>&#8377;'+fmt(tEmrE)+'</b></td><td><b>&#8377;'+fmt(tTotE)+'</b></td>';
+  var epfoRows='';var tEmpP=0,tEmrP=0,tTotP=0;
+  allBank.forEach(function(e,i){
+    var gross=num(((salaryData[month]||{})[e.code]||{}).gross)||calcGross(e,month).gross;
+    var basic=Math.min(gross,15000);var epf=Math.round(basic*0.12);
+    tEmpP+=epf;tEmrP+=epf;tTotP+=epf*2;
+    epfoRows+='<tr><td>'+(i+1)+'</td><td>'+e.code+'</td><td>'+e.name+'</td><td>'+(e.uan||'-')+'</td>'
+      +'<td>&#8377;'+fmt(gross)+'</td><td>&#8377;'+fmt(basic)+'</td><td>&#8377;'+fmt(epf)+'</td><td>&#8377;'+fmt(epf)+'</td><td><b>&#8377;'+fmt(epf*2)+'</b></td></tr>';
+  });
+  document.getElementById('epfoTbody').innerHTML=epfoRows;
+  document.getElementById('epfoTotals').innerHTML='<td colspan="6"><b>TOTAL</b></td><td><b>&#8377;'+fmt(tEmpP)+'</b></td><td><b>&#8377;'+fmt(tEmrP)+'</b></td><td><b>&#8377;'+fmt(tTotP)+'</b></td>';
+  toast('Compliance generated');
+}
+
+function showAdvSub(sub){
+  document.getElementById('adv_bank').style.display=sub==='bank'?'':'none';
+  document.getElementById('adv_cash').style.display=sub==='cash'?'':'none';
+  document.querySelectorAll('#tab_advances .sub-tab').forEach(function(b,i){b.classList.toggle('active',(sub==='bank'&&i===0)||(sub==='cash'&&i===1));});
+}
+function advAutoFill(){var e=getEmp(document.getElementById('advCode').value.trim().toUpperCase());document.getElementById('advName').value=e?e.name:'';document.getElementById('advMode').value=e?e.payMode:'';}
+function logAdvance(){
+  var code=document.getElementById('advCode').value.trim().toUpperCase();
+  var e=getEmp(code);if(!e){toast('Employee not found');return;}
+  var amt=num(document.getElementById('advAmt').value);if(!amt){toast('Enter amount');return;}
+  advances.push({code:code,name:e.name,mode:e.payMode,date:document.getElementById('advDate').value||new Date().toISOString().split('T')[0],amt:amt,reason:document.getElementById('advReason').value.trim(),recovery:num(document.getElementById('advRecovery').value),recovered:0,location:e.location||'Main Plant'});
+  saveAll();renderAdvances();
+  ['advCode','advName','advMode','advAmt','advReason','advRecovery'].forEach(function(id){document.getElementById(id).value='';});
+  toast('Advance logged: '+e.name);
+}
+function renderAdvances(){
+  var locF=getLocFilter('advLocFilter');
+  ['Bank','Cash'].forEach(function(mode){
+    var list=advances.filter(function(a){return a.mode===mode&&(!locF||a.location===locF);});
+    var tA=0,tR=0,tO=0;
+    document.getElementById('adv'+mode+'Tbody').innerHTML=list.map(function(a,i){
+      var idx=advances.indexOf(a);var out=a.amt-(a.recovered||0);
+      tA+=a.amt;tR+=a.recovered||0;tO+=out;
+      return '<tr><td>'+(i+1)+'</td>'
+        +'<td><b style="color:'+(mode==='Bank'?'#90caf9':'#ffcc80')+'">'+a.code+'</b></td>'
+        +'<td>'+a.name+'</td><td>'+a.date+'</td><td>&#8377;'+fmt(a.amt)+'</td><td>'+(a.reason||'-')+'</td>'
+        +'<td><input type="number" value="'+(a.recovery||0)+'" style="width:80px;font-size:11px" data-idx="'+idx+'" onchange="advances[parseInt(this.dataset.idx)].recovery=parseFloat(this.value)||0;saveAll()"></td>'
+        +'<td><input type="number" value="'+(a.recovered||0)+'" style="width:80px;font-size:11px" data-idx="'+idx+'" onchange="advances[parseInt(this.dataset.idx)].recovered=parseFloat(this.value)||0;saveAll();renderAdvances()"></td>'
+        +'<td><b style="color:'+(out>0?'#ef9a9a':'#81c784')+'">&#8377;'+fmt(out)+'</b></td>'
+        +'<td><button class="btn btn-danger btn-sm" data-idx="'+idx+'" onclick="delAdvance(parseInt(this.dataset.idx))">X</button></td>'
+      +'</tr>';
+    }).join('');
+    document.getElementById('adv'+mode+'Totals').innerHTML='<td colspan="4"><b>TOTAL</b></td><td><b>&#8377;'+fmt(tA)+'</b></td><td colspan="2"></td><td><b>&#8377;'+fmt(tR)+'</b></td><td><b style="color:#ef9a9a">&#8377;'+fmt(tO)+'</b></td><td></td>';
+    document.getElementById('adv'+mode+'Stats').innerHTML=
+      '<div class="stat-box"><div class="val">'+list.length+'</div><div class="lbl">'+mode+' Advances</div></div>'
+      +'<div class="stat-box"><div class="val">&#8377;'+Math.round(tA).toLocaleString('en-IN')+'</div><div class="lbl">Disbursed</div></div>'
+      +'<div class="stat-box"><div class="val">&#8377;'+Math.round(tO).toLocaleString('en-IN')+'</div><div class="lbl">Outstanding</div></div>';
+  });
+}
+function delAdvance(i){if(!confirm('Delete?'))return;advances.splice(i,1);saveAll();renderAdvances();}
+
+function renderReportStats(){
+  var m=curMonth();
+  document.getElementById('reportStats').innerHTML=
+    '<div class="stat-box"><div class="val">'+m+'</div><div class="lbl">Month</div></div>'
+    +'<div class="stat-box"><div class="val">'+employees.filter(function(e){return e.payMode==="Bank"&&e.status==="Active";}).length+'</div><div class="lbl">Bank</div></div>'
+    +'<div class="stat-box"><div class="val">'+employees.filter(function(e){return e.payMode==="Cash"&&e.status==="Active";}).length+'</div><div class="lbl">Cash</div></div>'
+    +'<div class="stat-box"><div class="val">'+locations.length+'</div><div class="lbl">Locations</div></div>';
+}
+
+function buildPrintHeader(title,sub){
+  return '<!DOCTYPE html><html><head><title>'+title+'</title>'
+    +'<style>body{font-family:Arial;font-size:10px;margin:10px}table{width:100%;border-collapse:collapse}'
+    +'th,td{border:1px solid #ccc;padding:4px}th{background:#ddd}'
+    +'.ttl{text-align:center;font-size:13px;font-weight:bold;margin:8px 0}'
+    +'tfoot td{font-weight:bold;background:#f5f5f5}'
+    +'.note{color:red;font-size:9px}@media print{button{display:none}}</style></head><body>'
+    +'<div class="ttl">'+title+'</div>'+(sub?'<p class="note">'+sub+'</p>':'');
+}
+function buildPrintFooter(){
+  return '<'+'script>window.onload=function(){window.print();}</'+'script></body></html>';
+}
+function openPrint(html){var w=window.open('','_blank','width=1100,height=700');if(w){w.document.write(html);w.document.close();}}
+
+function printBankSalary(){
+  var month=curMonth();var locF=getLocFilter('bankLocFilter');
+  var empList=employees.filter(function(e){return e.payMode==='Bank'&&e.status==='Active'&&(!locF||e.location===locF);});
+  var rows='';var tG=0,tE=0,tI=0,tA=0,tN=0;
+  empList.forEach(function(e,i){
+    var sal=(salaryData[month]||{})[e.code]||{};var g=calcGross(e,month);
+    var gross=num(sal.gross)||g.gross;var epf=num(sal.epf);var esic=num(sal.esic);
+    var adv=num(sal.advDedn);var net=num(sal.net)||Math.max(0,gross-epf-esic-adv);
+    tG+=gross;tE+=epf;tI+=esic;tA+=adv;tN+=net;
+    rows+='<tr><td>'+(i+1)+'</td><td>'+e.code+'</td><td>'+e.name+'</td><td>'+(e.dept||'')+'</td><td>'+(e.location||'')+'</td>'
+      +'<td>'+g.present+'</td><td>'+fmt(gross)+'</td><td>'+fmt(epf)+'</td><td>'+fmt(esic)+'</td><td>'+fmt(adv)+'</td><td>'+fmt(net)+'</td><td>'+(e.bankAcc||'')+'</td></tr>';
+  });
+  var html=buildPrintHeader('SSPI - Bank Salary Sheet - '+month+(locF?' | '+locF:''),'')
+    +'<table><thead><tr><th>#</th><th>Code</th><th>Name</th><th>Dept</th><th>Location</th><th>Days</th><th>Gross</th><th>EPF</th><th>ESIC</th><th>Advance</th><th>Net Pay</th><th>Bank A/C</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'<tfoot><tr><td colspan="6">TOTAL</td><td>'+fmt(tG)+'</td><td>'+fmt(tE)+'</td><td>'+fmt(tI)+'</td><td>'+fmt(tA)+'</td><td>'+fmt(tN)+'</td><td></td></tr></tfoot>'
+    +'</table><br><p>Prepared by: _________________ &nbsp; Date: _________________</p>'
+    +buildPrintFooter();
+  openPrint(html);
+}
+
+function printCashSalary(){
+  var month=curMonth();var locF=getLocFilter('cashLocFilter');
+  var empList=employees.filter(function(e){return e.payMode==='Cash'&&e.status==='Active'&&(!locF||e.location===locF);});
+  var rows='';var tG=0,tA=0,tN=0;
+  empList.forEach(function(e,i){
+    var sal=(salaryData[month]||{})[e.code]||{};var g=calcGross(e,month);
+    var gross=num(sal.gross)||g.gross;var adv=num(sal.advDedn);
+    var net=num(sal.net)||Math.max(0,gross-adv);
+    tG+=gross;tA+=adv;tN+=net;
+    rows+='<tr><td>'+(i+1)+'</td><td>'+e.code+'</td><td>'+e.name+'</td><td>'+(e.dept||'')+'</td><td>'+(e.location||'')+'</td>'
+      +'<td>'+g.present+'</td><td>'+fmt(gross)+'</td><td>'+fmt(adv)+'</td><td>'+fmt(net)+'</td>'
+      +'<td style="width:90px;border:1px solid #999">&nbsp;</td></tr>';
+  });
+  var html=buildPrintHeader('SSPI - Cash Salary Sheet - '+month+(locF?' | '+locF:''),'Cash employees excluded from PF and ESIC.')
+    +'<table><thead><tr><th>#</th><th>Code</th><th>Name</th><th>Dept</th><th>Location</th><th>Days</th><th>Gross</th><th>Advance</th><th>Net Payable</th><th>Employee Signature</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'<tfoot><tr><td colspan="6">TOTAL</td><td>'+fmt(tG)+'</td><td>'+fmt(tA)+'</td><td>'+fmt(tN)+'</td><td></td></tr></tfoot>'
+    +'</table><br><p>Cash Disbursed by: _________________ &nbsp; Date: _________________</p>'
+    +buildPrintFooter();
+  openPrint(html);
+}
+
+function printESIC(){
+  var rows=document.getElementById('esicTbody').innerHTML;
+  var tots=document.getElementById('esicTotals').innerHTML;
+  var html=buildPrintHeader('SSPI - ESIC Challan - '+curMonth(),'')
+    +'<table><thead><tr><th>#</th><th>Code</th><th>Name</th><th>IP No</th><th>Gross</th><th>Emp 0.75%</th><th>Empr 3.25%</th><th>Total</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody><tfoot><tr>'+tots+'</tr></tfoot></table>'+buildPrintFooter();
+  openPrint(html);
+}
+
+function printEPFO(){
+  var rows=document.getElementById('epfoTbody').innerHTML;
+  var tots=document.getElementById('epfoTotals').innerHTML;
+  var html=buildPrintHeader('SSPI - EPFO/ECR - '+curMonth(),'')
+    +'<table><thead><tr><th>#</th><th>Code</th><th>Name</th><th>UAN</th><th>Gross</th><th>Basic</th><th>Emp EPF</th><th>Empr EPF</th><th>Total</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody><tfoot><tr>'+tots+'</tr></tfoot></table>'+buildPrintFooter();
+  openPrint(html);
+}
+
+function printAdvReport(mode){
+  var locF=getLocFilter('advLocFilter');
+  var list=advances.filter(function(a){return a.mode===mode&&(!locF||a.location===locF);});
+  var rows='';var tA=0,tR=0,tO=0;
+  list.forEach(function(a,i){
+    var out=a.amt-(a.recovered||0);tA+=a.amt;tR+=a.recovered||0;tO+=out;
+    rows+='<tr><td>'+(i+1)+'</td><td>'+a.code+'</td><td>'+a.name+'</td><td>'+(a.location||'')+'</td><td>'+a.date+'</td>'
+      +'<td>'+fmt(a.amt)+'</td><td>'+(a.reason||'')+'</td><td>'+fmt(a.recovery||0)+'</td><td>'+fmt(a.recovered||0)+'</td><td>'+fmt(out)+'</td></tr>';
+  });
+  var html=buildPrintHeader('SSPI - '+mode+' Advance Report'+(locF?' | '+locF:''),'')
+    +'<table><thead><tr><th>#</th><th>Code</th><th>Name</th><th>Location</th><th>Date</th><th>Amount</th><th>Reason</th><th>Monthly Rec</th><th>Recovered</th><th>Outstanding</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'<tfoot><tr><td colspan="5">TOTAL</td><td>'+fmt(tA)+'</td><td colspan="2"></td><td>'+fmt(tR)+'</td><td>'+fmt(tO)+'</td></tr></tfoot>'
+    +'</table>'+buildPrintFooter();
+  openPrint(html);
+}
+
+function downloadSalaryCSV(mode){
+  var month=curMonth();var locF=getLocFilter(mode==='Bank'?'bankLocFilter':'cashLocFilter');
+  var emps=employees.filter(function(e){return e.payMode===mode&&e.status==='Active'&&(!locF||e.location===locF);});
+  var hdr=mode==='Bank'?'Code,Name,Dept,Location,Present,Gross,EPF,ESIC,Advance,Net,BankAcc':'Code,Name,Dept,Location,Present,Gross,Advance,Net';
+  var rows=emps.map(function(e){
+    var sal=(salaryData[month]||{})[e.code]||{};var g=calcGross(e,month);
+    var gross=num(sal.gross)||g.gross;var net=num(sal.net);
+    if(mode==='Bank') return [e.code,'"'+e.name+'"',e.dept,e.location,g.present,gross,num(sal.epf),num(sal.esic),num(sal.advDedn),net,e.bankAcc].join(',');
+    return [e.code,'"'+e.name+'"',e.dept,e.location,g.present,gross,num(sal.advDedn),net].join(',');
+  });
+  downloadText('SSPI_'+mode+'_Salary_'+month+'.csv',[hdr].concat(rows).join('\n'));
+}
+function downloadESICCSV(){
+  var rows=[].slice.call(document.getElementById('esicTbody').querySelectorAll('tr')).map(function(r){return [].slice.call(r.querySelectorAll('td')).map(function(c){return c.textContent;}).join(',');});
+  downloadText('SSPI_ESIC_'+curMonth()+'.csv',['#,Code,Name,IP No,Gross,Emp 0.75%,Empr 3.25%,Total'].concat(rows).join('\n'));
+}
+function downloadEPFOCSV(){
+  var rows=[].slice.call(document.getElementById('epfoTbody').querySelectorAll('tr')).map(function(r){return [].slice.call(r.querySelectorAll('td')).map(function(c){return c.textContent;}).join(',');});
+  downloadText('SSPI_EPFO_'+curMonth()+'.csv',['#,Code,Name,UAN,Gross,Basic,Emp EPF,Empr EPF,Total'].concat(rows).join('\n'));
+}
+function downloadAdvCSV(mode){
+  var rows=[].slice.call(document.getElementById('adv'+mode+'Tbody').querySelectorAll('tr')).map(function(r){return [].slice.call(r.querySelectorAll('td')).map(function(c){return c.textContent.replace(/[,\n]/g,' ');}).join(',');});
+  downloadText('SSPI_'+mode+'_Advances.csv',['#,Code,Name,Date,Amount,Reason,Monthly Rec,Recovered,Outstanding'].concat(rows).join('\n'));
+}
+
+function gsPost(payload){
+  var cb='gsCb_'+Date.now();
+  window[cb]=function(r){delete window[cb];toast(r&&r.status==='ok'?'Saved to GAS':'GAS: '+(r?r.message:'error'));};
+  var s=document.createElement('script');
+  s.src=GAS_URL+'?callback='+cb+'&payload='+encodeURIComponent(JSON.stringify(payload));
+  document.head.appendChild(s);setTimeout(function(){try{document.head.removeChild(s);}catch(e){}},5000);
+}
+function saveSalaryToGAS(mode){gsPost({type:'salary',mode:mode,month:curMonth(),data:salaryData[curMonth()]||{},token:AUTH_TOKEN});toast('Salary sent to GAS');}
+
+window.onload=function(){
+  refreshLocDropdowns();
+  renderMaster();
+  renderAtt();
+  renderAdvances();
+  document.getElementById('advDate').value=new Date().toISOString().split('T')[0];
+};
+</script>
+</body>
+</html>

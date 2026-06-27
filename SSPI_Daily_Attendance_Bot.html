@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SSPI Daily Attendance Bot</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;font-size:13px;}
+header{background:#1E3A5F;padding:10px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+header button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 14px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;}
+header button:hover{background:rgba(255,255,255,.3);}
+.htitle{flex:1;color:#fff;}
+.htitle b{font-size:15px;}
+.htitle small{display:block;font-size:11px;opacity:.7;}
+#hdr_time{color:rgba(255,255,255,.7);font-size:11px;}
+
+.top-bar{background:#1e293b;padding:12px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #334155;}
+.top-bar label{font-size:12px;color:#94a3b8;}
+select,input[type=date]{background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:5px;padding:6px 10px;font-size:12px;}
+.btn{padding:8px 16px;border:none;border-radius:5px;font-weight:700;cursor:pointer;font-size:12px;color:#fff;}
+.btn-green{background:#16a34a;} .btn-green:hover{background:#15803d;}
+.btn-blue{background:#0369a1;} .btn-blue:hover{background:#075985;}
+.btn-orange{background:#c2410c;} .btn-orange:hover{background:#9a3412;}
+.btn-teal{background:#0e7490;} .btn-teal:hover{background:#0c6070;}
+.btn-navy{background:#1e3a5f;}
+
+.kpi-row{display:flex;gap:10px;padding:14px 20px;flex-wrap:wrap;}
+.kpi{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px 18px;min-width:120px;text-align:center;}
+.kpi b{display:block;font-size:22px;color:#38bdf8;}
+.kpi span{font-size:11px;color:#94a3b8;}
+.kpi.green b{color:#4ade80;} .kpi.red b{color:#f87171;} .kpi.yellow b{color:#fbbf24;} .kpi.purple b{color:#a78bfa;}
+
+.main{padding:16px 20px;}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px;margin-bottom:16px;}
+.card-title{font-size:13px;font-weight:700;color:#38bdf8;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+
+/* Attendance Grid */
+.att-table{width:100%;border-collapse:collapse;font-size:11px;}
+.att-table th{background:#0f172a;color:#94a3b8;padding:7px 6px;text-align:center;border:1px solid #334155;white-space:nowrap;position:sticky;top:0;}
+.att-table th.name-col{text-align:left;min-width:150px;}
+.att-table td{padding:4px 4px;border:1px solid #1e293b;text-align:center;vertical-align:middle;}
+.att-table td.name-cell{text-align:left;padding:4px 8px;color:#e2e8f0;font-weight:600;white-space:nowrap;}
+.att-table td.dept-cell{color:#94a3b8;font-size:10px;white-space:nowrap;padding:4px 6px;}
+.att-table tr:hover td{background:#0f1f35;}
+
+/* Status buttons in cells */
+.status-btn{display:inline-block;width:28px;height:22px;border:none;border-radius:3px;cursor:pointer;font-size:10px;font-weight:700;color:#fff;}
+.s-P{background:#16a34a;} .s-A{background:#dc2626;} .s-HD{background:#d97706;}
+.s-L{background:#7c3aed;} .s-WO{background:#475569;} .s-H{background:#0369a1;}
+
+/* Day header */
+.day-col{min-width:34px;}
+.sun-col{color:#f87171 !important;}
+.today-col{background:#1e3a5f !important;color:#38bdf8 !important;}
+
+.tbl-wrap{overflow-x:auto;max-height:500px;overflow-y:auto;}
+
+/* Legend */
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;}
+.leg-item{display:flex;align-items:center;gap:4px;}
+.leg-dot{width:14px;height:14px;border-radius:2px;display:inline-block;}
+
+/* Monthly summary */
+.sum-table{width:100%;border-collapse:collapse;font-size:12px;}
+.sum-table th{background:#0f172a;color:#94a3b8;padding:8px;border:1px solid #334155;text-align:left;}
+.sum-table td{padding:7px 8px;border:1px solid #334155;color:#e2e8f0;}
+.sum-table tr:hover td{background:#0f1f35;}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;}
+.b-green{background:#14532d;color:#4ade80;} .b-red{background:#7f1d1d;color:#fca5a5;}
+.b-yellow{background:#78350f;color:#fcd34d;}
+
+.status-msg{padding:8px 14px;border-radius:5px;font-size:12px;margin-top:8px;}
+.status-msg.ok{background:#14532d;color:#4ade80;} .status-msg.err{background:#7f1d1d;color:#fca5a5;}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:2px solid #334155;margin-bottom:16px;}
+.tab{padding:9px 18px;cursor:pointer;font-size:12px;color:#94a3b8;border-bottom:3px solid transparent;margin-bottom:-2px;}
+.tab.active{color:#38bdf8;border-bottom-color:#38bdf8;font-weight:700;}
+
+@media print{header,.top-bar,.tabs,.btn{display:none!important;} body{background:#fff;color:#000;}}
+</style>
+</head>
+<body>
+
+<header>
+  <button onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'">← Back to Dashboard</button>
+  <div class="htitle"><b>📅 SSPI Daily Attendance Bot</b><small>Mark daily attendance → auto-counts working days for payroll</small></div>
+  <div id="hdr_time"></div>
+  <button onclick="window.print()" style="background:rgba(255,165,0,.3);">🖨️ Print</button>
+</header>
+
+<div class="top-bar">
+  <label>Month</label>
+  <select id="sel_month" onchange="loadSheet()">
+    <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+    <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+    <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+    <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+  </select>
+  <label>Year</label>
+  <select id="sel_year" onchange="loadSheet()"></select>
+  <label>Department</label>
+  <select id="sel_dept" onchange="loadSheet()">
+    <option value="">All Departments</option>
+    <option value="🪵 Wood">Wood</option>
+    <option value="📦 Corrugation">Corrugation</option>
+    <option value="🔩 Nailless">Nailless</option>
+    <option value="🔧 Steel">Steel</option>
+    <option value="🏢 Admin">Admin</option>
+    <option value="🏢 HR">HR</option>
+    <option value="💰 Accounts">Accounts</option>
+  </select>
+  <button class="btn btn-blue" onclick="markAllPresent()">✅ Mark All Present</button>
+  <button class="btn btn-green" onclick="saveDay()">💾 Save Attendance</button>
+  <button class="btn btn-teal" onclick="showTab('summary')">📊 Monthly Summary</button>
+  <button class="btn btn-orange" onclick="exportToPayroll()">⚡ Export to Payroll Bot</button>
+  <span id="save_msg" style="font-size:12px;color:#4ade80;display:none"></span>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi green"><b id="k_present">0</b><span>Present Today</span></div>
+  <div class="kpi red"><b id="k_absent">0</b><span>Absent</span></div>
+  <div class="kpi yellow"><b id="k_hd">0</b><span>Half Day</span></div>
+  <div class="kpi purple"><b id="k_leave">0</b><span>On Leave</span></div>
+  <div class="kpi"><b id="k_wo">0</b><span>Week Off</span></div>
+  <div class="kpi blue"><b id="k_total">0</b><span>Total Staff</span></div>
+</div>
+
+<div class="main">
+  <div class="tabs">
+    <div class="tab active" id="tab_daily" onclick="showTab('daily')">📋 Daily Entry</div>
+    <div class="tab" id="tab_summary" onclick="showTab('summary')">📊 Monthly Summary</div>
+  </div>
+
+  <!-- DAILY ENTRY TAB -->
+  <div id="view_daily">
+    <div class="card">
+      <div class="card-title">📅 Attendance Sheet — <span id="sheet_title">Select Month</span>
+        <span style="margin-left:auto;display:flex;gap:6px;">
+          <label style="color:#94a3b8;font-size:11px;align-self:center;">Date:</label>
+          <input type="date" id="sel_date" onchange="renderDailyRow()">
+        </span>
+      </div>
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot s-P"></div> P = Present</div>
+        <div class="leg-item"><div class="leg-dot s-A"></div> A = Absent</div>
+        <div class="leg-item"><div class="leg-dot s-HD"></div> HD = Half Day</div>
+        <div class="leg-item"><div class="leg-dot s-L"></div> L = Leave</div>
+        <div class="leg-item"><div class="leg-dot s-WO"></div> WO = Week Off</div>
+        <div class="leg-item"><div class="leg-dot s-H"></div> H = Holiday</div>
+      </div>
+      <div id="save_status"></div>
+      <div class="tbl-wrap" style="max-height:420px;">
+        <table class="att-table">
+          <thead><tr>
+            <th class="name-col" style="min-width:160px">Employee</th>
+            <th style="min-width:100px">Department</th>
+            <th style="min-width:160px">Mark Attendance</th>
+            <th style="min-width:80px">Today Status</th>
+            <th style="min-width:60px">Days This Month</th>
+          </tr></thead>
+          <tbody id="att_body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MONTHLY SUMMARY TAB -->
+  <div id="view_summary" style="display:none">
+    <div class="card">
+      <div class="card-title">📊 Monthly Attendance Summary — <span id="sum_title"></span></div>
+      <div style="margin-bottom:12px;font-size:12px;color:#94a3b8;">
+        Working Days count (P + HD×0.5) is used directly in the Payroll Bot.
+        Click <b>⚡ Export to Payroll Bot</b> to push these values automatically.
+      </div>
+      <div class="tbl-wrap">
+        <table class="sum-table">
+          <thead><tr>
+            <th>Emp Code</th><th>Name</th><th>Department</th>
+            <th style="text-align:center">Present</th><th style="text-align:center">Half Day</th>
+            <th style="text-align:center">Absent</th><th style="text-align:center">Leave</th>
+            <th style="text-align:center">Week Off</th>
+            <th style="text-align:center;color:#4ade80">Working Days</th>
+            <th style="text-align:center">Status</th>
+          </tr></thead>
+          <tbody id="sum_body"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:#94a3b8;">
+        * Working Days = Present + (Half Day × 0.5)
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+// GAS BACKEND
+// ═══════════════════════════════════
+const GS_URL  = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH = 'SSPI-VC-2026-SECURE';
+
+let _gsQueue = JSON.parse(localStorage.getItem('_sspi_att_gsq')||'[]');
+function gsPost(payload){
+  payload.authToken = GS_AUTH;
+  payload._ts = new Date().toISOString();
+  _gsQueue.push(payload);
+  localStorage.setItem('_sspi_att_gsq', JSON.stringify(_gsQueue));
+  _gsDrain();
+}
+function _gsDrain(){
+  if(!_gsQueue.length) return;
+  const item = _gsQueue[0];
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(()=>{ _gsQueue.shift(); localStorage.setItem('_sspi_att_gsq',JSON.stringify(_gsQueue)); if(_gsQueue.length) setTimeout(_gsDrain,500); })
+    .catch(()=>{ setTimeout(_gsDrain,30000); });
+}
+setTimeout(_gsDrain, 3000);
+
+// ═══════════════════════════════════
+// EMPLOYEE MASTER (same as Payroll Bot)
+// ═══════════════════════════════════
+const EMP_MASTER = [
+  {code:'EMP-001',name:'Raj Kumar Paswan',dept:'🪵 Wood',desig:'Supervisor'},
+  {code:'EMP-002',name:'Sunil',dept:'🪵 Wood',desig:'Machine Operator'},
+  {code:'EMP-003',name:'May Pet',dept:'🪵 Wood',desig:'Machine Operator'},
+  {code:'EMP-004',name:'Deepak Singh',dept:'🪵 Wood',desig:'Helper'},
+  {code:'EMP-005',name:'Manjeet',dept:'📦 Corrugation',desig:'Operator'},
+  {code:'EMP-006',name:'Ramesh Yadav',dept:'📦 Corrugation',desig:'Helper'},
+  {code:'EMP-007',name:'Sanjay',dept:'🔩 Nailless',desig:'Operator'},
+  {code:'EMP-008',name:'Ladies Team Lead',dept:'🔩 Nailless',desig:'Team Lead'},
+  {code:'EMP-009',name:'Ranjeet Singh',dept:'🔧 Steel',desig:'Sr. Welder'},
+  {code:'EMP-010',name:'Hari Shankar',dept:'🔧 Steel',desig:'Welder'},
+  {code:'EMP-011',name:'Lokesh',dept:'🔧 Steel',desig:'Operator'},
+  {code:'EMP-012',name:'Kamlesh Verma',dept:'🔧 Steel',desig:'Helper'},
+  {code:'EMP-013',name:'Amit Kumar',dept:'🏢 Admin',desig:'Admin Officer'},
+  {code:'EMP-014',name:'Priya Sharma',dept:'🏢 HR',desig:'HR Assistant'},
+  {code:'EMP-015',name:'Vijay Mishra',dept:'💰 Accounts',desig:'Accountant'},
+];
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ═══════════════════════════════════
+// STATE
+// ═══════════════════════════════════
+// Storage key: sspi_att_YYYY-MM  → { 'YYYY-MM-DD': { 'EMP-001': 'P', 'EMP-002': 'A', ... } }
+function attKey(y,m){ return 'sspi_att_' + y + '-' + String(m).padStart(2,'0'); }
+function loadAtt(y,m){ try{ return JSON.parse(localStorage.getItem(attKey(y,m))||'{}'); }catch{return {};} }
+function saveAtt(y,m,data){ localStorage.setItem(attKey(y,m), JSON.stringify(data)); }
+
+let curYear, curMonth, curDate, attData = {};
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+(function init(){
+  // Clock
+  (function tick(){ document.getElementById('hdr_time').textContent = new Date().toLocaleTimeString('en-IN'); setTimeout(tick,1000); })();
+
+  // Year select
+  const ySel = document.getElementById('sel_year');
+  const now = new Date();
+  for(let y = now.getFullYear(); y >= 2024; y--){
+    const o = document.createElement('option'); o.value=y; o.textContent=y;
+    ySel.appendChild(o);
+  }
+
+  // Set current month/year/date
+  document.getElementById('sel_month').value = now.getMonth()+1;
+  document.getElementById('sel_year').value  = now.getFullYear();
+  const td = now.toISOString().split('T')[0];
+  document.getElementById('sel_date').value = td;
+
+  loadSheet();
+})();
+
+function loadSheet(){
+  curMonth = parseInt(document.getElementById('sel_month').value);
+  curYear  = parseInt(document.getElementById('sel_year').value);
+  curDate  = document.getElementById('sel_date').value;
+  attData  = loadAtt(curYear, curMonth);
+  document.getElementById('sheet_title').textContent = MONTHS[curMonth-1] + ' ' + curYear;
+  document.getElementById('sum_title').textContent   = MONTHS[curMonth-1] + ' ' + curYear;
+  renderDailyRow();
+  renderSummary();
+}
+
+// ═══════════════════════════════════
+// DAILY ENTRY
+// ═══════════════════════════════════
+function renderDailyRow(){
+  curDate = document.getElementById('sel_date').value;
+  if(!curDate){ document.getElementById('att_body').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8">Select a date above</td></tr>'; return; }
+
+  const filterDept = document.getElementById('sel_dept').value;
+  const emps = EMP_MASTER.filter(e => !filterDept || e.dept === filterDept);
+  const dayData = attData[curDate] || {};
+
+  const statuses = ['P','A','HD','L','WO','H'];
+  const labels   = {P:'Present',A:'Absent',HD:'Half Day',L:'Leave',WO:'Week Off',H:'Holiday'};
+
+  document.getElementById('att_body').innerHTML = emps.map(e=>{
+    const cur = dayData[e.code] || '';
+    const monthCount = calcWorkingDays(e.code, curYear, curMonth);
+    return `<tr>
+      <td class="name-cell">${e.code}<br><span style="font-size:11px;color:#94a3b8">${e.name}</span></td>
+      <td class="dept-cell">${e.dept}</td>
+      <td style="padding:4px 6px">
+        ${statuses.map(s=>`<button class="status-btn s-${s}"
+          style="opacity:${cur===s?1:0.35};margin:1px;"
+          onclick="setStatus('${e.code}','${s}',this)"
+          title="${labels[s]}">${s}</button>`).join('')}
+      </td>
+      <td style="text-align:center">
+        ${cur ? `<span class="badge b-${cur==='P'?'green':cur==='A'?'red':'yellow'}">${cur}</span>` : '<span style="color:#475569">—</span>'}
+      </td>
+      <td style="text-align:center;color:#38bdf8;font-weight:700">${monthCount}</td>
+    </tr>`;
+  }).join('');
+
+  updateKPIs(dayData, emps);
+}
+
+function setStatus(code, status, btn){
+  if(!curDate){ alert('Please select a date first.'); return; }
+  if(!attData[curDate]) attData[curDate] = {};
+  attData[curDate][code] = status;
+  // Re-render just this row efficiently
+  renderDailyRow();
+}
+
+function markAllPresent(){
+  if(!curDate){ alert('Please select a date first.'); return; }
+  if(!attData[curDate]) attData[curDate] = {};
+  const filterDept = document.getElementById('sel_dept').value;
+  EMP_MASTER.filter(e => !filterDept || e.dept === filterDept).forEach(e=>{
+    attData[curDate][e.code] = 'P';
+  });
+  renderDailyRow();
+}
+
+function updateKPIs(dayData, emps){
+  let P=0, A=0, HD=0, L=0, WO=0;
+  emps.forEach(e=>{
+    const s = dayData[e.code]||'';
+    if(s==='P') P++; else if(s==='A') A++; else if(s==='HD') HD++;
+    else if(s==='L') L++; else if(s==='WO') WO++;
+  });
+  document.getElementById('k_present').textContent = P;
+  document.getElementById('k_absent').textContent  = A;
+  document.getElementById('k_hd').textContent      = HD;
+  document.getElementById('k_leave').textContent   = L;
+  document.getElementById('k_wo').textContent      = WO;
+  document.getElementById('k_total').textContent   = emps.length;
+}
+
+function saveDay(){
+  if(!curDate){ alert('Select a date first.'); return; }
+  saveAtt(curYear, curMonth, attData);
+
+  // Post each employee's status to GAS Attendance tab
+  const dayData = attData[curDate] || {};
+  EMP_MASTER.forEach(e=>{
+    const s = dayData[e.code];
+    if(s){
+      gsPost({
+        type:'attendance',
+        date: curDate,
+        employee: e.name,
+        empCode:  e.code,
+        department: e.dept,
+        status: s,
+        inTime:  s==='P'||s==='HD' ? '09:00' : '',
+        outTime: s==='P' ? '18:00' : s==='HD' ? '13:00' : '',
+        hours:   s==='P'?9 : s==='HD'?4.5 : 0
+      });
+    }
+  });
+
+  const el = document.getElementById('save_status');
+  el.className = 'status-msg ok';
+  el.textContent = '✅ Attendance saved for ' + curDate + ' — ' + Object.keys(dayData).length + ' employees recorded. Syncing to server…';
+  setTimeout(()=>{ el.textContent=''; el.className=''; }, 5000);
+
+  const sm = document.getElementById('save_msg');
+  sm.style.display='inline'; sm.textContent='✅ Saved';
+  setTimeout(()=>{ sm.style.display='none'; }, 3000);
+
+  renderSummary();
+}
+
+// ═══════════════════════════════════
+// MONTHLY SUMMARY
+// ═══════════════════════════════════
+function calcWorkingDays(code, y, m){
+  const data = loadAtt(y, m);
+  let p=0, hd=0;
+  Object.values(data).forEach(dayData=>{
+    const s = dayData[code]||'';
+    if(s==='P') p++; else if(s==='HD') hd++;
+  });
+  return Math.round((p + hd*0.5)*10)/10;
+}
+
+function getMonthStats(code, y, m){
+  const data = loadAtt(y, m);
+  let p=0, a=0, hd=0, l=0, wo=0;
+  Object.values(data).forEach(dayData=>{
+    const s = dayData[code]||'';
+    if(s==='P') p++; else if(s==='A') a++; else if(s==='HD') hd++;
+    else if(s==='L') l++; else if(s==='WO') wo++;
+  });
+  return {p, a, hd, l, wo, wd: Math.round((p + hd*0.5)*10)/10};
+}
+
+function renderSummary(){
+  const filterDept = document.getElementById('sel_dept').value;
+  const emps = EMP_MASTER.filter(e => !filterDept || e.dept === filterDept);
+  document.getElementById('sum_body').innerHTML = emps.map(e=>{
+    const s = getMonthStats(e.code, curYear, curMonth);
+    const pct = s.wd > 0 ? Math.round(s.wd / 26 * 100) : 0;
+    const badge = pct>=90?'b-green':pct>=75?'b-yellow':'b-red';
+    return `<tr>
+      <td>${e.code}</td>
+      <td><b>${e.name}</b><br><span style="color:#64748b;font-size:10px">${e.desig}</span></td>
+      <td>${e.dept}</td>
+      <td style="text-align:center;color:#4ade80">${s.p}</td>
+      <td style="text-align:center;color:#fbbf24">${s.hd}</td>
+      <td style="text-align:center;color:#f87171">${s.a}</td>
+      <td style="text-align:center;color:#a78bfa">${s.l}</td>
+      <td style="text-align:center;color:#64748b">${s.wo}</td>
+      <td style="text-align:center;font-size:14px;font-weight:700;color:#38bdf8">${s.wd}</td>
+      <td style="text-align:center"><span class="badge ${badge}">${pct}%</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="10" style="text-align:center;padding:20px;color:#64748b">No attendance data for this period</td></tr>';
+}
+
+// ═══════════════════════════════════
+// EXPORT TO PAYROLL BOT
+// ═══════════════════════════════════
+function exportToPayroll(){
+  // Save working days per employee to localStorage key that Payroll Bot reads
+  const payrollKey = 'sspi_att_wd_' + curYear + '_' + String(curMonth).padStart(2,'0');
+  const wdMap = {};
+  EMP_MASTER.forEach(e=>{
+    wdMap[e.code] = calcWorkingDays(e.code, curYear, curMonth);
+  });
+  localStorage.setItem(payrollKey, JSON.stringify(wdMap));
+
+  const summary = EMP_MASTER.map(e=>`${e.name}: ${wdMap[e.code]} days`).join('\n');
+  alert('✅ Working days exported for ' + MONTHS[curMonth-1] + ' ' + curYear + '!\n\nNow open the Monthly Payroll Bot — working days will auto-load.\n\n' + summary);
+}
+
+// ═══════════════════════════════════
+// TAB NAVIGATION
+// ═══════════════════════════════════
+function showTab(tab){
+  document.getElementById('view_daily').style.display   = tab==='daily'   ? '' : 'none';
+  document.getElementById('view_summary').style.display = tab==='summary' ? '' : 'none';
+  document.getElementById('tab_daily').className   = 'tab' + (tab==='daily'   ? ' active' : '');
+  document.getElementById('tab_summary').className = 'tab' + (tab==='summary' ? ' active' : '');
+  if(tab==='summary') renderSummary();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,613 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Salary Data Entry Bot</title>
+<style>
+  :root{
+    --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#ffffff;
+    --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --yellow:#fff7cc;
+  }
+  *{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
+  body{margin:0; background:var(--bg); color:var(--text);}
+  header{background:var(--navy); color:#fff; padding:16px 24px;}
+  header h1{margin:0; font-size:20px;}
+  header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+  .tabs{display:flex; flex-wrap:wrap; background:var(--navy2); padding:0 16px;}
+  .tab{padding:10px 16px; color:#fff; cursor:pointer; font-size:13px; opacity:.8; border-bottom:3px solid transparent;}
+  .tab.active{opacity:1; border-bottom:3px solid var(--accent); font-weight:bold;}
+  .container{max-width:1100px; margin:0 auto; padding:20px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:18px;}
+  .card h2{margin-top:0; font-size:16px; color:var(--navy);}
+  .card p.hint{font-size:12px; color:var(--muted); margin-top:-6px;}
+  .grid{display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:12px;}
+  label{display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:var(--navy);}
+  input, select, textarea{width:100%; padding:7px 8px; border:1px solid var(--border); border-radius:5px; font-size:13px;}
+  textarea{resize:vertical; min-height:50px;}
+  button{background:var(--accent); color:#fff; border:none; padding:9px 16px; border-radius:5px; font-size:13px; cursor:pointer; font-weight:bold;}
+  button:hover{background:var(--navy);}
+  button.secondary{background:#888;}
+  button.secondary:hover{background:#555;}
+  .row-actions{margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;}
+  table{width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;}
+  th, td{border:1px solid var(--border); padding:5px 6px; text-align:left;}
+  th{background:var(--navy); color:#fff; position:sticky; top:0;}
+  tr:nth-child(even){background:#fafbfc;}
+  .table-wrap{max-height:380px; overflow:auto; border:1px solid var(--border); border-radius:6px;}
+  .pill{display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;}
+  .pill.ok{background:#e3f6e9; color:var(--green);}
+  .readonly{background:#f0f2f5; color:#555;}
+  .delbtn{background:#c0392b; padding:3px 8px; font-size:11px;}
+  .delbtn:hover{background:#922b21;}
+  .summary{display:flex; gap:16px; flex-wrap:wrap; margin-top:10px;}
+  .summary .stat{background:var(--yellow); border:1px solid #e6d98a; border-radius:6px; padding:8px 14px; font-size:12px;}
+  .summary .stat b{display:block; font-size:16px; color:var(--navy);}
+  footer{text-align:center; font-size:11px; color:var(--muted); padding:16px;}
+</style>
+</head>
+<body>
+<!-- ACCESS CONTROL GATE -->
+<div id="accessGate" style="position:fixed;inset:0;background:#1E3A5F;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Arial,Helvetica,sans-serif">
+  <div style="background:#fff;border-radius:10px;padding:30px 36px;max-width:380px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.35)">
+    <div style="font-size:32px;margin-bottom:8px">🔒</div>
+    <h2 style="margin:0 0 6px;color:#1E3A5F;font-size:16px">Salary Data Entry Bot — Restricted Access</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 14px">Enter the access code provided by your supervisor / VC Admin to continue. Access is logged for your department only.</p>
+    <input id="gatePin" type="password" placeholder="Access Code" autocomplete="off" style="width:100%;padding:9px;font-size:14px;border:1px solid #d6dce4;border-radius:6px;text-align:center;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkGatePin()">
+    <div id="gateErr" style="color:#b3261e;font-size:11px;margin-top:6px;min-height:14px"></div>
+    <button onclick="checkGatePin()" style="margin-top:8px;background:#2E86AB;color:#fff;border:none;border-radius:6px;padding:9px 22px;font-size:12px;font-weight:bold;cursor:pointer">Unlock</button>
+    <div style="font-size:10.5px;color:#999;margin-top:10px">Authorized: HR Head, HR Executive, Accounts Head, Accountant</div>
+  </div>
+</div>
+<script>
+(function(){
+  var VALID_PINS = ['SAL-HR-2026','SAL-ACC-2026'];
+  var SESSION_KEY = 'sspi_gate_salary';
+  function checkGatePin(){
+    var v=document.getElementById('gatePin').value.trim();
+    if(VALID_PINS.indexOf(v)>-1){
+      sessionStorage.setItem(SESSION_KEY,'1');
+      document.getElementById('accessGate').remove();
+    } else {
+      document.getElementById('gateErr').textContent='Incorrect code. Contact VC Admin / your supervisor.';
+    }
+  }
+  window.checkGatePin=checkGatePin;
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    var g=document.getElementById('accessGate'); if(g) g.remove();
+  }
+})();
+</script>
+<header>
+  <h1>SSPI Salary Data Entry Bot</h1>
+  <p>Companion to SALARY_MASTER_SHEET.xlsx — capture data here, then export CSV and paste into the matching sheet/columns shown.</p>
+</header>
+<div class="tabs">
+  <div class="tab active" data-tab="monthly">Monthly Salary Entry</div>
+  <div class="tab" data-tab="employee">Employee Master</div>
+  <div class="tab" data-tab="revision">Salary Revision Master</div>
+  <div class="tab" data-tab="dashboard">Dashboard / Summary</div>
+</div>
+<div class="container">
+
+  <!-- MONTHLY SALARY ENTRY -->
+  <div class="panel active" id="panel-monthly">
+    <div class="card">
+      <h2>Monthly Attendance &amp; Salary Entry</h2>
+      <p class="hint">Maps to columns <b>H, I, J, M, N, Q, W</b> of the selected month sheet (Working Days, Present Days, OT Hours, Advance Taken, II Advance, Other Deduction, Remarks). Base salary, gross etc. are auto-calculated by the workbook's existing formulas — do not re-enter them here.</p>
+      <div class="grid">
+        <div>
+          <label>Month</label>
+          <select id="m_month"></select>
+        </div>
+        <div>
+          <label>Employee</label>
+          <select id="m_emp"></select>
+        </div>
+        <div>
+          <label>Base Salary (reference only)</label>
+          <input id="m_base" class="readonly" readonly>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:12px;">
+        <div><label>Working Days</label><input id="m_working" type="number" value="30"></div>
+        <div><label>Present Days</label><input id="m_present" type="number" value="30"></div>
+        <div><label>OT Hours</label><input id="m_ot" type="number" value="0" step="0.5"></div>
+        <div><label>Advance Taken (M)</label><input id="m_adv_taken" type="number" value="0"></div>
+        <div><label>II Advance (N)</label><input id="m_adv_2" type="number" value="0"></div>
+        <div><label>Other Deduction (Q)</label><input id="m_other_ded" type="number" value="0"></div>
+      </div>
+      <div style="margin-top:12px;"><label>Remarks</label><textarea id="m_remarks"></textarea></div>
+      <div class="row-actions">
+        <button onclick="addMonthlyRow()">Add / Update Entry</button>
+        <button class="secondary" onclick="exportCSV('monthly')">Export Month CSV</button>
+        <button class="secondary" onclick="clearAll('monthly')">Clear All Entries</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Entries — <span id="monthly_label">April</span></h2>
+      <div class="table-wrap"><table id="monthly_table">
+        <thead><tr><th>Emp Code</th><th>Name</th><th>Working Days</th><th>Present Days</th><th>OT Hrs</th><th>Advance Taken</th><th>II Advance</th><th>Other Ded.</th><th>Remarks</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- EMPLOYEE MASTER -->
+  <div class="panel" id="panel-employee">
+    <div class="card">
+      <h2>New / Edit Employee — Employee Master</h2>
+      <p class="hint">Maps to columns A-L of 'Employee Master'. Emp Code must be unique (not already used by the 137 existing employees).</p>
+      <div class="grid">
+        <div><label>Emp Code</label><input id="e_code" type="number"></div>
+        <div><label>Employee Name</label><input id="e_name"></div>
+        <div><label>Category (ESI / blank)</label><input id="e_cat"></div>
+        <div><label>Company</label><input id="e_company" value="SSPI"></div>
+        <div><label>Base Salary</label><input id="e_base" type="number"></div>
+        <div><label>Status</label>
+          <select id="e_status"><option>Active</option><option>Inactive</option><option>Left</option></select>
+        </div>
+        <div><label>Opening Advance</label><input id="e_opening_adv" type="number" value="0"></div>
+        <div><label>Salary Type</label>
+          <select id="e_saltype"><option>Regular</option><option>Fixed Salary</option></select>
+        </div>
+        <div><label>Salary Base Days</label><input id="e_basedays" type="number" value="30"></div>
+      </div>
+      <div style="margin-top:12px;"><label>Remarks</label><textarea id="e_remarks"></textarea></div>
+      <div class="row-actions">
+        <button onclick="addEmployeeRow()">Add Employee</button>
+        <button class="secondary" onclick="exportCSV('employee')">Export Employee Master CSV</button>
+        <button class="secondary" onclick="clearAll('employee')">Clear New Entries</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>New Employees Added This Session</h2>
+      <div class="table-wrap"><table id="employee_table">
+        <thead><tr><th>Emp Code</th><th>Name</th><th>Category</th><th>Company</th><th>Base Salary</th><th>Status</th><th>Opening Advance</th><th>Salary Type</th><th>Base Days</th><th>Remarks</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h2>Existing Employees (reference, read-only) — 137 total</h2>
+      <input type="text" id="emp_search" placeholder="Search by code or name..." onkeyup="filterEmpRef()" style="margin-bottom:8px;">
+      <div class="table-wrap"><table id="emp_ref_table">
+        <thead><tr><th>Emp Code</th><th>Name</th><th>Category</th><th>Company</th><th>Base Salary</th><th>Status</th><th>Salary Type</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- SALARY REVISION MASTER -->
+  <div class="panel" id="panel-revision">
+    <div class="card">
+      <h2>Salary Revision / Hike Entry</h2>
+      <p class="hint">Maps to columns A, D, F, J of 'Salary Revision Master' (Emp Code, Effective Month No., Revised Salary, Remarks). Employee Name, Base Salary, Hike Amount/% and Status are auto-calculated by existing formulas.</p>
+      <div class="grid">
+        <div><label>Employee</label><select id="r_emp"></select></div>
+        <div><label>Current Base Salary (reference)</label><input id="r_base" class="readonly" readonly></div>
+        <div><label>Effective Month</label><select id="r_month"></select></div>
+        <div><label>Revised Salary</label><input id="r_revised" type="number"></div>
+      </div>
+      <div style="margin-top:12px;"><label>Remarks</label><textarea id="r_remarks"></textarea></div>
+      <div class="row-actions">
+        <button onclick="addRevisionRow()">Add Revision</button>
+        <button class="secondary" onclick="exportCSV('revision')">Export Salary Revision CSV</button>
+        <button class="secondary" onclick="clearAll('revision')">Clear All Entries</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Revisions Entered</h2>
+      <div class="table-wrap"><table id="revision_table">
+        <thead><tr><th>Emp Code</th><th>Name</th><th>Old Base</th><th>Effective Month</th><th>Revised Salary</th><th>Hike Amt</th><th>Hike %</th><th>Remarks</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="panel" id="panel-dashboard">
+    <div class="card">
+      <h2>Session Summary</h2>
+      <p class="hint">Quick preview of what has been entered in this session (not the full workbook dashboard — open SALARY_MASTER_SHEET.xlsx for the live Dashboard sheet once data is pasted in).</p>
+      <div class="summary" id="summary_stats"></div>
+    </div>
+    <div class="card">
+      <h2>Monthly Entries Overview</h2>
+      <div class="table-wrap"><table id="dash_monthly_table">
+        <thead><tr><th>Month</th><th>Entries</th><th>Total Advance Taken</th><th>Total II Advance</th><th>Total Other Deduction</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h2>Export Everything</h2>
+      <div class="row-actions">
+        <button onclick="exportAll()">Export All Data (combined CSV)</button>
+        <button class="secondary" onclick="resetEverything()">Reset Entire Session</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<footer>SSPI Salary Data Entry Bot · data is stored in this browser only (localStorage) until exported · always export &amp; back up regularly</footer>
+
+<script>
+const EMPLOYEES = [{"code": 1, "cat": "ESI", "company": "SSPI", "name": "SATVEER SINGH", "base": 30000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 2, "cat": "ESI", "company": "SSPI", "name": "AMAR CHAND", "base": 20000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 3, "cat": "ESI", "company": "SSPI", "name": "NAND PRATAP", "base": 20000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 4, "cat": "ESI", "company": "SSPI", "name": "BHARAT/RAM ADHAR", "base": 20000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 5, "cat": "ESI", "company": "SSPI", "name": "RAJ KUMAR PASWAN", "base": 19000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 6, "cat": null, "company": "SSPI", "name": "SACHINE s/o manoj", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 7, "cat": "ESI", "company": "SSPI", "name": "SHYAM PASWAN", "base": 13500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 9, "cat": "ESI", "company": "SSPI", "name": "RAM VILAS", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 10, "cat": null, "company": "SSPI", "name": "SATISH AGRA", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 11, "cat": "ESI", "company": "SSPI", "name": "MANJEET", "base": 19000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 12, "cat": "ESI", "company": "SSPI", "name": "RAJEEV", "base": 13500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 13, "cat": "ESI", "company": "SSPI", "name": "Prem chand", "base": 12000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 14, "cat": null, "company": "SSPI", "name": "MANOJ", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 15, "cat": "ESI", "company": "SSPI", "name": "Harendara singh", "base": 12000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 16, "cat": null, "company": "SSPI", "name": "SANJEEV", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 17, "cat": "ESI", "company": "SSPI", "name": "Vikas PRAJAPAT", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 18, "cat": null, "company": "SSPI", "name": "JAIKISAN RAM", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 19, "cat": "ESI", "company": "SSPI", "name": "SANJEET", "base": 14000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 20, "cat": "ESI", "company": "SSPI", "name": "HARI SHANKAR", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 21, "cat": "ESI", "company": "SSPI", "name": "VIRENDER", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 22, "cat": null, "company": "SSPI", "name": "ANKIT YADAV", "base": 11500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 24, "cat": "ESI", "company": "SSPI", "name": "SATYNARAN", "base": 13500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 25, "cat": null, "company": "SSPI", "name": "RAJ KUMAR III", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 26, "cat": "ESI", "company": "SSPI", "name": "AMARJEET", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 27, "cat": "ESI", "company": "SSPI", "name": "SANJAYE SINGH", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 29, "cat": "ESI", "company": "L D", "name": "ASHA KUMARI", "base": 10500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 31, "cat": "ESI", "company": "L D", "name": "SHIWANI", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 33, "cat": "ESI", "company": "SSPI", "name": "DINESH KUMAR", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 34, "cat": "ESI", "company": "SSPI", "name": "SUKHARI SAW", "base": 12000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 35, "cat": null, "company": "SITAPUR", "name": "KULDEEP 2", "base": 11500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 36, "cat": null, "company": "L D", "name": "KANCHAN", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 37, "cat": "ESI", "company": "L D", "name": "ASHA DEVI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 38, "cat": null, "company": "L D", "name": "SAVITA PANDEY", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 39, "cat": "ESI", "company": "L D", "name": "PARMILA", "base": 9000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 40, "cat": null, "company": "SSPI", "name": "PAPU YADW", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 41, "cat": "ESI", "company": "L D", "name": "REKHA kumari 1", "base": 9000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 41, "cat": "ESI", "company": "L D", "name": "PINKI DEVI", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 42, "cat": "ESI", "company": "L D", "name": "ANU DEVI", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 44, "cat": null, "company": "L D", "name": "SANDHA DEVI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 45, "cat": null, "company": "L D", "name": "KISNAWATI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 47, "cat": null, "company": "L D", "name": "BABITA DEVI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 48, "cat": null, "company": "SITAPUR", "name": "AMRINDER pal", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 49, "cat": null, "company": "L D", "name": "arati kumari", "base": 9500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 50, "cat": null, "company": "L D", "name": "REENA KUMARI", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 51, "cat": "ESI", "company": "L D", "name": "SONI KUMARI", "base": 9000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 52, "cat": null, "company": "L D", "name": "NITU", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 53, "cat": null, "company": "L D", "name": "ROSANI DEVI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 54, "cat": "ESI", "company": "L D", "name": "REKHA devi II(SARWAN)", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 55, "cat": null, "company": "L D", "name": "MAMATA", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 56, "cat": null, "company": "LD", "name": "BABITA  DEVI II", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 57, "cat": "ESI", "company": "L D", "name": "KHUSBU DEVI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 58, "cat": null, "company": "L D", "name": "SHILA DEVI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 59, "cat": null, "company": "L D", "name": "PINKI DEVI II", "base": 9000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 60, "cat": "ESI", "company": "SUJEET", "name": "AJEET KUMAR", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 61, "cat": "ESI", "company": "SUJEET", "name": "RAM PUKAR", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 62, "cat": null, "company": "SITAPUR", "name": "NARENDER", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 63, "cat": null, "company": "SITAPUR", "name": "JAGDISH", "base": 11500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 64, "cat": null, "company": "SITAPUR", "name": "KULDEEP 1", "base": 11500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 65, "cat": null, "company": "sitapuer", "name": "sunil pal", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 66, "cat": null, "company": "SITAPUR", "name": "DHIRAJ sitapur", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 67, "cat": null, "company": "SITAPUR", "name": "NAND KISHOR", "base": 12000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 68, "cat": null, "company": "SITAPUR", "name": "SUSHIL KUMAR", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 70, "cat": null, "company": "SITAPUR", "name": "ANKUL", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 72, "cat": null, "company": "SITAPUR", "name": "AMREESH", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 73, "cat": null, "company": "SITAPUR", "name": "ROHIT  SITAPUR", "base": 12000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 74, "cat": null, "company": "SITAPUR", "name": "BRIJESH", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 75, "cat": null, "company": "SITAPUR", "name": "SIVRAJ", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 76, "cat": null, "company": "SSPI", "name": "AMAR NATH", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 77, "cat": null, "company": "SSPI", "name": "GOVIND PASWAN", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 78, "cat": "ESI", "company": "SSPI", "name": "RAKESH GODARA", "base": 17000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 80, "cat": "ESI", "company": "SSPI", "name": "RAM CHANDAR", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 81, "cat": null, "company": "SITAPUR", "name": "SANT KUMAR", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 82, "cat": null, "company": "LD", "name": "SHOBHA DEVI", "base": 8000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 83, "cat": "ESI", "company": "STEEL PANT", "name": "MAHENDER", "base": 16500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 84, "cat": null, "company": "L D", "name": "ushadevi ii", "base": 8000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 85, "cat": null, "company": "SSPI", "name": "ABJEET", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 86, "cat": null, "company": "SSPI", "name": "BHUPENDER", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 87, "cat": "ESI", "company": "STEEL PANT", "name": "SARWAN KUMAR", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 88, "cat": null, "company": "SITAPUR", "name": "balveer", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 89, "cat": null, "company": "SSPI", "name": "MUKESH RAM", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 90, "cat": null, "company": "STEEL PANT", "name": "NAGENDER BELDER", "base": 16500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 91, "cat": null, "company": "SITAPUR", "name": "Munendar", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 93, "cat": null, "company": "SSPI", "name": "Subhod kumar belder", "base": 15500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 94, "cat": null, "company": "SITAPUR", "name": "PANKAJ", "base": 12000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 95, "cat": null, "company": "SSPI", "name": "SACHINE S/o subod", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 97, "cat": null, "company": "sunil", "name": "SURYAPARKAS", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 100, "cat": null, "company": null, "name": "PINTU", "base": 0, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 101, "cat": null, "company": "SSPI", "name": "viky", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 102, "cat": null, "company": "SSPI", "name": "TEJ SINGH", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 104, "cat": "ESI", "company": "STEEL PANT", "name": "CHINTU KUMAR", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 107, "cat": null, "company": "STEEL PANT", "name": "KUNAL KUMAR", "base": 11500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 108, "cat": "ESI", "company": "SSPI", "name": "SINTURAM", "base": 10500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 110, "cat": null, "company": "STEEL PANT", "name": "GANESH RAJBHAR", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 111, "cat": null, "company": "SITAPUR", "name": "SONU", "base": 11000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 112, "cat": null, "company": "SITAPUR", "name": "mithune", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 114, "cat": null, "company": "SSPI", "name": "deep paswan", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 119, "cat": null, "company": "SSPI", "name": "SHIWAM PAL", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 119, "cat": null, "company": "SSPI", "name": "SHIWAM", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 120, "cat": null, "company": "SSPI", "name": "RAHUL KUMAR PASWAN", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 123, "cat": null, "company": "SSPI", "name": "GUDU KUMAR", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 124, "cat": null, "company": "H.K", "name": "Geeta hk", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 125, "cat": null, "company": "SSPI", "name": "TIGER", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 126, "cat": null, "company": "sunil", "name": "SUNIL", "base": 18000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 127, "cat": null, "company": "sunil", "name": "DEVPARKA", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 128, "cat": null, "company": "VISHAL", "name": "BITU", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 129, "cat": null, "company": "VISHAL", "name": "RUKAM PAL", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 130, "cat": null, "company": "VISHAL", "name": "JAGDISH II", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 131, "cat": null, "company": "VISHAL", "name": "RADHA CHARN", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 136, "cat": null, "company": "VISHAL", "name": "AMAR PAL(WELDER)", "base": 20000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 137, "cat": null, "company": "VISHAL", "name": "VIJENDER PAL(WELDER)", "base": 20000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 139, "cat": null, "company": "VISHAL", "name": "DIWARI LAL", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 142, "cat": null, "company": "VISHAL", "name": "JASWANT", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 143, "cat": null, "company": "VISHAL", "name": "MITHILESH", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 145, "cat": null, "company": "VISHAL", "name": "VINISH (welder)", "base": 20000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 146, "cat": null, "company": "VISHAL", "name": "VIPINE", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 148, "cat": null, "company": "L D", "name": "SUMAN DEVI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 149, "cat": null, "company": "VISHAL", "name": "PRABHAT", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 150, "cat": null, "company": "sunil", "name": "AMARDEEP", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 152, "cat": null, "company": "L D", "name": "RAJAN SHRI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 154, "cat": null, "company": "L D", "name": "BINLESH DEVI V", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 155, "cat": null, "company": "sunil", "name": "SHIV RAM", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 156, "cat": null, "company": "VISHAL", "name": "ASHIS II", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 157, "cat": null, "company": "L D", "name": "CHANCHAL", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 159, "cat": null, "company": "LD", "name": "SURYEKANTI DEI", "base": 8000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 171, "cat": null, "company": "L D", "name": "Reta devi", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 601, "cat": null, "company": "L D", "name": "ANITA DEVI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 602, "cat": null, "company": "LD", "name": "JULI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 603, "cat": null, "company": "L D", "name": "ANJALI", "base": 8500, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 604, "cat": null, "company": "SUJEET", "name": "AKASH RAMPUKAR", "base": 10000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 605, "cat": "ESI", "company": "PACK SAF", "name": "DHANAN", "base": 14000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 606, "cat": "ESI", "company": "SSPI", "name": "RAJAN KUMAR", "base": 13000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 607, "cat": null, "company": "SSPI", "name": "SACHINE /aaramachine", "base": 12000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 609, "cat": null, "company": "VISHAL", "name": "RINKU", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 612, "cat": null, "company": "VISHAL", "name": "ANKIT KUMAR", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 615, "cat": "ESI", "company": "PACK SAF", "name": "SANKAR PASWAN", "base": 14000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 616, "cat": "ESI", "company": "PACK SAF", "name": "SUNIL MISTRI", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}, {"code": 617, "cat": null, "company": "VISHAL", "name": "KARISANA", "base": 16000, "status": "Active", "salType": "Regular", "baseDays": 30}];
+const MONTHS = [["Apr", "April", 1], ["May", "May", 2], ["Jun", "June", 3], ["Jul", "July", 4], ["Aug", "August", 5], ["Sep", "September", 6], ["Oct", "October", 7], ["Nov", "November", 8], ["Dec", "December", 9], ["Jan", "January", 10], ["Feb", "February", 11], ["Mar", "March", 12]]; // [sheetName, fullName, monthNo]
+const EMP_BY_CODE = {};
+EMPLOYEES.forEach(e => EMP_BY_CODE[e.code] = e);
+
+// ---------- storage helpers ----------
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS BACKEND — auto-configured
+// ═══════════════════════════════════════════════════════
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+let _botLocation = localStorage.getItem('sspi_location') || 'Bhiwadi';
+// ── OFFLINE QUEUE + AUTH TOKEN + LOCATION ───────────────────
+var _offQ = JSON.parse(localStorage.getItem('sspi_offline_q') || '[]');
+var _botOnline = navigator.onLine;
+function _saveOffQ(){ localStorage.setItem('sspi_offline_q', JSON.stringify(_offQ)); }
+function syncBotQueue(){
+  if (!_botOnline || !_offQ.length) return;
+  var item = _offQ.shift(); _saveOffQ();
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(function(){ if(_offQ.length) setTimeout(syncBotQueue,600); })
+    .catch(function(){ _offQ.unshift(item); _saveOffQ(); });
+}
+window.addEventListener('online',  function(){ _botOnline=true;  syncBotQueue(); });
+window.addEventListener('offline', function(){ _botOnline=false; });
+function gsPost(payload){
+  if (!GS_URL) return;
+  payload.authToken = GS_AUTH_TOKEN;
+  payload.location  = payload.location || _botLocation;
+  payload._ts = payload._ts || new Date().toISOString();
+  if (!_botOnline) {
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+    return;
+  }
+  fetch(GS_URL, {method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  }).catch(function(){
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+  });
+}
+function load(key, def){ try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e){ return def; } }
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+let monthlyData = load('sspi_monthly', {});   // { "Apr": [ {code, working, present, ot, advTaken, adv2, otherDed, remarks} ] }
+let employeeData = load('sspi_employees_new', []);
+let revisionData = load('sspi_revisions', []);
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  if(t.dataset.tab === 'dashboard') renderDashboard();
+}));
+
+// ---------- populate selects ----------
+function empOptionLabel(e){ return e.code + ' — ' + e.name + (e.company ? ' (' + e.company + ')' : ''); }
+function populateEmpSelect(sel){
+  sel.innerHTML = '';
+  EMPLOYEES.forEach(e => {
+    const o = document.createElement('option');
+    o.value = e.code; o.textContent = empOptionLabel(e);
+    sel.appendChild(o);
+  });
+}
+populateEmpSelect(document.getElementById('m_emp'));
+populateEmpSelect(document.getElementById('r_emp'));
+
+function populateMonthSelect(sel){
+  sel.innerHTML = '';
+  MONTHS.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m[0]; o.textContent = m[1] + ' (' + m[0] + ')';
+    sel.appendChild(o);
+  });
+}
+populateMonthSelect(document.getElementById('m_month'));
+populateMonthSelect(document.getElementById('r_month'));
+
+// ---------- monthly entry ----------
+function updateMonthlyBase(){
+  const code = parseInt(document.getElementById('m_emp').value);
+  const e = EMP_BY_CODE[code];
+  document.getElementById('m_base').value = e ? e.base : '';
+}
+document.getElementById('m_emp').addEventListener('change', updateMonthlyBase);
+document.getElementById('m_month').addEventListener('change', renderMonthlyTable);
+updateMonthlyBase();
+
+function addMonthlyRow(){
+  const month = document.getElementById('m_month').value;
+  const code = parseInt(document.getElementById('m_emp').value);
+  const row = {
+    code: code,
+    working: parseFloat(document.getElementById('m_working').value) || 0,
+    present: parseFloat(document.getElementById('m_present').value) || 0,
+    ot: parseFloat(document.getElementById('m_ot').value) || 0,
+    advTaken: parseFloat(document.getElementById('m_adv_taken').value) || 0,
+    adv2: parseFloat(document.getElementById('m_adv_2').value) || 0,
+    otherDed: parseFloat(document.getElementById('m_other_ded').value) || 0,
+    remarks: document.getElementById('m_remarks').value || ''
+  };
+  if(!monthlyData[month]) monthlyData[month] = [];
+  const idx = monthlyData[month].findIndex(r => r.code === code);
+  if(idx >= 0) monthlyData[month][idx] = row; else monthlyData[month].push(row);
+  save('sspi_monthly', monthlyData);
+  gsPost({sheet:'salary_monthly',month:month,...row});
+  renderMonthlyTable();
+  document.getElementById('m_remarks').value = '';
+}
+function deleteMonthlyRow(month, code){
+  monthlyData[month] = (monthlyData[month]||[]).filter(r => r.code !== code);
+  save('sspi_monthly', monthlyData);
+  renderMonthlyTable();
+}
+function renderMonthlyTable(){
+  const month = document.getElementById('m_month').value;
+  const monthFull = MONTHS.find(m=>m[0]===month)[1];
+  document.getElementById('monthly_label').textContent = monthFull;
+  const tbody = document.querySelector('#monthly_table tbody');
+  tbody.innerHTML = '';
+  (monthlyData[month]||[]).forEach(r => {
+    const e = EMP_BY_CODE[r.code] || {name:'?'};
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.code}</td><td>${e.name}</td><td>${r.working}</td><td>${r.present}</td><td>${r.ot}</td><td>${r.advTaken}</td><td>${r.adv2}</td><td>${r.otherDed}</td><td>${r.remarks}</td>
+      <td><button class="delbtn" onclick="deleteMonthlyRow('${month}', ${r.code})">Delete</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+renderMonthlyTable();
+
+// ---------- employee master ----------
+function addEmployeeRow(){
+  const code = parseInt(document.getElementById('e_code').value);
+  if(!code){ alert('Enter an Emp Code'); return; }
+  if(EMP_BY_CODE[code] || employeeData.find(x=>x.code===code)){
+    if(!confirm('Emp Code ' + code + ' already exists. Continue anyway?')) return;
+  }
+  const row = {
+    code: code,
+    name: document.getElementById('e_name').value,
+    cat: document.getElementById('e_cat').value,
+    company: document.getElementById('e_company').value,
+    base: parseFloat(document.getElementById('e_base').value) || 0,
+    status: document.getElementById('e_status').value,
+    openingAdv: parseFloat(document.getElementById('e_opening_adv').value) || 0,
+    salType: document.getElementById('e_saltype').value,
+    baseDays: parseFloat(document.getElementById('e_basedays').value) || 30,
+    remarks: document.getElementById('e_remarks').value
+  };
+  employeeData.push(row);
+  save('sspi_employees_new', employeeData);
+  renderEmployeeTable();
+  ['e_code','e_name','e_cat','e_base','e_remarks'].forEach(id => document.getElementById(id).value = '');
+}
+function deleteEmployeeRow(code){
+  employeeData = employeeData.filter(r => r.code !== code);
+  save('sspi_employees_new', employeeData);
+  renderEmployeeTable();
+}
+function renderEmployeeTable(){
+  const tbody = document.querySelector('#employee_table tbody');
+  tbody.innerHTML = '';
+  employeeData.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.code}</td><td>${r.name}</td><td>${r.cat}</td><td>${r.company}</td><td>${r.base}</td><td>${r.status}</td><td>${r.openingAdv}</td><td>${r.salType}</td><td>${r.baseDays}</td><td>${r.remarks}</td>
+      <td><button class="delbtn" onclick="deleteEmployeeRow(${r.code})">Delete</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+renderEmployeeTable();
+
+function filterEmpRef(){
+  const q = document.getElementById('emp_search').value.toLowerCase();
+  const tbody = document.querySelector('#emp_ref_table tbody');
+  tbody.innerHTML = '';
+  EMPLOYEES.filter(e => String(e.code).includes(q) || (e.name||'').toLowerCase().includes(q))
+    .slice(0, 200)
+    .forEach(e => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${e.code}</td><td>${e.name}</td><td>${e.cat||''}</td><td>${e.company||''}</td><td>${e.base}</td><td>${e.status}</td><td>${e.salType}</td>`;
+      tbody.appendChild(tr);
+    });
+}
+filterEmpRef();
+
+// ---------- salary revision ----------
+document.getElementById('r_emp').addEventListener('change', updateRevisionBase);
+function updateRevisionBase(){
+  const code = parseInt(document.getElementById('r_emp').value);
+  const e = EMP_BY_CODE[code];
+  document.getElementById('r_base').value = e ? e.base : '';
+}
+updateRevisionBase();
+
+function addRevisionRow(){
+  const code = parseInt(document.getElementById('r_emp').value);
+  const e = EMP_BY_CODE[code];
+  const monthSheet = document.getElementById('r_month').value;
+  const monthInfo = MONTHS.find(m=>m[0]===monthSheet);
+  const revised = parseFloat(document.getElementById('r_revised').value) || 0;
+  const row = {
+    code: code, name: e.name, oldBase: e.base,
+    monthNo: monthInfo[2], monthName: monthInfo[1],
+    revised: revised,
+    hikeAmt: revised - e.base,
+    hikePct: e.base ? (((revised - e.base) / e.base) * 100).toFixed(1) : 0,
+    remarks: document.getElementById('r_remarks').value
+  };
+  const idx = revisionData.findIndex(r => r.code === code);
+  if(idx >= 0) revisionData[idx] = row; else revisionData.push(row);
+  save('sspi_revisions', revisionData);
+  gsPost({sheet:'salary_revision',...revObj});
+  renderRevisionTable();
+  document.getElementById('r_revised').value = '';
+  document.getElementById('r_remarks').value = '';
+}
+function deleteRevisionRow(code){
+  revisionData = revisionData.filter(r => r.code !== code);
+  save('sspi_revisions', revisionData);
+  gsPost({sheet:'salary_revision',...revObj});
+  renderRevisionTable();
+}
+function renderRevisionTable(){
+  const tbody = document.querySelector('#revision_table tbody');
+  tbody.innerHTML = '';
+  revisionData.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.code}</td><td>${r.name}</td><td>${r.oldBase}</td><td>${r.monthName} (${r.monthNo})</td><td>${r.revised}</td><td>${r.hikeAmt}</td><td>${r.hikePct}%</td><td>${r.remarks}</td>
+      <td><button class="delbtn" onclick="deleteRevisionRow(${r.code})">Delete</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+renderRevisionTable();
+
+// ---------- dashboard ----------
+function renderDashboard(){
+  const stats = document.getElementById('summary_stats');
+  const totalMonthlyRows = Object.values(monthlyData).reduce((a,arr)=>a+arr.length,0);
+  stats.innerHTML = `
+    <div class="stat"><b>${employeeData.length}</b>New Employees Added</div>
+    <div class="stat"><b>${revisionData.length}</b>Salary Revisions Entered</div>
+    <div class="stat"><b>${totalMonthlyRows}</b>Monthly Attendance Rows</div>
+    <div class="stat"><b>${EMPLOYEES.length}</b>Existing Employees (Master)</div>
+  `;
+  const tbody = document.querySelector('#dash_monthly_table tbody');
+  tbody.innerHTML = '';
+  MONTHS.forEach(m => {
+    const rows = monthlyData[m[0]] || [];
+    const advTaken = rows.reduce((a,r)=>a+r.advTaken,0);
+    const adv2 = rows.reduce((a,r)=>a+r.adv2,0);
+    const otherDed = rows.reduce((a,r)=>a+r.otherDed,0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${m[1]}</td><td>${rows.length}</td><td>${advTaken}</td><td>${adv2}</td><td>${otherDed}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- CSV export ----------
+function toCSV(rows){
+  return rows.map(r => r.map(c => {
+    c = (c===undefined||c===null) ? '' : String(c);
+    if(c.includes(',') || c.includes('"') || c.includes('\n')) c = '"' + c.replace(/"/g,'""') + '"';
+    return c;
+  }).join(',')).join('\n');
+}
+function download(filename, content){
+  const blob = new Blob([content], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function exportCSV(type){
+  if(type === 'monthly'){
+    const month = document.getElementById('m_month').value;
+    const monthFull = MONTHS.find(m=>m[0]===month)[1];
+    const rows = [['Emp Code','Employee Name','Working Days (H)','Present Days (I)','OT Hours (J)','Advance Taken (M)','II Advance (N)','Other Deduction (Q)','Remarks (W)']];
+    (monthlyData[month]||[]).forEach(r => {
+      const e = EMP_BY_CODE[r.code] || {name:''};
+      rows.push([r.code, e.name, r.working, r.present, r.ot, r.advTaken, r.adv2, r.otherDed, r.remarks]);
+    });
+    download(`Monthly_Entry_${month}.csv`, toCSV(rows));
+  } else if(type === 'employee'){
+    const rows = [['Emp Code','Original S.No.','Category','Company','Employee Name','Base Salary as on April','Status','Opening Advance','Remarks','Salary Type','Salary Base Days','Fixed Salary Note']];
+    employeeData.forEach(r => rows.push([r.code, '', r.cat, r.company, r.name, r.base, r.status, r.openingAdv, r.remarks, r.salType, r.baseDays, '']));
+    download('Employee_Master_New_Entries.csv', toCSV(rows));
+  } else if(type === 'revision'){
+    const rows = [['Emp Code','Effective Month No. (D)','Revised Salary (F)','Remarks (J)','-- reference: Employee Name','-- reference: Old Base','-- reference: Hike Amount','-- reference: Hike %']];
+    revisionData.forEach(r => rows.push([r.code, r.monthNo, r.revised, r.remarks, r.name, r.oldBase, r.hikeAmt, r.hikePct + '%']));
+    download('Salary_Revision_Entries.csv', toCSV(rows));
+  }
+}
+function exportAll(){
+  exportCSV('employee');
+  exportCSV('revision');
+  MONTHS.forEach(m => { if((monthlyData[m[0]]||[]).length) exportCSV2Month(m[0]); });
+  function exportCSV2Month(month){
+    const rows = [['Emp Code','Employee Name','Working Days (H)','Present Days (I)','OT Hours (J)','Advance Taken (M)','II Advance (N)','Other Deduction (Q)','Remarks (W)']];
+    (monthlyData[month]||[]).forEach(r => {
+      const e = EMP_BY_CODE[r.code] || {name:''};
+      rows.push([r.code, e.name, r.working, r.present, r.ot, r.advTaken, r.adv2, r.otherDed, r.remarks]);
+    });
+    download(`Monthly_Entry_${month}.csv`, toCSV(rows));
+  }
+}
+
+// ---------- reset ----------
+function clearAll(type){
+  if(!confirm('Clear all entries for this section?')) return;
+  if(type === 'monthly'){ const month = document.getElementById('m_month').value; monthlyData[month] = []; save('sspi_monthly', monthlyData); renderMonthlyTable(); }
+  else if(type === 'employee'){ employeeData = []; save('sspi_employees_new', employeeData); renderEmployeeTable(); }
+  else if(type === 'revision'){ revisionData = []; save('sspi_revisions', revisionData); renderRevisionTable(); }
+}
+function resetEverything(){
+  if(!confirm('This will erase ALL data entered in this bot (all months, employees, revisions). Continue?')) return;
+  localStorage.removeItem('sspi_monthly');
+  localStorage.removeItem('sspi_employees_new');
+  localStorage.removeItem('sspi_revisions');
+  location.reload();
+}
+
+// ── JSONP cross-device sync ─────────────────────────────
+function gsGet(type, limit){
+  return new Promise(function(resolve){
+    var cbName='_gsJP_'+Date.now();
+    var script=document.createElement('script');
+    var done=false;
+    window[cbName]=function(d){ done=true; delete window[cbName]; if(script.parentNode) script.parentNode.removeChild(script); resolve((d&&d.data)?d.data:[]); };
+    script.onerror=function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } },10000);
+    script.src=GS_URL+'?type='+type+'&limit='+(limit||200)+'&callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+function showToast(msg,clr){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:20px;right:20px;background:'+(clr==='error'?'#dc2626':'#1e3a5f')+';color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 2px 12px rgba(0,0,0,0.2)';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },4000);
+}
+function loadSalaryFromSheets(){
+  gsGet('salary', 300).then(function(rows){
+    if(!rows||!rows.length){ showToast('No cloud salary data found yet'); return; }
+    var synced=0;
+    rows.forEach(function(r){
+      var month=r['Month']||''; var code=r['Emp Code']||''; if(!month||!code) return;
+      if(!monthlyData[month]) monthlyData[month]=[];
+      // Check if not already in local data
+      var exists=monthlyData[month].some(function(e){ return e.code===code; });
+      if(!exists){
+        monthlyData[month].push({
+          code:code, working:parseFloat(r['Working Days'])||0,
+          present:parseFloat(r['Present Days'])||0, ot:parseFloat(r['OT Hours'])||0,
+          advTaken:parseFloat(r['Advance'])||0, adv2:parseFloat(r['II Advance'])||0,
+          otherDed:parseFloat(r['Other Deduction'])||0, remarks:r['Remarks']||''
+        });
+        synced++;
+      }
+    });
+    if(synced>0){
+      save('sspi_monthly', monthlyData);
+      renderMonthlyTable();
+      showToast('☁ '+synced+' salary entries synced from Google Sheets');
+    } else {
+      showToast('☁ Salary data already up to date');
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(loadSalaryFromSheets, 1000); });
+</script>
+</body>
+</html>

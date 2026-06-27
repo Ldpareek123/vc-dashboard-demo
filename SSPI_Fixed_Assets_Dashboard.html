@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Fixed Assets Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1F3864,#375623);padding:16px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid #375623}
+.header h1{font-size:22px;font-weight:700;color:#fff}
+.badge{background:#375623;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px}
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.2s}
+.btn-primary{background:#2E75B6;color:#fff}.btn-primary:hover{background:#1F3864}
+.btn-success{background:#375623;color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+.main{padding:20px;max-width:1500px;margin:0 auto}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.kpi{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px;border-left:4px solid var(--accent)}
+.kpi .label{font-size:11px;color:#94a3b8;text-transform:uppercase}
+.kpi .value{font-size:26px;font-weight:700;color:#fff;margin:6px 0}
+.kpi .sub{font-size:11px;color:#64748b}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:18px;margin-bottom:24px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:18px}
+.chart-card h3{font-size:13px;font-weight:700;color:#375623;margin-bottom:4px}
+.chart-card p{font-size:11px;color:#64748b;margin-bottom:14px}
+.chart-wrap{position:relative;height:240px}
+.filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.filter-bar input,.filter-bar select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:7px 12px;border-radius:6px;font-size:12px}
+.asset-table{width:100%;border-collapse:collapse;font-size:12px}
+.asset-table th{background:#1F3864;color:#fff;padding:9px 12px;text-align:left;font-size:11px;font-weight:700;white-space:nowrap}
+.asset-table td{padding:8px 12px;border-bottom:1px solid #334155;vertical-align:middle}
+.asset-table tr:nth-child(even) td{background:#1a2540}
+.asset-table tr:hover td{background:#334155}
+.status-chip{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.s-active{background:#37562330;color:#86efac}
+.s-disposed{background:#8B000030;color:#f87171}
+.s-maintenance{background:#C6591130;color:#fbbf24}
+.dep-bar{height:6px;background:#334155;border-radius:3px;overflow:hidden;margin-top:3px}
+.dep-bar span{height:100%;display:block;border-radius:3px}
+.warranty-warn{background:#C6591133;color:#fbbf24;padding:2px 6px;border-radius:4px;font-size:10px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>🏗️ Fixed Assets Dashboard <span class="badge">SSPI</span></h1>
+    <p>Complete fixed asset register with depreciation schedule, WDV, insurance and disposal tracking</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-success btn-sm" onclick="window.location.href='SSPI_Fixed_Assets_Bot.html'">➕ Add Asset</button>
+    <button class="btn btn-primary btn-sm" onclick="exportToCSV()">⬇️ Export CSV</button>
+    <button class="btn btn-primary btn-sm" onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'">← Dashboard</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="kpi-row" id="kpi-row"></div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>📊 Asset Value by Category</h3>
+      <p>Gross value vs WDV (Written Down Value) by asset category</p>
+      <div class="chart-wrap"><canvas id="cat-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>📉 Annual Depreciation Trend (₹ Lakhs)</h3>
+      <p>Total depreciation charged per financial year</p>
+      <div class="chart-wrap"><canvas id="dep-trend-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>🏷️ Asset Status Distribution</h3>
+      <p>Active vs disposed vs under maintenance</p>
+      <div class="chart-wrap"><canvas id="status-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>⚠️ Warranty / Insurance Expiry (Next 90 Days)</h3>
+      <p>Assets requiring renewal within 3 months</p>
+      <div class="chart-wrap"><canvas id="expiry-chart"></canvas></div>
+    </div>
+  </div>
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <h3 style="font-size:14px;font-weight:700;color:#375623">📋 Fixed Asset Register</h3>
+      <div class="filter-bar" style="margin:0">
+        <input type="text" id="fa-search" placeholder="Search assets..." oninput="renderTable()" style="width:180px">
+        <select id="cat-filter" onchange="renderTable()">
+          <option value="">All Categories</option>
+          <option>Plant &amp; Machinery</option>
+          <option>Factory Building</option>
+          <option>Office Equipment</option>
+          <option>Furniture &amp; Fixtures</option>
+          <option>Vehicles</option>
+          <option>Computer &amp; IT Equipment</option>
+        </select>
+        <select id="status-filter" onchange="renderTable()">
+          <option value="">All Status</option>
+          <option>Active</option><option>Disposed</option><option>Maintenance</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="asset-table">
+        <thead>
+          <tr>
+            <th>Asset ID</th><th>Asset Name</th><th>Category</th><th>Location</th>
+            <th>Purchase Date</th><th>Cost (₹)</th><th>Dep %</th><th>WDV (₹)</th>
+            <th>Dep Consumed</th><th>Warranty</th><th>Status</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="asset-tbody"></tbody>
+      </table>
+    </div>
+    <div id="table-footer" style="padding:8px 0;font-size:11px;color:#64748b;margin-top:8px"></div>
+  </div>
+</div>
+
+<script>
+const GAS_URL='https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+function fmt(n){return (Math.round(n)).toLocaleString('en-IN');}
+function fmtL(n){return '₹'+(n/100000).toFixed(2)+'L';}
+const ASSETS_DEMO=[
+  {id:'FA-2019-001',name:'PP Corrugation Machine 1',cat:'Plant & Machinery',loc:'Production Floor',date:'2019-04-01',cost:2850000,rate:15.33,status:'Active',warranty:'2024-03-31'},
+  {id:'FA-2019-002',name:'PP Corrugation Machine 2',cat:'Plant & Machinery',loc:'Production Floor',date:'2019-06-15',cost:2750000,rate:15.33,status:'Active',warranty:'2024-06-14'},
+  {id:'FA-2020-001',name:'PP Lamination Machine 1',cat:'Plant & Machinery',loc:'Production Floor',date:'2020-01-10',cost:1850000,rate:15.33,status:'Active',warranty:'2025-01-09'},
+  {id:'FA-2020-002',name:'Slitter Machine 1',cat:'Plant & Machinery',loc:'Production Floor',date:'2020-07-20',cost:650000,rate:15.33,status:'Active',warranty:'2023-07-19'},
+  {id:'FA-2021-001',name:'Bag Making Machine 1',cat:'Plant & Machinery',loc:'Production Floor',date:'2021-03-01',cost:1200000,rate:15.33,status:'Active',warranty:'2026-02-28'},
+  {id:'FA-2021-002',name:'Printing Machine 1',cat:'Plant & Machinery',loc:'Production Floor',date:'2021-08-15',cost:780000,rate:15.33,status:'Maintenance',warranty:'2024-08-14'},
+  {id:'FA-2018-001',name:'Factory Building — Block A',cat:'Factory Building',loc:'Production Floor',date:'2018-04-01',cost:12500000,rate:10,status:'Active',warranty:''},
+  {id:'FA-2022-001',name:'Forklift',cat:'Vehicles',loc:'Warehouse',date:'2022-05-01',cost:850000,rate:25.89,status:'Active',warranty:'2027-04-30'},
+  {id:'FA-2023-001',name:'Server & Computers',cat:'Computer & IT Equipment',loc:'Office',date:'2023-01-15',cost:185000,rate:63.16,status:'Active',warranty:'2026-01-14'},
+  {id:'FA-2023-002',name:'Office Furniture',cat:'Furniture & Fixtures',loc:'Office',date:'2023-03-01',cost:125000,rate:25.89,status:'Active',warranty:''},
+  {id:'FA-2024-001',name:'Bag Making Machine 3',cat:'Plant & Machinery',loc:'Production Floor',date:'2024-02-10',cost:1650000,rate:15.33,status:'Active',warranty:'2029-02-09'},
+  {id:'FA-2024-002',name:'DG Set 50 KVA',cat:'Electrical Fittings',loc:'Factory Gate',date:'2024-06-01',cost:580000,rate:25.89,status:'Active',warranty:'2027-05-31'},
+  {id:'FA-2016-001',name:'Old Slitter Machine',cat:'Plant & Machinery',loc:'Production Floor',date:'2016-04-01',cost:450000,rate:15.33,status:'Disposed',warranty:''},
+];
+function calcWDV(cost,rate,purchaseDate){
+  var years=(new Date()-new Date(purchaseDate))/(365.25*24*60*60*1000);
+  var wdv=cost;
+  for(var y=0;y<years;y++) wdv=wdv*(1-rate/100);
+  return Math.max(0,wdv);
+}
+function renderKPIs(assets){
+  var active=assets.filter(function(a){return a.status==='Active';});
+  var totalCost=active.reduce(function(s,a){return s+a.cost;},0);
+  var totalWDV=active.reduce(function(s,a){return s+calcWDV(a.cost,a.rate,a.date);},0);
+  var totalDep=totalCost-totalWDV;
+  var today=new Date();
+  var expiring=active.filter(function(a){return a.warranty&&new Date(a.warranty)<new Date(today.getTime()+90*24*60*60*1000)&&new Date(a.warranty)>today;});
+  var kpis=[
+    {label:'Total Assets (Active)',value:active.length,sub:'All categories',accent:'#375623'},
+    {label:'Gross Block',value:fmtL(totalCost),sub:'Purchase cost of all active assets',accent:'#2E75B6'},
+    {label:'Net Block / WDV',value:fmtL(totalWDV),sub:'Written down value as of today',accent:'#0E6F56'},
+    {label:'Total Depreciation',value:fmtL(totalDep),sub:'Accumulated depreciation charged',accent:'#C65911'},
+    {label:'Depreciation %',value:Math.round((1-totalWDV/totalCost)*100)+'%',sub:'Of gross block depreciated',accent:'#4B3BA5'},
+    {label:'Expiring Warranties',value:expiring.length,sub:'Within next 90 days',accent:expiring.length>0?'#f87171':'#375623'},
+  ];
+  document.getElementById('kpi-row').innerHTML=kpis.map(function(k){
+    return '<div class="kpi" style="--accent:'+k.accent+'"><div class="label">'+k.label+'</div><div class="value">'+k.value+'</div><div class="sub">'+k.sub+'</div></div>';
+  }).join('');
+}
+function renderCharts(assets){
+  var cats=[...new Set(assets.map(function(a){return a.cat;}))];
+  var catCosts=cats.map(function(c){return assets.filter(function(a){return a.cat===c;}).reduce(function(s,a){return s+a.cost;},0)/100000;});
+  var catWDVs=cats.map(function(c){return assets.filter(function(a){return a.cat===c;}).reduce(function(s,a){return s+calcWDV(a.cost,a.rate,a.date);},0)/100000;});
+  var cfg={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'#1e293b'}},y:{ticks:{color:'#94a3b8'},grid:{color:'#334155'}}}};
+  var catShort=cats.map(function(c){return c.substring(0,10)+'.';});
+  new Chart(document.getElementById('cat-chart'),{type:'bar',data:{labels:catShort,datasets:[
+    {label:'Gross Cost (₹L)',data:catCosts,backgroundColor:'#2E75B666',borderColor:'#2E75B6',borderWidth:1},
+    {label:'WDV (₹L)',data:catWDVs,backgroundColor:'#37562366',borderColor:'#375623',borderWidth:1}
+  ]},options:cfg});
+  new Chart(document.getElementById('dep-trend-chart'),{type:'line',data:{labels:['FY19','FY20','FY21','FY22','FY23','FY24','FY25'],datasets:[
+    {label:'Depreciation (₹L)',data:[8.2,14.5,18.1,22.4,26.8,31.2,35.6],borderColor:'#C65911',backgroundColor:'#C6591122',fill:true,tension:.4}
+  ]},options:Object.assign({},cfg,{scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'#1e293b'}},y:{ticks:{color:'#94a3b8',callback:function(v){return '₹'+v+'L';}},grid:{color:'#334155'}}}})});
+  new Chart(document.getElementById('status-chart'),{type:'doughnut',data:{labels:['Active','Disposed','Maintenance'],datasets:[
+    {data:[assets.filter(function(a){return a.status==='Active';}).length,assets.filter(function(a){return a.status==='Disposed';}).length,assets.filter(function(a){return a.status==='Maintenance';}).length],
+     backgroundColor:['#37562388','#8B000088','#C6591188']}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{}}});
+  var today=new Date();
+  var expiringAssets=assets.filter(function(a){return a.warranty;}).map(function(a){return {name:a.name.substring(0,15),days:Math.round((new Date(a.warranty)-today)/(24*60*60*1000))};}).filter(function(a){return a.days>0&&a.days<180;}).sort(function(a,b){return a.days-b.days;}).slice(0,8);
+  new Chart(document.getElementById('expiry-chart'),{type:'bar',data:{labels:expiringAssets.map(function(a){return a.name;}),datasets:[
+    {label:'Days until expiry',data:expiringAssets.map(function(a){return a.days;}),backgroundColor:expiringAssets.map(function(a){return a.days<30?'#f87171aa':a.days<90?'#fbbf24aa':'#22c55eaa';})}
+  ]},options:Object.assign({},cfg,{indexAxis:'y',scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'#334155'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#1e293b'}}}})});
+}
+function renderTable(){
+  var q=document.getElementById('fa-search').value.toLowerCase();
+  var cat=document.getElementById('cat-filter').value;
+  var status=document.getElementById('status-filter').value;
+  var filtered=ASSETS_DEMO.filter(function(a){
+    return (!q||a.id.toLowerCase().includes(q)||a.name.toLowerCase().includes(q))&&(!cat||a.cat===cat)&&(!status||a.status===status);
+  });
+  var today=new Date();
+  document.getElementById('asset-tbody').innerHTML=filtered.map(function(a){
+    var wdv=calcWDV(a.cost,a.rate,a.date);
+    var depPct=Math.round((1-wdv/a.cost)*100);
+    var depFill=Math.min(100,depPct);
+    var depClr=depPct>80?'#f87171':depPct>50?'#fbbf24':'#22c55e';
+    var warExpired=a.warranty&&new Date(a.warranty)<today;
+    var warSoon=a.warranty&&new Date(a.warranty)<new Date(today.getTime()+90*24*60*60*1000)&&!warExpired;
+    var warCell=a.warranty?(warExpired?'<span class="warranty-warn">EXPIRED '+a.warranty+'</span>':warSoon?'<span class="warranty-warn">⚠️ '+a.warranty+'</span>':'<span style="font-size:11px;color:#22c55e">'+a.warranty+'</span>'):'<span style="font-size:11px;color:#64748b">—</span>';
+    var sc=a.status==='Active'?'s-active':a.status==='Disposed'?'s-disposed':'s-maintenance';
+    return '<tr><td style="font-weight:700;color:#2E75B6;white-space:nowrap">'+a.id+'</td><td style="font-weight:600">'+a.name+'</td><td style="font-size:11px">'+a.cat+'</td><td style="font-size:11px">'+a.loc+'</td><td style="white-space:nowrap">'+a.date+'</td><td style="text-align:right;white-space:nowrap">₹'+fmt(a.cost)+'</td><td style="text-align:center">'+a.rate+'%</td><td style="text-align:right;white-space:nowrap;color:'+depClr+';font-weight:600">₹'+fmt(wdv)+'</td><td style="min-width:100px"><div style="font-size:10px;color:#94a3b8">'+depPct+'% depreciated</div><div class="dep-bar"><span style="width:'+depFill+'%;background:'+depClr+'"></span></div></td><td>'+warCell+'</td><td><span class="status-chip '+sc+'">'+a.status+'</span></td><td><button class="btn btn-primary btn-sm" onclick="window.location.href=\'SSPI_Fixed_Assets_Bot.html\'">Edit</button></td></tr>';
+  }).join('');
+  document.getElementById('table-footer').textContent='Showing '+filtered.length+' of '+ASSETS_DEMO.length+' assets';
+}
+function exportToCSV(){
+  var rows=[['Asset ID','Name','Category','Location','Purchase Date','Cost','Dep Rate','WDV','Status','Warranty']];
+  ASSETS_DEMO.forEach(function(a){rows.push([a.id,a.name,a.cat,a.loc,a.date,a.cost,a.rate+'%',Math.round(calcWDV(a.cost,a.rate,a.date)),a.status,a.warranty||'']);});
+  var csv=rows.map(function(r){return r.join(',');}).join('\n');
+  var link=document.createElement('a');
+  link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  link.download='SSPI_Fixed_Assets_'+new Date().toISOString().split('T')[0]+'.csv';
+  link.click();
+}
+renderKPIs(ASSETS_DEMO);
+renderCharts(ASSETS_DEMO);
+renderTable();
+</script>
+</body>
+</html>

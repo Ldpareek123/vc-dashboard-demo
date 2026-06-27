@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Training Hub — V4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1F3864,#4B3BA5);padding:16px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid #4B3BA5}
+.header h1{font-size:22px;font-weight:700;color:#fff}
+.header p{font-size:12px;color:#94a3b8;margin-top:2px}
+.badge{background:#4B3BA5;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px}
+.btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:.2s}
+.btn-primary{background:#2E75B6;color:#fff}.btn-primary:hover{background:#1F3864}
+.btn-sm{padding:5px 10px;font-size:11px}
+.main{max-width:1200px;margin:24px auto;padding:0 20px}
+.search-bar{display:flex;gap:10px;margin-bottom:24px;align-items:center}
+.search-bar input{flex:1;background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:14px}
+.search-bar select{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:10px 12px;border-radius:8px;font-size:13px}
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.guide-card{background:#1e293b;border:1px solid #334155;border-radius:12px;overflow:hidden;transition:transform .2s;cursor:pointer}
+.guide-card:hover{transform:translateY(-2px);border-color:#4B3BA5}
+.guide-thumb{height:100px;display:flex;align-items:center;justify-content:center;font-size:48px;position:relative}
+.guide-thumb .play-overlay{position:absolute;width:40px;height:40px;background:#00000066;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;bottom:8px;right:8px}
+.guide-body{padding:14px}
+.guide-body .dept-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:8px;display:inline-block}
+.guide-body h3{font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px;line-height:1.3}
+.guide-body p{font-size:11px;color:#64748b;line-height:1.5;margin-bottom:10px}
+.guide-body .meta{display:flex;gap:12px;font-size:10px;color:#475569;margin-bottom:10px}
+.steps-section{margin-top:12px;padding-top:10px;border-top:1px solid #334155;display:none}
+.steps-section.open{display:block}
+.step-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #334155}
+.step-item:last-child{border:none}
+.step-num{width:20px;height:20px;border-radius:50%;background:#4B3BA5;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:12px;color:#94a3b8;line-height:1.4}
+.progress-track{height:4px;background:#334155;border-radius:2px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:2px;background:#4B3BA5;transition:.4s}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>🎓 Training Hub <span class="badge">V4</span></h1>
+    <p>Step-by-step guides for all bots and modules — for operators, managers, and admins</p>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'" style="margin-left:auto">← Dashboard</button>
+</div>
+
+<div class="main">
+  <div class="search-bar">
+    <input type="text" id="guide-search" placeholder="Search guides — e.g. salary, attendance, GRN..." oninput="filterGuides()">
+    <select id="dept-filter" onchange="filterGuides()">
+      <option value="">All Departments</option>
+      <option>Production</option><option>HR</option><option>Finance</option>
+      <option>Stores</option><option>Sales</option><option>Admin</option>
+    </select>
+    <select id="level-filter" onchange="filterGuides()">
+      <option value="">All Levels</option>
+      <option>Beginner</option><option>Intermediate</option><option>Admin</option>
+    </select>
+  </div>
+  <div class="guide-grid" id="guide-grid"></div>
+</div>
+
+<script>
+const GUIDES = [
+  {title:'Daily Attendance Entry',dept:'HR',icon:'👷',bg:'#C6591120',level:'Beginner',mins:5,
+   desc:'How floor workers log attendance daily using the Attendance Bot.',
+   steps:['Open SSPI Dashboard on phone/computer','Click "Daily Attendance Bot"','Enter Employee Name (select from dropdown)','Select Date and Shift (Morning/Evening/Night)','Mark Status: Present / Absent / Late','Enter Time In and Time Out','Click Submit — confirmation popup appears','Sheet automatically updates']},
+  {title:'Salary Data Entry',dept:'HR',icon:'💸',bg:'#C6591120',level:'Intermediate',mins:10,
+   desc:'Enter monthly salary for all employees. Run once per month after attendance finalised.',
+   steps:['Open Salary Data Entry Bot','Select Month and Year','Select Employee from dropdown','Verify Basic, DA, HRA are auto-filled from master','Check Overtime Hours if applicable','System auto-calculates PF, ESI, Net Pay','Review deductions section','Click Submit to save to Sheet']},
+  {title:'Job Card Entry — Production',dept:'Production',icon:'🏭',bg:'#2E75B620',level:'Beginner',mins:8,
+   desc:'Create a Job Card when starting a new production batch or work order.',
+   steps:['Open Manufacturing Dashboard','Click "New Job Card"','Enter JC Number (auto-generated or manual)','Select Machine from dropdown','Enter Product Name and Batch Quantity','Set Start Date and Shift','Assign Supervisor','Click Submit — JC appears in production log']},
+  {title:'GRN Entry — Materials Received',dept:'Stores',icon:'📦',bg:'#37562320',level:'Beginner',mins:7,
+   desc:'Record materials received from suppliers into stock.',
+   steps:['Open Materials GRN Bot','Enter GRN Number (unique)','Select Supplier from dropdown','Enter Material Name, Quantity, Unit (Kg/Pcs/MT)','Enter Rate and calculate Amount','Upload invoice photo (camera button)','Check quality inspection box if passed','Submit — RM stock auto-updated']},
+  {title:'Monthly Payroll Run',dept:'HR',icon:'📋',bg:'#C6591120',level:'Intermediate',mins:15,
+   desc:'Complete payroll run after all salary entries are done for the month.',
+   steps:['Ensure all Salary Data is entered for the month','Open Monthly Payroll Bot','Select Month/Year','Click "Load All Employees" — table populates','Review totals — Basic, Deductions, Net','Check PF and ESI amounts','Click "Generate Payroll" — creates payslips','Email payslips to employees automatically','Export to Excel for records']},
+  {title:'Accounting Voucher Entry',dept:'Finance',icon:'📒',bg:'#4B3BA520',level:'Intermediate',mins:10,
+   desc:'Enter payment, receipt, and journal vouchers into the accounting system.',
+   steps:['Open Accounting Voucher Bot','Select Voucher Type: Payment / Receipt / Journal','Enter Date and Voucher Number','Debit Account: select from ledger dropdown','Credit Account: select from ledger dropdown','Enter Amount in figures','Add Narration (brief description)','Click Submit — entry saves to Finance Sheet']},
+  {title:'GST Reconciliation',dept:'Finance',icon:'📊',bg:'#4B3BA520',level:'Admin',mins:20,
+   desc:'Monthly GST reconciliation of purchase and sales for GSTR-3B filing.',
+   steps:['Open GST Recon Bot','Select Month','Load Purchase Data from GRN entries','Load Sales Data from Sales Orders','System calculates Input Tax Credit vs Output Tax','Review Net GST Liability','Export to CSV for CA/filing','Mark month as reconciled']},
+  {title:'Sales Order Entry',dept:'Sales',icon:'🛒',bg:'#0E6F5620',level:'Beginner',mins:8,
+   desc:'Create a sales order when customer gives PO.',
+   steps:['Open Sales Order Bot','Enter SO Number and Customer PO Number','Select Customer from dropdown','Add line items: Product, Qty, Rate','System calculates total and GST','Set Delivery Date','Select Dispatch Mode','Submit — Production notified automatically']},
+  {title:'Machine Maintenance Log',dept:'Production',icon:'🔧',bg:'#2E75B620',level:'Intermediate',mins:10,
+   desc:'Log machine breakdown or preventive maintenance work done.',
+   steps:['Open Machine Module','Select Machine from list','Click "Log Maintenance"','Select Type: Breakdown / Preventive / Oil Change / etc','Enter Problem Description','Enter Work Done / Spare Parts Used','Enter Downtime Hours','Upload photo if needed','Submit — PM calendar updated']},
+  {title:'Digital Approval — Advance',dept:'HR',icon:'✍️',bg:'#C6591120',level:'Admin',mins:5,
+   desc:'Approve or reject advance against salary requests with digital signature.',
+   steps:['Open Digital Approval Bot','Login with your PIN','Review pending advance request','Check employee name and amount requested','Read justification note','Draw your signature on the signature pad','Click Approve or Reject','Signature saved — notification sent to employee']},
+  {title:'QR Code Scanning',dept:'Production',icon:'📱',bg:'#2E75B620',level:'Beginner',mins:3,
+   desc:'Scan QR codes on machines or job cards using phone camera.',
+   steps:['Open SSPI QR Hub','Click "Scanner" tab','Allow camera permission when prompted','Point camera at QR code on machine/job card','System auto-detects and identifies the code','Tap "Open Bot" button that appears','Bot opens pre-filled with machine/JC data','Complete your entry normally']},
+  {title:'Debtors Control & Follow-up',dept:'Finance',icon:'💰',bg:'#4B3BA520',level:'Intermediate',mins:12,
+   desc:'Manage outstanding debtors and record payment follow-ups.',
+   steps:['Open Debtors Control Bot','View all outstanding debtors by aging','Click on debtor for details','Select: Record Payment / Follow-up Call / Write-off','For payment: enter amount, date, reference','For follow-up: enter next action and promised date','For write-off: escalate to Owner approval','Submit — debtor ledger updated']},
+];
+
+function renderGuides(list) {
+  const grid = document.getElementById('guide-grid');
+  grid.innerHTML = list.map((g,i) => {
+    const progress = parseInt(localStorage.getItem('guide-progress-'+i)||'0');
+    return `<div class="guide-card" id="gc-${i}">
+      <div class="guide-thumb" style="background:${g.bg}">
+        <span>${g.icon}</span>
+        <div class="play-overlay">▶</div>
+      </div>
+      <div class="guide-body">
+        <span class="dept-tag" style="background:${g.bg};color:${g.bg.slice(1,7)}">${g.dept}</span>
+        <h3>${g.title}</h3>
+        <p>${g.desc}</p>
+        <div class="meta">
+          <span>⏱️ ${g.mins} min</span>
+          <span>📚 ${g.steps.length} steps</span>
+          <span>🎯 ${g.level}</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="toggleSteps(${i},event)">📖 View Steps</button>
+          <button class="btn btn-sm" style="background:#4B3BA5;color:#fff" onclick="markDone(${i},event)">✅ Mark Done</button>
+        </div>
+        <div class="steps-section" id="steps-${i}">
+          ${g.steps.map((s,si)=>`<div class="step-item"><div class="step-num">${si+1}</div><div class="step-text">${s}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSteps(i, e) {
+  e.stopPropagation();
+  document.getElementById(`steps-${i}`).classList.toggle('open');
+}
+
+function markDone(i, e) {
+  e.stopPropagation();
+  localStorage.setItem('guide-progress-'+i,'100');
+  const fill = document.querySelector(`#gc-${i} .progress-fill`);
+  if (fill) fill.style.width = '100%';
+}
+
+function filterGuides() {
+  const q = document.getElementById('guide-search').value.toLowerCase();
+  const dept = document.getElementById('dept-filter').value;
+  const lvl = document.getElementById('level-filter').value;
+  const filtered = GUIDES.filter(g =>
+    (!q || g.title.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q)) &&
+    (!dept || g.dept === dept) &&
+    (!lvl || g.level === lvl)
+  );
+  renderGuides(filtered);
+}
+
+renderGuides(GUIDES);
+</script>
+</body>
+</html>

@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SSPI Materials Bot — Unified Stores & Raw Materials</title>
+<style>
+:root{--navy:#1E3A5F;--navy2:#274A73;--accent:#E8A020;--bg:#f4f6f9;--card:#fff;
+  --border:#d6dce4;--text:#222;--muted:#666;--green:#1d7a3c;--red:#c0392b;
+  --orange:#b8860b;--teal:#065A82;--purple:#6D2E46;}
+*{box-sizing:border-box;font-family:Arial,sans-serif;}
+body{margin:0;background:var(--bg);}
+header{background:var(--navy);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
+header h1{margin:0;font-size:17px;}header small{opacity:.7;font-size:10px;}
+.tabs{display:flex;flex-wrap:wrap;background:var(--navy2);}
+.tab{padding:11px 16px;color:rgba(255,255,255,.7);cursor:pointer;font-size:12px;border-bottom:3px solid transparent;white-space:nowrap;}
+.tab.active{color:#fff;border-bottom-color:var(--accent);font-weight:bold;}
+.body{max-width:1100px;margin:0 auto;padding:16px;}
+.panel{display:none;}.panel.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px;}
+.card h2{margin:0 0 14px;font-size:14px;color:var(--navy);border-bottom:2px solid var(--border);padding-bottom:8px;}
+.grid{display:grid;gap:12px;}.g2{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:1fr 1fr 1fr;}
+label{display:block;font-size:11px;font-weight:bold;color:var(--navy2);margin-bottom:3px;}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:#fff;}
+input:focus,select:focus{outline:2px solid var(--accent);border-color:var(--accent);}
+.btn{padding:9px 18px;border:none;border-radius:5px;font-size:12px;font-weight:bold;cursor:pointer;color:#fff;}
+.btn-green{background:var(--green);}.btn-navy{background:var(--navy);}.btn-orange{background:var(--orange);}
+.btn-red{background:var(--red);}.btn-teal{background:var(--teal);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.note{background:#eef5fb;border-left:4px solid var(--teal);padding:9px 12px;font-size:12px;border-radius:0 6px 6px 0;margin-bottom:12px;}
+.warn{background:#fff7e0;border-left:4px solid var(--orange);padding:9px 12px;font-size:12px;border-radius:0 6px 6px 0;margin-bottom:12px;}
+.alert{background:#fde7e7;border-left:4px solid var(--red);padding:9px 12px;font-size:12px;border-radius:0 6px 6px 0;margin-bottom:12px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:var(--navy);color:#fff;padding:7px 9px;text-align:left;white-space:nowrap;}
+td{border:1px solid var(--border);padding:6px 9px;vertical-align:middle;}
+tr:nth-child(even){background:#fafbfc;}
+.tbl-wrap{max-height:380px;overflow:auto;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold;}
+.b-ok{background:#e3f6e9;color:var(--green);}.b-low{background:#fde7e7;color:var(--red);}
+.b-warn{background:#fff7e0;color:var(--orange);}.b-blue{background:#e0f0ff;color:var(--teal);}
+.b-crit{background:#c0392b;color:#fff;}.b-draft{background:#f3f4f6;color:#6b7280;}
+.thickness-box{background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:10px;margin-top:8px;}
+.thick-status{font-size:14px;font-weight:bold;margin-top:6px;}
+.item-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 36px;gap:6px;align-items:end;margin-bottom:6px;}
+.rm-flag{display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:5px;padding:8px;margin-top:6px;font-size:11px;}
+.stock-ok{color:var(--green);font-weight:bold;}.stock-low{color:var(--orange);font-weight:bold;}.stock-none{color:var(--red);font-weight:bold;}
+select[id^="po_item_type"]{font-size:11px;}
+.kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.kpi{flex:1;min-width:120px;background:#fff;border:1px solid var(--border);border-radius:7px;padding:10px 12px;}
+.kpi b{display:block;font-size:20px;color:var(--navy);}.kpi span{font-size:10px;color:var(--muted);}
+@media print{header,.tabs,.btn-row{display:none!important;}.panel{display:block!important;}}
+</style>
+</head>
+<body>
+<div id="back_to_dashboard" style="background:#1E3A5F;color:#fff;padding:8px 20px;display:flex;align-items:center;gap:12px;font-size:12px;position:sticky;top:0;z-index:9999;box-shadow:0 2px 6px rgba(0,0,0,.35)">
+  <button onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">← Back to Dashboard</button>
+  <span style="opacity:.55;font-size:11px;">SSPI Operations Dashboard V4</span>
+</div>
+<header>
+  <div><h1>📦 SSPI Materials Bot — Stores & Raw Materials</h1>
+    <small>Purchase Orders · GRN · Issue to Production · Stock Register · RM Grade-wise · Components</small></div>
+  <div style="text-align:right;font-size:11px;opacity:.8">
+    <div id="hdr_date"></div>
+    <button onclick="location.reload()" style="margin-top:4px;background:rgba(255,255,255,.15);border:none;color:#fff;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;">🔄 Refresh</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('po',this)">📋 Purchase Orders</div>
+  <div class="tab" onclick="showTab('grn',this)">📥 GRN (Goods Receipt)</div>
+  <div class="tab" onclick="showTab('issue',this)">📤 Issue to Production</div>
+  <div class="tab" onclick="showTab('stock',this)">📊 All Stock</div>
+  <div class="tab" onclick="showTab('rm_grades',this)">🌲 RM Grade-wise</div>
+  <div class="tab" onclick="showTab('components',this)">🔧 Components</div>
+  <div class="tab" onclick="showTab('thickness',this)">📏 Thickness Log</div>
+  <div class="tab" onclick="showTab('adjustments',this)">⚖️ Adjustments</div>
+</div>
+
+<div class="body">
+
+<!-- ═══ PURCHASE ORDERS ═══ -->
+<div id="tab-po" class="panel active">
+  <div class="note"><b>📋 Purchase Order Entry</b> — Create a PO first. When goods arrive, go to GRN tab and select this PO to auto-fill the receipt.</div>
+  <div class="card">
+    <h2>➕ New Purchase Order</h2>
+    <div class="grid g3">
+      <div><label>PO Date *</label><input type="date" id="po_date"></div>
+      <div><label>Supplier Name *</label><input type="text" id="po_supplier" placeholder="Supplier / Party Name"></div>
+      <div><label>Supplier Contact</label><input type="text" id="po_contact" placeholder="Phone / Email"></div>
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      <div><label>Expected Delivery Date</label><input type="date" id="po_exp_delivery"></div>
+      <div><label>Payment Terms</label>
+        <select id="po_terms"><option>30 days credit</option><option>15 days credit</option><option>Immediate</option><option>Advance</option></select></div>
+      <div><label>PO Remarks</label><input type="text" id="po_remarks" placeholder="Optional notes"></div>
+    </div>
+    <div style="margin-top:12px;border:1px solid var(--border);border-radius:6px;padding:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <b style="font-size:12px;">PO Line Items</b>
+        <button class="btn btn-teal" onclick="addPOLine()" style="padding:5px 12px;font-size:11px;">+ Add Line</button>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;">Material Type · Item Name · Qty · Unit · Rate (₹) · [remove]</div>
+      <div id="po_lines">
+        <!-- lines added dynamically -->
+      </div>
+      <div style="text-align:right;font-size:12px;font-weight:bold;color:var(--navy);margin-top:8px;">
+        PO Total: ₹<span id="po_total">0</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="savePO()">💾 Save Purchase Order</button>
+      <button class="btn btn-navy" onclick="clearPO()">✖ Clear</button>
+    </div>
+    <div id="po_status" style="margin-top:8px;font-size:12px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Open Purchase Orders
+      <button class="btn" style="float:right;background:#0e7490;font-size:12px;padding:4px 12px" onclick="repostPOsToGAS()">🔄 Re-sync to Server</button>
+    </h2>
+    <div id="po_sync_status" style="font-size:12px;color:#22c55e;margin-bottom:6px;display:none"></div>
+    <div class="kpi-row">
+      <div class="kpi"><b id="kpi_po_open">—</b><span>Open POs</span></div>
+      <div class="kpi"><b id="kpi_po_partial">—</b><span>Partially Received</span></div>
+      <div class="kpi"><b id="kpi_po_value">—</b><span>Total PO Value (₹)</span></div>
+      <div class="kpi"><b id="kpi_po_overdue">—</b><span>Overdue POs</span></div>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>PO No.</th><th>Date</th><th>Supplier</th><th>Items</th><th>Expected</th><th>Value (₹)</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="po_list_body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GRN ═══ -->
+<div id="tab-grn" class="panel">
+  <div class="note"><b>📥 Goods Receipt Note (GRN)</b> — Covers all material types: Regular Stores items AND Raw Materials (Wood/Plywood). For RM, capture paper and actual thickness.</div>
+  <div class="card">
+    <h2>➕ New GRN</h2>
+    <div class="grid g3">
+      <div><label>GRN Date *</label><input type="date" id="grn_date"></div>
+      <div><label>Link to PO (optional)</label>
+        <select id="grn_po_ref" onchange="loadPOIntoGRN()">
+          <option value="">— Select PO (or enter manually) —</option>
+        </select></div>
+      <div><label>Supplier *</label><input type="text" id="grn_supplier" placeholder="Supplier Name"></div>
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      <div><label>Vehicle No.</label><input type="text" id="grn_vehicle" placeholder="e.g. RJ14-GH-1234"></div>
+      <div><label>Challan / Invoice No.</label><input type="text" id="grn_challan" placeholder="Delivery challan no."></div>
+      <div><label>Material Category *</label>
+        <select id="grn_category" onchange="toggleRMFields()">
+          <option value="stores">Regular Stores Item</option>
+          <option value="wood">Wood (Eucalyptus / Pinewood)</option>
+          <option value="plywood">Plywood (MR / BWR / BWP)</option>
+          <option value="fasteners">Nails / Fasteners / Hardware</option>
+          <option value="packing">Packing Material</option>
+          <option value="consumables">Consumables / Other</option>
+        </select></div>
+    </div>
+
+    <!-- GRN Line Items -->
+    <div style="margin-top:12px;border:1px solid var(--border);border-radius:6px;padding:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <b style="font-size:12px;">GRN Line Items</b>
+        <button class="btn btn-teal" onclick="addGRNLine()" style="padding:5px 12px;font-size:11px;">+ Add Line</button>
+      </div>
+      <div id="grn_lines"></div>
+    </div>
+
+    <!-- RM-specific thickness capture -->
+    <div id="rm_thickness_section" class="thickness-box" style="display:none;margin-top:10px;">
+      <div style="font-size:12px;font-weight:bold;color:var(--green);margin-bottom:8px;">📏 Thickness Measurement (Required for Wood/Plywood)</div>
+      <div class="grid g3">
+        <div><label>Paper Thickness (invoice, mm)</label><input type="number" id="grn_paper_thick" placeholder="e.g. 18" step="0.1" oninput="calcThickVariance()"></div>
+        <div><label>Actual Measured Thickness (mm)</label><input type="number" id="grn_actual_thick" placeholder="e.g. 16.5" step="0.1" oninput="calcThickVariance()"></div>
+        <div><label>Grade *</label>
+          <select id="grn_grade">
+            <option value="">— Select Grade —</option>
+            <option>Grade A</option><option>Grade B</option><option>Grade C</option>
+            <option>MR (Commercial)</option><option>BWR (Water Resistant)</option><option>BWP (Water Proof)</option>
+          </select></div>
+      </div>
+      <div class="thick-status" id="thick_status_display">Enter both thickness values above</div>
+      <div class="grid g2" style="margin-top:8px;">
+        <div><label>Action Taken</label>
+          <select id="grn_thick_action">
+            <option>Accepted as-is</option><option>Price Adjusted</option><option>Returned to Supplier</option><option>Pending Decision</option>
+          </select></div>
+        <div><label>Thickness Remarks</label><input type="text" id="grn_thick_remarks" placeholder="Notes on variance (if any)"></div>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:10px;">
+      <div><label>Invoice / Bill Amount (₹)</label><input type="number" id="grn_bill_amount" placeholder="Total bill value"></div>
+      <div><label>Entered by</label><input type="text" id="grn_entered_by" placeholder="Your name" value="Store Keeper"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="saveGRN()">💾 Save GRN</button>
+      <button class="btn btn-navy" onclick="clearGRN()">✖ Clear</button>
+      <button class="btn btn-orange" onclick="printGRN()">🖨️ Print GRN</button>
+    </div>
+    <div id="grn_status" style="margin-top:8px;font-size:12px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 GRN Register (Last 30)
+      <button class="btn" style="float:right;background:#0e7490;font-size:12px;padding:4px 12px" onclick="repostGRNsToGAS()">🔄 Re-sync to Server</button>
+    </h2>
+    <div id="grn_sync_status" style="font-size:12px;color:#22c55e;margin-bottom:6px;display:none"></div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>GRN No.</th><th>Date</th><th>Category</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit</th><th>Grade</th><th>Paper Thick</th><th>Actual Thick</th><th>Variance</th><th>Status</th></tr></thead>
+      <tbody id="grn_register_body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ISSUE TO PRODUCTION ═══ -->
+<div id="tab-issue" class="panel">
+  <div class="note"><b>📤 Issue to Production</b> — Link every material issue to a Job Card. RM issues check BOM availability automatically.</div>
+  <div class="card">
+    <h2>➕ Issue Material</h2>
+    <div class="grid g3">
+      <div><label>Issue Date *</label><input type="date" id="iss_date"></div>
+      <div><label>Job Card No. *</label>
+        <input type="text" id="iss_jc" placeholder="e.g. JC-2026-0045" oninput="checkJCStock()">
+        <div id="jc_bom_status" style="font-size:11px;color:var(--muted);margin-top:3px;"></div></div>
+      <div><label>Product Type</label>
+        <select id="iss_product_type" onchange="checkJCStock()">
+          <option>Pallet</option><option>Box</option><option>Crate</option><option>Other</option>
+        </select></div>
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      <div><label>Material Category *</label>
+        <select id="iss_category" onchange="updateIssMaterials()">
+          <option value="wood">Wood</option><option value="plywood">Plywood</option>
+          <option value="fasteners">Nails / Fasteners</option><option value="stores">Stores Item</option>
+        </select></div>
+      <div><label>Material / Item *</label>
+        <select id="iss_material" onchange="updateIssGrades()">
+          <option>Eucalyptus</option><option>Pinewood</option></select></div>
+      <div><label>Grade</label>
+        <select id="iss_grade"><option>Grade A</option><option>Grade B</option><option>Grade C</option></select></div>
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      <div><label>Quantity *</label><input type="number" id="iss_qty" placeholder="0" oninput="checkIssStock()"></div>
+      <div><label>Unit</label><input type="text" id="iss_unit" value="CFT" readonly style="background:#f5f7fa;"></div>
+      <div id="iss_stock_check" style="padding-top:18px;font-size:12px;font-weight:bold;"></div>
+    </div>
+    <div class="grid g2" style="margin-top:10px">
+      <div><label>Purpose / Component</label><input type="text" id="iss_purpose" placeholder="e.g. Top Deck Boards, Base Panel"></div>
+      <div><label>Issued By</label><input type="text" id="iss_by" value="Store Keeper"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="saveIssue()">💾 Save Issue</button>
+      <button class="btn btn-navy" onclick="clearIssue()">✖ Clear</button>
+    </div>
+    <div id="iss_status" style="margin-top:8px;font-size:12px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Issue Register (Last 30)</h2>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Date</th><th>Job Card</th><th>Product Type</th><th>Material</th><th>Grade</th><th>Qty</th><th>Unit</th><th>Purpose</th><th>Issued By</th></tr></thead>
+      <tbody id="issue_register_body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ALL STOCK ═══ -->
+<div id="tab-stock" class="panel">
+  <div class="note"><b>📊 All Stock</b> — Combined view of all stores items and raw materials. Stock = Opening + GRN Received − Issues − Adjustments.</div>
+  <div class="kpi-row">
+    <div class="kpi"><b id="s_total_val">—</b><span>Total Stock Value (₹)</span></div>
+    <div class="kpi"><b id="s_low_count" style="color:var(--red)">—</b><span>Low Stock Items</span></div>
+    <div class="kpi"><b id="s_grn_today">—</b><span>GRNs Today</span></div>
+    <div class="kpi"><b id="s_iss_today">—</b><span>Issues Today</span></div>
+    <div class="kpi"><b id="s_po_open">—</b><span>Open POs</span></div>
+  </div>
+  <div class="card">
+    <h2>All Materials — Stock Summary</h2>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Category</th><th>Material</th><th>Grade/Type</th><th>Unit</th><th>Opening</th><th>Received</th><th>Issued</th><th>Adjusted</th><th>Closing</th><th>Rate (₹)</th><th>Value (₹)</th><th>Reorder</th><th>Status</th></tr></thead>
+      <tbody id="all_stock_body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RM GRADE-WISE ═══ -->
+<div id="tab-rm_grades" class="panel">
+  <div class="card">
+    <h2>🌲 Wood Stock — Grade-wise</h2>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Species</th><th>Grade</th><th>Opening</th><th>Received</th><th>Issued</th><th>Closing</th><th>Unit</th><th>Rate (₹)</th><th>Value (₹)</th><th>Reorder</th><th>Status</th></tr></thead>
+      <tbody id="wood_grade_body"></tbody></table>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🪵 Plywood Stock — Grade + Thickness</h2>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Grade</th><th>Nominal Thick</th><th>Avg Actual Thick</th><th>Avg Variance</th><th>Opening</th><th>Received</th><th>Issued</th><th>Closing</th><th>Unit</th><th>Rate (₹)</th><th>Value (₹)</th><th>Status</th></tr></thead>
+      <tbody id="ply_grade_body"></tbody></table>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🔩 Other RM — Nails, Blocks, Hardware</h2>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Material</th><th>Type/Size</th><th>Opening</th><th>Received</th><th>Issued</th><th>Closing</th><th>Unit</th><th>Rate (₹)</th><th>Value (₹)</th><th>Status</th></tr></thead>
+      <tbody id="other_rm_body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COMPONENT STOCK ═══ -->
+<div id="tab-components" class="panel">
+  <div class="note"><b>🔧 Component Stock</b> — Semi-finished parts tracked between production stages. Linked to Job Cards via BOM.</div>
+  <div class="card">
+    <h2>Update Component Stock</h2>
+    <div class="grid g3">
+      <div><label>Date *</label><input type="date" id="cs_date"></div>
+      <div><label>Product Type *</label>
+        <select id="cs_product" onchange="loadCompLines()">
+          <option>Pallet</option><option>Box</option><option>Crate</option>
+        </select></div>
+      <div><label>Job Card Reference</label><input type="text" id="cs_jc" placeholder="JC-2026-XXXX"></div>
+    </div>
+    <div id="comp_lines_container" style="margin-top:12px;"></div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="saveCompStock()">💾 Save Component Stock</button>
+    </div>
+    <div id="cs_status" style="margin-top:8px;font-size:12px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>📊 Component Stock Summary (Latest per Product)</h2>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Product</th><th>Component</th><th>Stage</th><th>Opening</th><th>Produced</th><th>Used</th><th>Closing</th><th>Target</th><th>Coverage %</th><th>Status</th></tr></thead>
+      <tbody id="comp_summary_body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ THICKNESS LOG ═══ -->
+<div id="tab-thickness" class="panel">
+  <div class="kpi-row">
+    <div class="kpi"><b id="tv_total">—</b><span>GRNs with Thickness Data</span></div>
+    <div class="kpi"><b id="tv_crit" style="color:var(--red)">—</b><span>Critical (&gt;5mm)</span></div>
+    <div class="kpi"><b id="tv_warn" style="color:var(--orange)">—</b><span>Warning (2-5mm)</span></div>
+    <div class="kpi"><b id="tv_ok" style="color:var(--green)">—</b><span>OK (&lt;2mm)</span></div>
+  </div>
+  <div class="card">
+    <h2>📏 Thickness Variance Register</h2>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>GRN No.</th><th>Date</th><th>Supplier</th><th>Material</th><th>Grade</th><th>Paper Thick</th><th>Actual Thick</th><th>Variance</th><th>% Var</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody id="thick_log_body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADJUSTMENTS ═══ -->
+<div id="tab-adjustments" class="panel">
+  <div class="card">
+    <h2>⚖️ Stock Adjustment Entry</h2>
+    <div class="grid g3">
+      <div><label>Date *</label><input type="date" id="adj_date"></div>
+      <div><label>Category *</label>
+        <select id="adj_category">
+          <option value="wood">Wood (RM)</option><option value="plywood">Plywood (RM)</option>
+          <option value="stores">Stores Item</option><option value="fasteners">Nails/Fasteners</option>
+        </select></div>
+      <div><label>Item / Material *</label><input type="text" id="adj_item" placeholder="Item name"></div>
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      <div><label>Grade/Type</label><input type="text" id="adj_grade" placeholder="Grade A, MR, etc."></div>
+      <div><label>Adjustment Qty *</label><input type="number" id="adj_qty" placeholder="Use +ve for addition, -ve for reduction"></div>
+      <div><label>Unit</label><input type="text" id="adj_unit" placeholder="CFT, Sqft, kg, nos"></div>
+    </div>
+    <div class="grid g2" style="margin-top:10px">
+      <div><label>Reason *</label>
+        <select id="adj_reason">
+          <option>Physical Count Correction</option><option>Damage / Wastage</option>
+          <option>Return to Supplier</option><option>Transfer Between Stores</option><option>Opening Balance Entry</option>
+        </select></div>
+      <div><label>Authorised By</label><input type="text" id="adj_auth" placeholder="Manager name"></div>
+    </div>
+    <div><label style="margin-top:10px">Remarks</label><textarea id="adj_remarks" rows="2" placeholder="Details of adjustment"></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-orange" onclick="saveAdjustment()">💾 Save Adjustment</button>
+      <button class="btn btn-navy" onclick="clearAdj()">✖ Clear</button>
+    </div>
+    <div id="adj_status" style="margin-top:8px;font-size:12px;"></div>
+  </div>
+  <div class="card">
+    <h2>📋 Adjustment Log</h2>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Date</th><th>Category</th><th>Item</th><th>Grade</th><th>Adj Qty</th><th>Unit</th><th>Reason</th><th>Auth By</th></tr></thead>
+      <tbody id="adj_log_body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /body -->
+
+<script>
+// ══════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH = 'SSPI-VC-2026-SECURE';
+const TODAY = new Date().toISOString().split('T')[0];
+
+// ── Master Data ──────────────────────────────────
+const WOOD_MASTER = [
+  {cat:'wood',material:'Eucalyptus',grade:'Grade A',unit:'CFT',rate:90,opening:1000,reorder:500},
+  {cat:'wood',material:'Eucalyptus',grade:'Grade B',unit:'CFT',rate:70,opening:600,reorder:300},
+  {cat:'wood',material:'Pinewood',  grade:'Grade A',unit:'CFT',rate:85,opening:800,reorder:400},
+  {cat:'wood',material:'Pinewood',  grade:'Grade B',unit:'CFT',rate:70,opening:0,  reorder:200},
+  {cat:'wood',material:'Pinewood',  grade:'Grade C',unit:'CFT',rate:50,opening:0,  reorder:100},
+];
+const PLY_MASTER = [
+  {cat:'plywood',material:'Plywood',grade:'MR (Commercial)',       thick:12,unit:'Sqft',rate:35,opening:1000,reorder:500},
+  {cat:'plywood',material:'Plywood',grade:'MR (Commercial)',       thick:18,unit:'Sqft',rate:40,opening:500, reorder:300},
+  {cat:'plywood',material:'Plywood',grade:'BWR (Water Resistant)',thick:12,unit:'Sqft',rate:45,opening:500, reorder:300},
+  {cat:'plywood',material:'Plywood',grade:'BWR (Water Resistant)',thick:18,unit:'Sqft',rate:52,opening:500, reorder:300},
+  {cat:'plywood',material:'Plywood',grade:'BWP (Water Proof)',     thick:12,unit:'Sqft',rate:60,opening:0,  reorder:200},
+  {cat:'plywood',material:'Plywood',grade:'BWP (Water Proof)',     thick:18,unit:'Sqft',rate:70,opening:0,  reorder:200},
+];
+const OTHER_RM = [
+  {cat:'fasteners',material:'Nails',grade:'2"',  unit:'kg', rate:80, opening:0,   reorder:50},
+  {cat:'fasteners',material:'Nails',grade:'2.5"',unit:'kg', rate:80, opening:500, reorder:100},
+  {cat:'fasteners',material:'Nails',grade:'3"',  unit:'kg', rate:75, opening:0,   reorder:50},
+  {cat:'fasteners',material:'Blocks',grade:'Standard',unit:'nos',rate:5,opening:2000,reorder:500},
+];
+const BOM = {
+  Pallet:[{m:'Eucalyptus',g:'Grade A',qty:5,cft:2.5},{m:'Eucalyptus',g:'Grade A',qty:5,cft:2.5},{m:'Pinewood',g:'Grade B',qty:9,cft:1.2},{m:'Nails',g:'2.5"',qty:0.5,cft:0}],
+  Box:[{m:'Pinewood',g:'Grade B',qty:1,cft:1.5},{m:'Pinewood',g:'Grade B',qty:4,cft:0.8},{m:'Pinewood',g:'Grade C',qty:4,cft:0.3},{m:'Nails',g:'2"',qty:0.3,cft:0}],
+  Crate:[{m:'Eucalyptus',g:'Grade B',qty:1,cft:2.0},{m:'Eucalyptus',g:'Grade B',qty:4,cft:1.2},{m:'Pinewood',g:'Grade C',qty:4,cft:0.6},{m:'Nails',g:'3"',qty:0.5,cft:0}]
+};
+const COMP_DEF = {
+  Pallet:[{comp:'Top Deck Boards',stage:'Stage 1'},{comp:'Bottom Deck Boards',stage:'Stage 1'},{comp:'Blocks/Posts',stage:'Stage 2'}],
+  Box:[{comp:'Base',stage:'Stage 1'},{comp:'Side Slats',stage:'Stage 1'},{comp:'End Slats',stage:'Stage 1'},{comp:'Top',stage:'Stage 1'},{comp:'Corner Blocks',stage:'Stage 2'}],
+  Crate:[{comp:'Base',stage:'Stage 1'},{comp:'Side Slats',stage:'Stage 1'},{comp:'End Slats',stage:'Stage 1'},{comp:'Top',stage:'Stage 1'},{comp:'Corner Posts',stage:'Stage 2'}]
+};
+
+// ── LocalStorage helpers ─────────────────────────
+const ls = k => { try{return JSON.parse(localStorage.getItem('sspi_mat_'+k)||'[]');}catch{return[];} };
+const lsSave = (k,v) => localStorage.setItem('sspi_mat_'+k, JSON.stringify(v));
+// Also read RM bot data for compatibility
+const lsRM = k => { try{return JSON.parse(localStorage.getItem('sspi_rm_'+k)||'[]');}catch{return[];} };
+
+// ── Clock ────────────────────────────────────────
+(function tick(){
+  const n=new Date();
+  document.getElementById('hdr_date').textContent=n.toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})+' '+n.toLocaleTimeString('en-IN');
+  setTimeout(tick,1000);
+})();
+
+// ── GAS post with offline queue ───────────────────
+let _gsQueue = JSON.parse(localStorage.getItem('_sspi_mat_gsq')||'[]');
+function gsPost(payload){
+  payload.authToken = GS_AUTH;
+  payload._ts = new Date().toISOString();
+  _gsQueue.push(payload);
+  localStorage.setItem('_sspi_mat_gsq', JSON.stringify(_gsQueue));
+  _gsDrain();
+}
+function _gsDrain(){
+  if(!_gsQueue.length) return;
+  const item = _gsQueue[0];
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(()=>{ _gsQueue.shift(); localStorage.setItem('_sspi_mat_gsq',JSON.stringify(_gsQueue)); if(_gsQueue.length) setTimeout(_gsDrain,500); })
+    .catch(()=>{ setTimeout(_gsDrain,30000); });
+}
+setTimeout(_gsDrain, 3000);
+
+// ── JSONP read from GAS ───────────────────────────
+function gasJSONP(type, limit, cb){
+  const cbName = '_gsCB_' + type + '_' + Date.now();
+  window[cbName] = function(res){
+    try{ delete window[cbName]; }catch(e){}
+    if(res && res.status==='ok') cb(res.data||[]);
+    else cb([]);
+  };
+  const s = document.createElement('script');
+  s.src = GS_URL + '?type=' + type + '&limit=' + limit + '&authToken=' + GS_AUTH + '&callback=' + cbName;
+  s.onerror = function(){ try{delete window[cbName];}catch(e){} cb([]); };
+  document.head.appendChild(s);
+  setTimeout(()=>{ try{if(window[cbName]){delete window[cbName];cb([]);}}catch(e){} }, 10000);
+}
+
+// ── Pull GRNs from GAS on load (cross-device sync) ─
+function syncGRNFromGAS(){
+  gasJSONP('grn', 500, function(rows){
+    try{
+      // Stores tab returns rows keyed by column headers
+      const existing = ls('grn');
+      const existingNos = new Set(existing.map(g=>g.grnNo));
+      const grouped = {};
+      rows.forEach(r=>{
+        const gNo  = r['GRN/Issue No'] || r.grnNo || '';
+        const type = r['Type'] || r.type || '';
+        if(!gNo || type !== 'GRN' || existingNos.has(gNo)) return;
+        if(!grouped[gNo]) grouped[gNo] = {
+          grnNo: gNo,
+          date:     r['Date']          || r.date     || '',
+          category: type,
+          supplier: r['Supplier/Dept'] || r.supplier || '',
+          poRef:    r['Remarks']       || r.poRef    || '',
+          grade:'', paperThick:'', actualThick:'', variance:'',
+          thickStatus:'', thickAction:'', totalQty:0, lines:[]
+        };
+        const qty = parseFloat(r['Qty'] || r.qty) || 0;
+        const item = r['Item'] || r.material || r.item || '';
+        const unit = r['Unit'] || r.unit || '';
+        grouped[gNo].lines.push({item, qty, unit, rate:0});
+        grouped[gNo].totalQty = (grouped[gNo].totalQty||0) + qty;
+      });
+      const newGRNs = Object.values(grouped);
+      if(newGRNs.length){
+        lsSave('grn', [...existing, ...newGRNs]);
+        renderGRNRegister();
+      }
+    }catch(e){}
+  });
+}
+
+// ── Pull POs from GAS on load (cross-device sync) ─────────────
+function syncPOFromGAS(){
+  gasJSONP('purchase', 300, function(rows){
+    try{
+      // Purchase tab headers: Date | PO No | Supplier | Item | Qty | Rate | Amount | Delivery Date | Status | Location | Submitted By | Timestamp
+      // One row per line item — group by PO No
+      const existing = ls('po');
+      const existingNos = new Set(existing.map(p=>p.poNo));
+      const grouped = {};
+      rows.forEach(r=>{
+        const poNo = r['PO No'] || r.poNo || '';
+        if(!poNo || existingNos.has(poNo)) return;
+        if(!grouped[poNo]) grouped[poNo] = {
+          poNo,
+          date:        r['Date']          || r.date        || '',
+          supplier:    r['Supplier']       || r.supplier    || '',
+          contact:     '',
+          expDelivery: r['Delivery Date']  || r.expDelivery || '',
+          terms:       r['Terms']          || r.terms       || '30 days credit',
+          remarks:     '',
+          status:      r['Status']         || r.status      || 'Open',
+          totalValue:  0,
+          lines:       []
+        };
+        const qty    = parseFloat(r['Qty']    || r.qty)    || 0;
+        const rate   = parseFloat(r['Rate']   || r.rate)   || 0;
+        const amount = parseFloat(r['Amount'] || r.amount) || (qty * rate);
+        grouped[poNo].totalValue += amount;
+        grouped[poNo].lines.push({
+          type:   r['Category'] || '',
+          item:   r['Item']     || r.item || '',
+          qty, unit: r['Unit'] || r.unit || '', rate, amount
+        });
+      });
+      const newPOs = Object.values(grouped);
+      if(newPOs.length){
+        lsSave('po', [...existing, ...newPOs]);
+        renderPOList();
+        populateGRNPOSelect();
+      }
+    }catch(e){}
+  });
+}
+
+// ── Re-post existing localStorage POs to GAS (one-time recovery) ──
+function repostPOsToGAS(){
+  const pos = ls('po');
+  if(!pos.length){
+    alert('No POs found in local storage on this device.\n\nOpen this bot on the device where POs were originally entered, then click Re-sync to Server.');
+    return;
+  }
+  let count = 0;
+  pos.forEach(po => {
+    (po.lines||[]).forEach(line => {
+      gsPost({
+        type:         'purchase',
+        poNo:         po.poNo,
+        date:         po.date,
+        supplier:     po.supplier,
+        item:         line.item   || '',
+        qty:          line.qty    || 0,
+        unit:         line.unit   || '',
+        rate:         line.rate   || 0,
+        amount:       line.amount || 0,
+        deliveryDate: po.expDelivery || '',
+        terms:        po.terms    || '',
+        status:       po.status   || 'Open'
+      });
+      count++;
+    });
+  });
+  const el = document.getElementById('po_sync_status');
+  el.style.display = 'block';
+  el.textContent = '✅ Re-syncing ' + count + ' line(s) from ' + pos.length + ' PO(s) to server…';
+  setTimeout(()=>{ el.textContent += ' Done! POs will now appear in SSPI_MASTER_DATA → Purchase tab.'; }, 5000);
+}
+
+// ── Re-post all localStorage GRNs to GAS (one-time recovery) ──
+function repostGRNsToGAS(){
+  const grns = ls('grn');
+  if(!grns.length){
+    alert('No GRNs found in local storage on this device.\n\nOpen this bot on the device where GRNs were originally entered, then click Re-sync to Server.');
+    return;
+  }
+  let count = 0;
+  grns.forEach(g => {
+    (g.lines||[]).forEach(line => {
+      gsPost({
+        type: 'grn',
+        grnNo:    g.grnNo,
+        date:     g.date,
+        supplier: g.supplier,
+        material: line.item || '',
+        qty:      line.qty  || 0,
+        unit:     line.unit || '',
+        rate:     line.rate || 0,
+        poRef:    g.poRef   || '',
+        grade:    g.grade   || '',
+        category: g.category|| 'GRN'
+      });
+      count++;
+    });
+  });
+  const el = document.getElementById('grn_sync_status');
+  el.style.display='block';
+  el.textContent = '✅ Re-syncing ' + count + ' line(s) from ' + grns.length + ' GRN(s) to server…';
+  setTimeout(()=>{ el.textContent += ' Done! GRNs will now appear in SSPI_MASTER_DATA → Stores tab.'; }, 5000);
+}
+
+// ── Tab navigation ───────────────────────────────
+function showTab(id, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+  refreshTab(id);
+}
+function refreshTab(id){
+  if(id==='po') { renderPOList(); calcPOKPIs(); populateGRNPOSelect(); }
+  if(id==='grn') { renderGRNRegister(); populateGRNPOSelect(); }
+  if(id==='issue') { renderIssueRegister(); }
+  if(id==='stock') { renderAllStock(); }
+  if(id==='rm_grades') { renderRMGrades(); }
+  if(id==='components') { loadCompLines(); renderCompSummary(); }
+  if(id==='thickness') { renderThicknessLog(); }
+  if(id==='adjustments') { renderAdjLog(); }
+}
+
+// ══ INIT default dates ═══
+document.querySelectorAll('[type="date"]').forEach(d=>d.value=TODAY);
+
+// ══════════════════════════════════════════════════
+// PURCHASE ORDERS
+// ══════════════════════════════════════════════════
+let poLineCount = 0;
+function addPOLine(data){
+  poLineCount++;
+  const id = 'pol_'+poLineCount;
+  const div = document.createElement('div');
+  div.className='item-row'; div.id=id;
+  div.innerHTML=`
+    <div>
+      <select style="width:100%;padding:6px;font-size:11px;border:1px solid var(--border);border-radius:4px;" onchange="updatePOTotal()">
+        <option value="">— Category —</option>
+        <option>Wood (Eucalyptus/Pinewood)</option><option>Plywood</option><option>Nails/Hardware</option>
+        <option>Blocks</option><option>Packing Material</option><option>Consumable</option><option>Other Stores</option>
+      </select>
+      <input type="text" placeholder="Item / description" style="margin-top:4px;width:100%;padding:6px;font-size:11px;border:1px solid var(--border);border-radius:4px;">
+    </div>
+    <div><label style="font-size:10px">Qty</label><input type="number" placeholder="0" min="0" style="padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;" oninput="updatePOTotal()"></div>
+    <div><label style="font-size:10px">Unit</label><input type="text" value="CFT" style="padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;"></div>
+    <div><label style="font-size:10px">Rate (₹)</label><input type="number" placeholder="0" min="0" style="padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;" oninput="updatePOTotal()"></div>
+    <button onclick="document.getElementById('${id}').remove();updatePOTotal();" style="background:var(--red);color:#fff;border:none;border-radius:4px;cursor:pointer;height:32px;align-self:flex-end;">✕</button>
+  `;
+  document.getElementById('po_lines').appendChild(div);
+  if(data){ /* auto-fill from PO data if provided */ }
+}
+function updatePOTotal(){
+  let total=0;
+  document.querySelectorAll('#po_lines .item-row').forEach(row=>{
+    const inputs=row.querySelectorAll('input[type="number"]');
+    if(inputs.length>=2){ const q=parseFloat(inputs[0].value)||0; const r=parseFloat(inputs[1].value)||0; total+=q*r; }
+  });
+  document.getElementById('po_total').textContent=total.toLocaleString('en-IN');
+}
+function clearPO(){ document.getElementById('po_lines').innerHTML=''; poLineCount=0; updatePOTotal(); }
+function savePO(){
+  const dt=document.getElementById('po_date').value;
+  const sup=document.getElementById('po_supplier').value.trim();
+  if(!dt||!sup){ alert('Date and Supplier are required.'); return; }
+  const lines=[]; let totalVal=0;
+  document.querySelectorAll('#po_lines .item-row').forEach(row=>{
+    const sel=row.querySelector('select');
+    const inputs=row.querySelectorAll('input');
+    const cat=sel?sel.value:'';
+    const item=inputs[0]?inputs[0].value:'';
+    const qty=parseFloat(inputs[1]?inputs[1].value:0)||0;
+    const unit=inputs[2]?inputs[2].value:'';
+    const rate=parseFloat(inputs[3]?inputs[3].value:0)||0;
+    if(item&&qty>0){ lines.push({cat,item,qty,unit,rate,amount:qty*rate}); totalVal+=qty*rate; }
+  });
+  if(!lines.length){ alert('Add at least one line item.'); return; }
+  const poNo='PO-'+dt.replace(/-/g,'').slice(2)+'-'+String(Date.now()).slice(-4);
+  const po={ poNo, date:dt, supplier:sup, contact:document.getElementById('po_contact').value,
+    expDelivery:document.getElementById('po_exp_delivery').value,
+    terms:document.getElementById('po_terms').value,
+    remarks:document.getElementById('po_remarks').value,
+    lines, totalValue:totalVal, status:'Open', createdAt:new Date().toISOString() };
+  const pos=ls('po'); pos.push(po); lsSave('po',pos);
+  // Post one row per line item so GAS gets item / qty / rate / amount columns filled
+  lines.forEach(line => gsPost({
+    type:'purchase', poNo, date:dt, supplier:sup,
+    item: line.item, qty: line.qty, unit: line.unit||'', rate: line.rate, amount: line.amount,
+    deliveryDate: po.expDelivery||'', terms: po.terms, status:'Open'
+  }));
+  document.getElementById('po_status').innerHTML='<span style="color:var(--green);font-weight:bold;">✅ PO '+poNo+' saved ('+lines.length+' items, ₹'+totalVal.toLocaleString('en-IN')+')</span>';
+  clearPO();
+  renderPOList(); calcPOKPIs(); populateGRNPOSelect();
+}
+function renderPOList(){
+  const pos=ls('po');
+  document.getElementById('kpi_po_open').textContent=pos.filter(p=>p.status==='Open').length;
+  document.getElementById('kpi_po_partial').textContent=pos.filter(p=>p.status==='Partial').length;
+  document.getElementById('kpi_po_value').textContent='₹'+pos.filter(p=>p.status!=='Closed').reduce((s,p)=>s+p.totalValue,0).toLocaleString('en-IN',{maximumFractionDigits:0});
+  const ov=pos.filter(p=>p.status!=='Closed'&&p.expDelivery&&p.expDelivery<TODAY).length;
+  document.getElementById('kpi_po_overdue').textContent=ov;
+  document.getElementById('po_list_body').innerHTML=pos.slice(-20).reverse().map(p=>{
+    const cls=p.status==='Open'?'b-blue':p.status==='Closed'?'b-ok':p.status==='Partial'?'b-warn':'b-draft';
+    return `<tr>
+      <td><b>${p.poNo}</b></td><td>${p.date}</td><td>${p.supplier}</td>
+      <td>${p.lines.map(l=>l.item).join(', ')}</td>
+      <td>${p.expDelivery||'—'}</td><td style="text-align:right">₹${(p.totalValue||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+      <td><span class="badge ${cls}">${p.status}</span></td>
+      <td><button class="btn btn-teal" style="padding:3px 8px;font-size:10px" onclick="createGRNfromPO('${p.poNo}')">📥 GRN</button></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:14px">No POs yet. Create one above.</td></tr>';
+}
+function calcPOKPIs(){ /* handled in renderPOList */ }
+function createGRNfromPO(poNo){
+  showTab('grn', document.querySelectorAll('.tab')[1]);
+  document.getElementById('grn_po_ref').value=poNo;
+  loadPOIntoGRN();
+}
+function populateGRNPOSelect(){
+  const sel=document.getElementById('grn_po_ref');
+  const current=sel.value;
+  sel.innerHTML='<option value="">— Select PO (or enter manually) —</option>';
+  ls('po').filter(p=>p.status!=='Closed').forEach(p=>{
+    const opt=document.createElement('option');
+    opt.value=p.poNo; opt.textContent=p.poNo+' — '+p.supplier+' ('+p.date+')';
+    sel.appendChild(opt);
+  });
+  if(current) sel.value=current;
+}
+function loadPOIntoGRN(){
+  const poNo=document.getElementById('grn_po_ref').value;
+  if(!poNo) return;
+  const po=ls('po').find(p=>p.poNo===poNo);
+  if(!po) return;
+  document.getElementById('grn_supplier').value=po.supplier;
+  document.getElementById('grn_lines').innerHTML='';
+  po.lines.forEach(line=>{
+    addGRNLine({item:line.item, qty:line.qty, unit:line.unit, rate:line.rate, cat:line.cat});
+  });
+}
+
+// ══════════════════════════════════════════════════
+// GRN
+// ══════════════════════════════════════════════════
+let grnLineCount=0;
+function addGRNLine(data){
+  grnLineCount++;
+  const id='grn_line_'+grnLineCount;
+  const div=document.createElement('div');
+  div.className='item-row'; div.id=id;
+  div.innerHTML=`
+    <input type="text" placeholder="Item / Material name" value="${data?.item||''}" style="padding:7px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+    <input type="number" placeholder="Qty" value="${data?.qty||''}" min="0" style="padding:7px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+    <input type="text" placeholder="Unit" value="${data?.unit||'CFT'}" style="padding:7px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+    <input type="number" placeholder="Rate" value="${data?.rate||''}" min="0" style="padding:7px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+    <button onclick="document.getElementById('${id}').remove();" style="background:var(--red);color:#fff;border:none;border-radius:4px;cursor:pointer;height:34px;">✕</button>
+  `;
+  document.getElementById('grn_lines').appendChild(div);
+}
+function toggleRMFields(){
+  const cat=document.getElementById('grn_category').value;
+  document.getElementById('rm_thickness_section').style.display=(cat==='wood'||cat==='plywood')?'block':'none';
+}
+function calcThickVariance(){
+  const paper=parseFloat(document.getElementById('grn_paper_thick').value)||0;
+  const actual=parseFloat(document.getElementById('grn_actual_thick').value)||0;
+  if(!paper||!actual){document.getElementById('thick_status_display').textContent='Enter both values';return;}
+  const diff=Math.abs(paper-actual);
+  let status,color;
+  if(diff<=2){status='✅ OK (≤2mm variance)';color='var(--green)';}
+  else if(diff<=5){status='⚠️ WARNING ('+diff.toFixed(1)+'mm variance — 2-5mm)';color='var(--orange)';}
+  else{status='🚨 CRITICAL ('+diff.toFixed(1)+'mm variance — >5mm)';color='var(--red)';}
+  const pct=paper>0?(diff/paper*100).toFixed(1):'—';
+  document.getElementById('thick_status_display').innerHTML=`<span style="color:${color}">${status}</span> &nbsp;|&nbsp; ${pct}% variance`;
+}
+function clearGRN(){ document.getElementById('grn_lines').innerHTML=''; grnLineCount=0; document.getElementById('rm_thickness_section').style.display='none'; document.getElementById('grn_status').textContent=''; document.querySelectorAll('[id^="grn_"]').forEach(el=>{if(el.tagName==='INPUT')el.value=el.type==='date'?TODAY:'';}); }
+function saveGRN(){
+  const dt=document.getElementById('grn_date').value;
+  const sup=document.getElementById('grn_supplier').value.trim();
+  if(!dt||!sup){ alert('Date and Supplier required.'); return; }
+  const cat=document.getElementById('grn_category').value;
+  const poRef=document.getElementById('grn_po_ref').value;
+  const lines=[]; let totalQty=0;
+  document.querySelectorAll('#grn_lines .item-row').forEach(row=>{
+    const inputs=row.querySelectorAll('input');
+    const item=inputs[0]?inputs[0].value.trim():'';
+    const qty=parseFloat(inputs[1]?inputs[1].value:0)||0;
+    const unit=inputs[2]?inputs[2].value:'';
+    const rate=parseFloat(inputs[3]?inputs[3].value:0)||0;
+    if(item&&qty>0){lines.push({item,qty,unit,rate,amount:qty*rate});totalQty+=qty;}
+  });
+  if(!lines.length){ alert('Add at least one GRN line item.'); return; }
+  const grnNo='GRN-'+dt.replace(/-/g,'').slice(2)+'-'+String(Date.now()).slice(-4);
+  let paperThick='', actualThick='', variance='', thickStatus='', thickAction='';
+  const grade=document.getElementById('grn_grade')?document.getElementById('grn_grade').value:'';
+  if(cat==='wood'||cat==='plywood'){
+    paperThick=document.getElementById('grn_paper_thick').value;
+    actualThick=document.getElementById('grn_actual_thick').value;
+    if(paperThick&&actualThick){
+      const d=Math.abs(parseFloat(paperThick)-parseFloat(actualThick));
+      variance=d.toFixed(2);
+      thickStatus=d<=2?'OK':d<=5?'WARNING':'CRITICAL';
+    }
+    thickAction=document.getElementById('grn_thick_action').value;
+  }
+  const grn={grnNo,date:dt,supplier:sup,category:cat,poRef,vehicle:document.getElementById('grn_vehicle').value,
+    challan:document.getElementById('grn_challan').value,lines,totalQty,
+    paperThick,actualThick,variance,thickStatus,thickAction,grade,
+    billAmount:document.getElementById('grn_bill_amount').value,
+    enteredBy:document.getElementById('grn_entered_by').value,createdAt:new Date().toISOString()};
+  const grns=ls('grn'); grns.push(grn); lsSave('grn',grns);
+  // Also save in rm compat key if RM category
+  if(cat==='wood'||cat==='plywood'){
+    const rmGRNs=lsRM('grn');
+    lines.forEach(l=>{
+      rmGRNs.push({grn_no:grnNo,date:dt,supplier:sup,material:cat==='wood'?l.item:'Plywood',
+        grade,qty:l.qty,unit:l.unit,rate:l.rate,paper_thick:paperThick,actual_thick:actualThick,
+        variance,thick_status:thickStatus,thick_action:thickAction});
+    });
+    localStorage.setItem('sspi_rm_grn',JSON.stringify(rmGRNs));
+  }
+  // Update PO status
+  if(poRef){ const pos=ls('po'); const idx=pos.findIndex(p=>p.poNo===poRef); if(idx>=0){pos[idx].status='Partial';lsSave('po',pos);} }
+  // Post to GAS
+  const gType=(cat==='wood'||cat==='plywood')?'rm_grn':'stores_grn';
+  lines.forEach(l=>{ gsPost({type:gType, grnNo, date:dt, supplier:sup, material:l.item, grade, qty:l.qty, unit:l.unit, rate:l.rate, paperThick, actualThick, variance, thickStatus, thickAction, poRef}); });
+  document.getElementById('grn_status').innerHTML=`<span style="color:var(--green);font-weight:bold;">✅ ${grnNo} saved (${lines.length} items, Total Qty: ${totalQty}${thickStatus?` | Thickness: ${thickStatus}`:''})</span>`;
+  clearGRN();
+  renderGRNRegister();
+}
+function renderGRNRegister(){
+  const grns=ls('grn');
+  document.getElementById('grn_register_body').innerHTML=grns.slice(-30).reverse().map(g=>{
+    const tc=g.thickStatus==='CRITICAL'?'b-crit':g.thickStatus==='WARNING'?'b-warn':g.thickStatus==='OK'?'b-ok':'';
+    return `<tr>
+      <td><b>${g.grnNo}</b></td><td>${g.date}</td>
+      <td>${g.category}</td><td>${g.supplier}</td>
+      <td>${(g.lines||[]).map(l=>l.item).join(', ')}</td>
+      <td style="text-align:right">${g.totalQty}</td>
+      <td>${(g.lines&&g.lines[0])?g.lines[0].unit:''}</td>
+      <td>${g.grade||'—'}</td>
+      <td style="text-align:center">${g.paperThick?g.paperThick+'mm':'—'}</td>
+      <td style="text-align:center">${g.actualThick?g.actualThick+'mm':'—'}</td>
+      <td style="text-align:center;font-weight:bold">${g.variance?g.variance+'mm':'—'}</td>
+      <td>${g.thickStatus?`<span class="badge ${tc}">${g.thickStatus}</span>`:'—'}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:14px">No GRNs recorded yet.</td></tr>';
+}
+function printGRN(){ window.print(); }
+
+// ══════════════════════════════════════════════════
+// ISSUE TO PRODUCTION
+// ══════════════════════════════════════════════════
+function getStock(material, grade){
+  // Combine opening + GRN receipts - issues - adjustments
+  const m = [...WOOD_MASTER,...PLY_MASTER,...OTHER_RM].find(x=>x.material===material&&x.grade===grade);
+  const opening = m?m.opening:0;
+  const grns = ls('grn');
+  const received = grns.reduce((s,g)=>{
+    return s+(g.lines||[]).filter(l=>l.item===material).reduce((ss,l)=>ss+(parseFloat(l.qty)||0),0);
+  },0);
+  // Also check RM compat
+  const rmRec = lsRM('grn').filter(r=>r.material===material&&r.grade===grade).reduce((s,r)=>s+(parseFloat(r.qty)||0),0);
+  const issues = ls('issue').filter(i=>i.material===material&&i.grade===grade).reduce((s,i)=>s+(parseFloat(i.qty)||0),0);
+  const rmIss = lsRM('issue').filter(i=>i.material===material&&i.grade===grade).reduce((s,i)=>s+(parseFloat(i.quantity)||0),0);
+  const adjs = ls('adj').filter(a=>a.item===material&&a.grade===grade).reduce((s,a)=>s+(parseFloat(a.qty)||0),0);
+  return opening + received + rmRec - issues - rmIss + adjs;
+}
+function updateIssMaterials(){
+  const cat=document.getElementById('iss_category').value;
+  const sel=document.getElementById('iss_material');
+  sel.innerHTML='';
+  if(cat==='wood'){['Eucalyptus','Pinewood'].forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o);});}
+  else if(cat==='plywood'){const o=document.createElement('option');o.value='Plywood';o.textContent='Plywood';sel.appendChild(o);}
+  else if(cat==='fasteners'){['Nails','Blocks'].forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o);});}
+  updateIssGrades(); checkIssStock();
+  const unitMap={wood:'CFT',plywood:'Sqft',fasteners:'kg',stores:'nos'};
+  document.getElementById('iss_unit').value=unitMap[cat]||'nos';
+}
+function updateIssGrades(){
+  const mat=document.getElementById('iss_material').value;
+  const sel=document.getElementById('iss_grade');
+  sel.innerHTML='';
+  const grades={Eucalyptus:['Grade A','Grade B'],Pinewood:['Grade A','Grade B','Grade C'],
+    Plywood:['MR (Commercial)','BWR (Water Resistant)','BWP (Water Proof)'],
+    Nails:['2"','2.5"','3"'],Blocks:['Standard','Treated']};
+  (grades[mat]||['Standard']).forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;sel.appendChild(o);});
+  checkIssStock();
+}
+function checkIssStock(){
+  const mat=document.getElementById('iss_material').value;
+  const grade=document.getElementById('iss_grade').value;
+  const qty=parseFloat(document.getElementById('iss_qty').value)||0;
+  const avail=getStock(mat,grade);
+  const el=document.getElementById('iss_stock_check');
+  const unit=document.getElementById('iss_unit').value;
+  if(qty>0){
+    const diff=avail-qty;
+    el.innerHTML=diff>=0
+      ?`<span class="stock-ok">✅ Available: ${avail} ${unit} (surplus: +${diff.toFixed(1)})</span>`
+      :`<span class="stock-none">🚫 Short! Available: ${avail} ${unit} (deficit: ${diff.toFixed(1)})</span>`;
+  } else {
+    el.innerHTML=`<span style="color:var(--muted)">Stock: ${avail} ${unit}</span>`;
+  }
+}
+function checkJCStock(){
+  const jc=document.getElementById('iss_jc').value.trim();
+  const pt=document.getElementById('iss_product_type').value;
+  const el=document.getElementById('jc_bom_status');
+  if(!jc){el.textContent='';return;}
+  const boms=BOM[pt]||[];
+  const checks=boms.map(b=>{const avail=getStock(b.m,b.g);const need=b.cft>0?b.qty*b.cft:b.qty;const ok=avail>=need;return `${ok?'✅':'⚠️'} ${b.m} ${b.g}: need ${need} ${b.cft>0?'CFT':'kg'}, have ${avail.toFixed(0)}`;});
+  el.innerHTML='<div style="font-size:10px;color:var(--navy2);margin-top:4px;">BOM check for '+pt+': '+checks.join(' · ')+'</div>';
+}
+function clearIssue(){ document.getElementById('iss_status').textContent=''; document.getElementById('iss_qty').value=''; document.getElementById('iss_jc').value=''; document.getElementById('iss_purpose').value=''; document.getElementById('jc_bom_status').textContent=''; }
+function saveIssue(){
+  const dt=document.getElementById('iss_date').value;
+  const jc=document.getElementById('iss_jc').value.trim();
+  const mat=document.getElementById('iss_material').value;
+  const grade=document.getElementById('iss_grade').value;
+  const qty=parseFloat(document.getElementById('iss_qty').value)||0;
+  if(!dt||!jc||!qty){ alert('Date, Job Card No., and Quantity are required.'); return; }
+  const avail=getStock(mat,grade);
+  if(qty>avail){ if(!confirm(`⚠️ Stock may be insufficient! Available: ${avail}, Issuing: ${qty}. Continue?`)) return; }
+  const iss={date:dt,jobCard:jc,productType:document.getElementById('iss_product_type').value,
+    category:document.getElementById('iss_category').value,
+    material:mat,grade,qty,unit:document.getElementById('iss_unit').value,
+    purpose:document.getElementById('iss_purpose').value,
+    issuedBy:document.getElementById('iss_by').value,createdAt:new Date().toISOString()};
+  const issues=ls('issue'); issues.push(iss); lsSave('issue',issues);
+  // RM compat
+  const rmIss=lsRM('issue'); rmIss.push({date:dt,product_type:iss.productType,material:mat,grade,quantity:qty,unit:iss.unit,component:iss.purpose,job_card:jc});
+  localStorage.setItem('sspi_rm_issue',JSON.stringify(rmIss));
+  gsPost({type:'rm_issue',date:dt,jobCard:jc,productType:iss.productType,material:mat,grade,quantity:qty,unit:iss.unit,component:iss.purpose,issuedBy:iss.issuedBy});
+  document.getElementById('iss_status').innerHTML=`<span style="color:var(--green);font-weight:bold;">✅ Issue saved — ${qty} ${iss.unit} of ${mat} (${grade}) for ${jc}</span>`;
+  clearIssue(); renderIssueRegister();
+}
+function renderIssueRegister(){
+  const iss=ls('issue');
+  document.getElementById('issue_register_body').innerHTML=iss.slice(-30).reverse().map(i=>`<tr>
+    <td>${i.date}</td><td><b>${i.jobCard}</b></td><td>${i.productType}</td>
+    <td>${i.material}</td><td>${i.grade}</td>
+    <td style="text-align:right">${i.qty}</td><td>${i.unit}</td>
+    <td>${i.purpose||'—'}</td><td>${i.issuedBy||'—'}</td>
+  </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:14px">No issues recorded yet.</td></tr>';
+}
+
+// ══════════════════════════════════════════════════
+// ALL STOCK
+// ══════════════════════════════════════════════════
+function renderAllStock(){
+  const grns=ls('grn'); const issues=ls('issue'); const adjs=ls('adj');
+  const today=TODAY;
+  const grnsToday=grns.filter(g=>g.date===today).length;
+  const issToday=issues.filter(i=>i.date===today).length;
+  const openPOs=ls('po').filter(p=>p.status!=='Closed').length;
+  let totalValue=0, lowCount=0;
+
+  const allMasters=[...WOOD_MASTER,...PLY_MASTER,...OTHER_RM];
+  const rows=allMasters.map(m=>{
+    const rec=grns.reduce((s,g)=>{
+      return s+(g.lines||[]).filter(l=>l.item===m.material).reduce((ss,l)=>ss+(parseFloat(l.qty)||0),0);
+    },0)+lsRM('grn').filter(r=>r.material===m.material&&r.grade===m.grade).reduce((s,r)=>s+(parseFloat(r.qty)||0),0);
+    const iss=issues.filter(i=>i.material===m.material&&i.grade===m.grade).reduce((s,i)=>s+(parseFloat(i.qty)||0),0)
+      +lsRM('issue').filter(i=>i.material===m.material&&i.grade===m.grade).reduce((s,i)=>s+(parseFloat(i.quantity)||0),0);
+    const adj=adjs.filter(a=>a.item===m.material&&a.grade===m.grade).reduce((s,a)=>s+(parseFloat(a.qty)||0),0);
+    const closing=m.opening+rec-iss+adj;
+    totalValue+=closing*m.rate;
+    const status=closing<m.reorder?'low':'ok';
+    if(status==='low') lowCount++;
+    return {m,rec,iss,adj,closing,value:closing*m.rate,status};
+  });
+
+  document.getElementById('s_total_val').textContent='₹'+totalValue.toLocaleString('en-IN',{maximumFractionDigits:0});
+  document.getElementById('s_low_count').textContent=lowCount;
+  document.getElementById('s_grn_today').textContent=grnsToday;
+  document.getElementById('s_iss_today').textContent=issToday;
+  document.getElementById('s_po_open').textContent=openPOs;
+
+  document.getElementById('all_stock_body').innerHTML=rows.map(({m,rec,iss,adj,closing,value,status})=>`<tr>
+    <td>${m.cat}</td><td>${m.material}</td><td>${m.grade}</td><td>${m.unit}</td>
+    <td style="text-align:right">${m.opening}</td>
+    <td style="text-align:right">${rec}</td>
+    <td style="text-align:right">${iss}</td>
+    <td style="text-align:right">${adj!==0?adj:'—'}</td>
+    <td style="text-align:right;font-weight:bold;color:${status==='low'?'var(--red)':'var(--green)'}">${closing.toFixed(0)}</td>
+    <td style="text-align:right">₹${m.rate}</td>
+    <td style="text-align:right">₹${value.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+    <td style="text-align:right">${m.reorder}</td>
+    <td><span class="badge ${status==='low'?'b-low':'b-ok'}">${status==='low'?'⚠️ LOW':'✅ OK'}</span></td>
+  </tr>`).join('');
+}
+
+// ══ RM GRADES ════════════════════════════════════
+function renderRMGrades(){
+  const grns=ls('grn'); const iss=ls('issue');
+  const rw=(m)=>{
+    const rec=grns.reduce((s,g)=>{return s+(g.lines||[]).filter(l=>l.item===m.material).reduce((ss,l)=>ss+(parseFloat(l.qty)||0),0);},0)+lsRM('grn').filter(r=>r.material===m.material&&r.grade===m.grade).reduce((s,r)=>s+(parseFloat(r.qty)||0),0);
+    const is=iss.filter(i=>i.material===m.material&&i.grade===m.grade).reduce((s,i)=>s+(parseFloat(i.qty)||0),0);
+    const closing=m.opening+rec-is;
+    const st=closing<m.reorder?'<span class="badge b-low">⚠️ LOW</span>':'<span class="badge b-ok">✅ OK</span>';
+    return `<tr><td>${m.material}</td><td>${m.grade}</td><td>${m.opening}</td><td>${rec}</td><td>${is}</td>
+      <td style="font-weight:bold;text-align:right">${closing.toFixed(0)}</td><td>${m.unit}</td>
+      <td>₹${m.rate}</td><td>₹${(closing*m.rate).toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+      <td>${m.reorder}</td><td>${st}</td></tr>`;
+  };
+  document.getElementById('wood_grade_body').innerHTML=WOOD_MASTER.map(rw).join('');
+  document.getElementById('ply_grade_body').innerHTML=PLY_MASTER.map(m=>{
+    const grnData=ls('grn').filter(g=>g.grade===m.grade&&g.paperThick&&g.actualThick);
+    const avgActual=grnData.length?(grnData.reduce((s,g)=>s+parseFloat(g.actualThick||0),0)/grnData.length).toFixed(1):'—';
+    const avgVar=grnData.length?(grnData.reduce((s,g)=>s+parseFloat(g.variance||0),0)/grnData.length).toFixed(2):'—';
+    const rec=ls('grn').filter(g=>g.grade===m.grade).reduce((s,g)=>{return s+(g.lines||[]).reduce((ss,l)=>ss+(parseFloat(l.qty)||0),0);},0);
+    const is=ls('issue').filter(i=>i.grade===m.grade).reduce((s,i)=>s+(parseFloat(i.qty)||0),0);
+    const closing=m.opening+rec-is;
+    const st=closing<m.reorder?'<span class="badge b-low">⚠️ LOW</span>':'<span class="badge b-ok">✅ OK</span>';
+    return `<tr><td>${m.grade}</td><td>${m.thick}mm</td><td>${avgActual} mm</td><td>${avgVar} mm</td>
+      <td>${m.opening}</td><td>${rec}</td><td>${is}</td>
+      <td style="font-weight:bold;text-align:right">${closing.toFixed(0)}</td><td>${m.unit}</td>
+      <td>₹${m.rate}</td><td>₹${(closing*m.rate).toLocaleString('en-IN',{maximumFractionDigits:0})}</td><td>${st}</td></tr>`;
+  }).join('');
+  document.getElementById('other_rm_body').innerHTML=OTHER_RM.map(rw).join('');
+}
+
+// ══ COMPONENTS ═══════════════════════════════════
+function loadCompLines(){
+  const pt=document.getElementById('cs_product').value;
+  const latest=ls('comp_'+pt.toLowerCase());
+  const last=latest.length?latest[latest.length-1]:{};
+  let html='<table style="width:100%;font-size:12px;border-collapse:collapse;">'
+    +'<thead><tr><th style="background:var(--navy);color:#fff;padding:7px 9px;">Component</th><th style="background:var(--navy);color:#fff;padding:7px 9px;">Stage</th>'
+    +'<th style="background:var(--navy);color:#fff;padding:7px 9px;">Opening</th><th style="background:var(--navy);color:#fff;padding:7px 9px;">Produced Today</th>'
+    +'<th style="background:var(--navy);color:#fff;padding:7px 9px;">Used Today</th><th style="background:var(--navy);color:#fff;padding:7px 9px;">Closing</th></tr></thead><tbody>';
+  (COMP_DEF[pt]||[]).forEach((c,i)=>{
+    const prev=last[c.comp]||{closing:0};
+    html+=`<tr><td style="border:1px solid var(--border);padding:6px 9px;"><b>${c.comp}</b></td>
+      <td style="border:1px solid var(--border);padding:6px 9px;font-size:11px;color:var(--muted)">${c.stage||'—'}</td>
+      <td style="border:1px solid var(--border);padding:6px 9px;text-align:right;">${prev.closing||0}</td>
+      <td style="border:1px solid var(--border);padding:6px 9px;"><input type="number" min="0" step="1" id="comp_prod_${i}" value="0" style="width:70px;padding:4px;border:1px solid var(--border);border-radius:4px;font-size:12px;" oninput="calcCompClosing(${i})"></td>
+      <td style="border:1px solid var(--border);padding:6px 9px;"><input type="number" min="0" step="1" id="comp_used_${i}" value="0" style="width:70px;padding:4px;border:1px solid var(--border);border-radius:4px;font-size:12px;" oninput="calcCompClosing(${i})"></td>
+      <td style="border:1px solid var(--border);padding:6px 9px;text-align:right;font-weight:bold;" id="comp_close_${i}">${prev.closing||0}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('comp_lines_container').innerHTML = html;
+  // Store COMP_DEF ref for save
+  window._csCompDef = COMP_DEF[pt] || [];
+  window._csPrevLast = last;
+}
+function calcCompClosing(i){
+  const c = window._csCompDef[i];
+  if (!c) return;
+  const prev = window._csPrevLast[c.comp] || {closing:0};
+  const prod = parseFloat(document.getElementById('comp_prod_'+i).value)||0;
+  const used = parseFloat(document.getElementById('comp_used_'+i).value)||0;
+  const closing = (prev.closing||0) + prod - used;
+  const el = document.getElementById('comp_close_'+i);
+  if (el) el.textContent = closing;
+}
+function saveCompStock(){
+  const pt = document.getElementById('cs_product').value;
+  if (!pt) { alert('Select a product first.'); return; }
+  const comps = window._csCompDef || COMP_DEF[pt] || [];
+  if (!comps.length) { alert('No components found for this product.'); return; }
+  const entry = { date: new Date().toISOString().slice(0,10), product: pt };
+  comps.forEach((c,i) => {
+    const prev = (window._csPrevLast||{})[c.comp] || {closing:0};
+    const prod = parseFloat(document.getElementById('comp_prod_'+i).value)||0;
+    const used = parseFloat(document.getElementById('comp_used_'+i).value)||0;
+    entry[c.comp] = { opening: prev.closing||0, produced: prod, used: used, closing: (prev.closing||0)+prod-used };
+  });
+  const existing = ls('comp_'+pt.toLowerCase());
+  existing.push(entry);
+  lsSave('comp_'+pt.toLowerCase(), existing);
+  gsPost({ type:'componentStock', ...entry });
+  showToast('✅ Component stock saved for ' + pt);
+  loadCompLines();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Sales Order &amp; Dispatch Bot</title>
+<style>
+  :root{
+    --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#ffffff;
+    --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --yellow:#fff7cc; --red:#b3261e; --orange:#b8860b;
+  }
+  *{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
+  body{margin:0; background:var(--bg); color:var(--text);}
+  header{background:var(--navy); color:#fff; padding:16px 24px;}
+  header h1{margin:0; font-size:20px;}
+  header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+  .tabs{display:flex; flex-wrap:wrap; background:var(--navy2); padding:0 16px;}
+  .tab{padding:10px 16px; color:#fff; cursor:pointer; font-size:13px; opacity:.8; border-bottom:3px solid transparent;}
+  .tab.active{opacity:1; border-bottom:3px solid var(--accent); font-weight:bold;}
+  .container{max-width:1300px; margin:0 auto; padding:20px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:18px;}
+  .card h2{margin-top:0; font-size:16px; color:var(--navy);}
+  .card p.hint{font-size:12px; color:var(--muted); margin-top:-6px;}
+  .grid{display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:12px;}
+  label{display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:var(--navy);}
+  input, select, textarea{width:100%; padding:7px 8px; border:1px solid var(--border); border-radius:5px; font-size:13px;}
+  textarea{resize:vertical; min-height:50px;}
+  button{background:var(--accent); color:#fff; border:none; padding:9px 16px; border-radius:5px; font-size:13px; cursor:pointer; font-weight:bold;}
+  button:hover{background:var(--navy);}
+  button.secondary{background:#888;}
+  .row-actions{margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  table{width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;}
+  th, td{border:1px solid var(--border); padding:5px 6px; text-align:left;}
+  th{background:var(--navy); color:#fff; position:sticky; top:0;}
+  tr:nth-child(even){background:#fafbfc;}
+  .table-wrap{max-height:480px; overflow:auto; border:1px solid var(--border); border-radius:6px;}
+  .pill{display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;}
+  .tag{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700}
+  .tag.green{background:rgba(34,197,94,.15);color:#16a34a}
+  .tag.blue{background:rgba(14,165,233,.15);color:#0284c7}
+  .tag.orange{background:rgba(249,115,22,.15);color:#ea580c}
+  .pill.received{background:#eef5fb; color:var(--accent);}
+  .pill.production{background:#fff7e0; color:var(--orange);}
+  .pill.ready{background:#ede9fe; color:#6d28d9;}
+  .pill.dispatched{background:#e3f6e9; color:var(--green);}
+  .pill.partial{background:#fff0f5; color:#be185d;}
+  .pill.draft{background:#fde7e7; color:var(--red);}
+  .note{background:#eef5fb; border-left:4px solid var(--accent); border-radius:0 6px 6px 0; padding:10px 14px; font-size:12px; color:#333; margin-bottom:14px; line-height:1.6;}
+  .kpi-row{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
+  .kpi{flex:1; min-width:140px; background:#fff; border:1px solid var(--border); border-radius:8px; padding:12px 16px;}
+  .kpi b{display:block; font-size:22px; color:var(--navy);}
+  .kpi span{font-size:11px; color:var(--muted);}
+  footer{text-align:center; font-size:11px; color:var(--muted); padding:16px;}
+  .filewrap{display:flex; align-items:center; gap:8px;}
+  .filewrap input[type=file]{padding:4px;}
+</style>
+</head>
+<body>
+<div id="back_to_dashboard" style="background:#1E3A5F;color:#fff;padding:8px 20px;display:flex;align-items:center;gap:12px;font-size:12px;position:sticky;top:0;z-index:9999;box-shadow:0 2px 6px rgba(0,0,0,.35)">
+  <button onclick="window.location.href='SSPI_COMBINED_DASHBOARD_V4.html'" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 16px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">← Back to Dashboard</button>
+  <span style="opacity:.55;font-size:11px;">SSPI Operations Dashboard V4</span>
+</div>
+<!-- ACCESS CONTROL GATE -->
+<div id="accessGate" style="position:fixed;inset:0;background:#1E3A5F;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Arial,Helvetica,sans-serif">
+  <div style="background:#fff;border-radius:10px;padding:30px 36px;max-width:380px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.35)">
+    <div style="font-size:32px;margin-bottom:8px">📦</div>
+    <h2 style="margin:0 0 6px;color:#1E3A5F;font-size:16px">Sales Order &amp; Dispatch Bot — Restricted Access</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 14px">Enter the access code provided by your supervisor / VC Admin to continue.</p>
+    <input id="gatePin" type="password" placeholder="Access Code" autocomplete="off" style="width:100%;padding:9px;font-size:14px;border:1px solid #d6dce4;border-radius:6px;text-align:center;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkGatePin()">
+    <div id="gateErr" style="color:#b3261e;font-size:11px;margin-top:6px;min-height:14px"></div>
+    <button onclick="checkGatePin()" style="margin-top:8px;background:#2E86AB;color:#fff;border:none;border-radius:6px;padding:9px 22px;font-size:12px;font-weight:bold;cursor:pointer">Unlock</button>
+    <div style="font-size:10.5px;color:#999;margin-top:10px">Authorized: Sales, Production Planning, Dispatch, Accounts</div>
+  </div>
+</div>
+<script>
+(function(){
+  var VALID_PINS = ['SO-2026','SALES-2026'];
+  var SESSION_KEY = 'sspi_gate_so';
+  function checkGatePin(){
+    var v=document.getElementById('gatePin').value.trim();
+    if(VALID_PINS.indexOf(v)>-1){
+      sessionStorage.setItem(SESSION_KEY,'1');
+      document.getElementById('accessGate').remove();
+    } else {
+      document.getElementById('gateErr').textContent='Incorrect code. Contact VC Admin / your supervisor.';
+    }
+  }
+  window.checkGatePin=checkGatePin;
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    var g=document.getElementById('accessGate'); if(g) g.remove();
+  }
+})();
+</script>
+<header>
+  <h1>📦 SSPI Sales Order &amp; Dispatch Bot</h1>
+  <p>Captures orders received by phone/WhatsApp/email/PDF/XLSX/DOCX · auto-drafts orders forwarded to a Gmail label · links every order to its Job Card and tracks it through to Dispatch</p>
+</header>
+<div class="tabs">
+  <div class="tab active" data-tab="newso">New Sales Order</div>
+  <div class="tab" data-tab="drafts">Email Drafts — Needs Review</div>
+  <div class="tab" data-tab="dispatch">Dispatch Entry</div>
+  <div class="tab" data-tab="pipeline">Order Pipeline</div>
+</div>
+<div class="container">
+
+  <!-- NEW SALES ORDER -->
+  <div class="panel active" id="panel-newso">
+    <div class="note">Use this for any order that didn't arrive in the Gmail label (phone call, WhatsApp, walk-in, or an email you want to enter manually). If you have the customer's PO as a PDF/XLSX/DOCX, attach it — it gets saved and linked to this order permanently.</div>
+    <div class="card">
+      <h2>Enter a New Sales Order</h2>
+      <div class="grid">
+        <div><label>Date</label><input id="so_date" type="date"></div>
+        <div><label>SO No. *</label><input id="so_no" type="text" placeholder="e.g. SSPI/2026/0099"></div>
+        <div><label>Customer *</label><input id="so_cust" type="text" placeholder="Customer name"></div>
+        <div><label>Product *</label><input id="so_prod" type="text" placeholder="Product / pallet type"></div>
+        <div><label>Qty *</label><input id="so_qty" type="number" min="0"></div>
+        <div><label>Rate (₹/unit)</label><input id="so_rate" type="number" min="0"></div>
+        <div><label>Amount (₹, auto)</label><input id="so_amount" type="text" readonly></div>
+        <div><label>Delivery Due Date</label><input id="so_due" type="date"></div>
+        <div><label>Entered By</label><input id="so_by" type="text" placeholder="Your name"></div>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div>
+          <label>Attach Original Order (PDF / XLSX / DOCX / image)</label>
+          <div class="filewrap"><input type="file" id="so_file" accept=".pdf,.xlsx,.xls,.docx,.doc,image/*" onchange="handleSOFile(this)"><span id="so_file_name" style="font-size:11px;color:var(--muted)">No file attached</span></div>
+        </div>
+      </div>
+      <div class="row-actions">
+        <button onclick="submitSalesOrder()">💾 Save Sales Order</button>
+        <span id="so_upload_status" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMAIL DRAFTS -->
+  <div class="panel" id="panel-drafts">
+    <div class="note">
+      <b>One-time setup (Gmail):</b> create a label called <code>SSPI-Sales-Orders</code> in Gmail and apply it to incoming customer order emails (manually, or with a Gmail filter rule). Every 30 minutes the system scans that label. If the email has a PDF/XLSX/DOCX attachment, it's saved to Drive and linked below. If the email has <b>no attachment</b> — e.g. the customer pasted an order/projection table straight into the email body — that table is captured automatically too; click <b>📄 View Captured Content</b> on that row to see it and pull any line into a real order. Either way, the order amount/product is left blank for you to complete here.
+    </div>
+    <div class="card">
+      <h2>Drafts Needing Review</h2>
+      <div class="row-actions" style="margin-top:0;margin-bottom:10px"><button onclick="loadDrafts()">🔄 Refresh</button></div>
+      <div class="table-wrap"><table id="drafts_table">
+        <thead><tr><th>SO No.</th><th>Date</th><th>Customer (from email)</th><th>Subject</th><th>Qty</th><th>Attachment</th><th>Captured Content</th><th>Action</th></tr></thead>
+        <tbody><tr><td colspan="7">Click Refresh to load.</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- DISPATCH ENTRY -->
+  <div class="panel" id="panel-dispatch">
+    <div class="note">Logging a dispatch here automatically updates the linked Sales Order's Dispatched Qty / Balance Qty / Status — no need to update the order separately.</div>
+    <div class="card">
+      <h2>Log a Dispatch</h2>
+      <div class="grid">
+        <div><label>Date</label><input id="dp_date" type="date"></div>
+        <div><label>Dispatch No.</label><input id="dp_no" type="text" placeholder="e.g. DC-2026-0044"></div>
+        <div><label>SO No. *</label><input id="dp_so" type="text" placeholder="Must match an existing Sales Order" list="soNoList"><datalist id="soNoList"></datalist></div>
+        <div><label>Customer (auto)</label><input id="dp_cust" type="text" readonly></div>
+        <div><label>Product (auto)</label><input id="dp_prod" type="text" readonly></div>
+        <div><label>Qty Dispatched *</label><input id="dp_qty" type="number" min="0"></div>
+        <div><label>Vehicle / Transporter</label><input id="dp_vehicle" type="text"></div>
+        <div><label>LR No.</label><input id="dp_lr" type="text"></div>
+        <div><label>Driver</label><input id="dp_driver" type="text"></div>
+        <div><label>Destination</label><input id="dp_dest" type="text"></div>
+        <div><label>Entered By</label><input id="dp_by" type="text" placeholder="Your name"></div>
+      </div>
+      <div class="row-actions">
+        <button onclick="lookupSOForDispatch()">🔎 Lookup Order</button>
+        <button onclick="submitDispatch()">🚚 Save Dispatch</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="panel" id="panel-pipeline">
+    <div class="kpi-row" id="kpiRow"></div>
+    <div class="card">
+      <h2>Order Pipeline — Order Received → In Production → Ready to Dispatch → Dispatched</h2>
+      <div class="row-actions" style="margin-top:0;margin-bottom:10px">
+        <button onclick="loadPipeline()">🔄 Refresh</button>
+        <input id="pipelineSearch" type="text" placeholder="Search customer / SO No / product…" oninput="filterPipeline(this.value)" style="flex:1;min-width:200px">
+      </div>
+      <div class="table-wrap"><table id="pipeline_table">
+        <thead><tr><th>SO No.</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Delivery Due</th><th>Status</th><th>Linked Job Card</th><th>Dispatched Qty</th><th>Balance Qty</th><th>Attachment</th></tr></thead>
+        <tbody><tr><td colspan="11">Click Refresh to load.</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+</div>
+<footer>SSPI Sales Order &amp; Dispatch Bot · every order carries through to Job Card and Dispatch via its SO No.</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS BACKEND — same backend as all other SSPI bots
+// ═══════════════════════════════════════════════════════
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+var _offQ = JSON.parse(localStorage.getItem('sspi_offline_q_so') || '[]');
+var _botOnline = navigator.onLine;
+function _saveOffQ(){ localStorage.setItem('sspi_offline_q_so', JSON.stringify(_offQ)); }
+function syncBotQueue(){
+  if (!_botOnline || !_offQ.length) return;
+  var item = _offQ.shift(); _saveOffQ();
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(function(){ if(_offQ.length) setTimeout(syncBotQueue,600); })
+    .catch(function(){ _offQ.unshift(item); _saveOffQ(); });
+}
+window.addEventListener('online',  function(){ _botOnline=true;  syncBotQueue(); });
+window.addEventListener('offline', function(){ _botOnline=false; });
+function gsPost(payload){
+  if (!GS_URL) return;
+  payload.authToken = GS_AUTH_TOKEN;
+  payload._ts = payload._ts || new Date().toISOString();
+  if (!_botOnline) { _offQ.push(JSON.parse(JSON.stringify(payload))); _saveOffQ(); return; }
+  fetch(GS_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)})
+    .catch(function(){ _offQ.push(JSON.parse(JSON.stringify(payload))); _saveOffQ(); });
+}
+// File upload needs the actual JSON response (the Drive URL) — uses normal
+// CORS fetch, not no-cors, so we can read what GAS sends back.
+function gsUploadFile(fileName, mimeType, base64Data){
+  return fetch(GS_URL, {
+    method: 'POST', mode: 'cors',
+    headers: {'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ type:'uploadFile', authToken: GS_AUTH_TOKEN, fileName, mimeType, base64Data })
+  }).then(r => r.json()).catch(() => ({ status: 'error' }));
+}
+function gsGet(type, limit){
+  return new Promise(function(resolve){
+    var cbName = '_gsJP_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    var script = document.createElement('script');
+    var done = false;
+    window[cbName] = function(d){
+      done = true; delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      resolve((d && d.data) ? d.data : []);
+    };
+    script.onerror = function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } }, 12000);
+    script.src = GS_URL + '?type=' + type + '&limit=' + (limit||500) + '&token=' + GS_AUTH_TOKEN + '&callback=' + cbName;
+    document.head.appendChild(script);
+  });
+}
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  if (t.dataset.tab === 'drafts') loadDrafts();
+  if (t.dataset.tab === 'pipeline') loadPipeline();
+}));
+
+(function(){ const t = new Date().toISOString().slice(0,10); document.getElementById('so_date').value = t; document.getElementById('dp_date').value = t; })();
+
+// ---------- New Sales Order ----------
+let pendingAttachmentUrl = '';
+function calcSOAmount(){
+  const qty = parseFloat(document.getElementById('so_qty').value) || 0;
+  const rate = parseFloat(document.getElementById('so_rate').value) || 0;
+  document.getElementById('so_amount').value = '₹' + (qty*rate).toFixed(2);
+}
+document.getElementById('so_qty').addEventListener('input', calcSOAmount);
+document.getElementById('so_rate').addEventListener('input', calcSOAmount);
+
+function handleSOFile(input){
+  const file = input.files[0];
+  const nameEl = document.getElementById('so_file_name');
+  const statusEl = document.getElementById('so_upload_status');
+  if (!file) { nameEl.textContent = 'No file attached'; pendingAttachmentUrl=''; return; }
+  if (file.size > 8*1024*1024) { alert('File too large (max 8MB).'); input.value=''; nameEl.textContent='No file attached'; return; }
+  nameEl.textContent = file.name;
+  statusEl.textContent = '⏳ Uploading…';
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const base64Data = e.target.result.split(',')[1];
+    gsUploadFile(file.name, file.type, base64Data).then(res => {
+      if (res && res.status === 'ok' && res.url) {
+        pendingAttachmentUrl = res.url;
+        statusEl.textContent = '✅ Uploaded';
+      } else {
+        statusEl.textContent = '⚠ Upload failed — order will save without attachment';
+      }
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitSalesOrder(){
+  const soNo = document.getElementById('so_no').value.trim();
+  const cust = document.getElementById('so_cust').value.trim();
+  const prod = document.getElementById('so_prod').value.trim();
+  const qty = parseFloat(document.getElementById('so_qty').value) || 0;
+  if (!soNo || !cust || !prod || !qty) { alert('Fill in SO No., Customer, Product and Qty.'); return; }
+  const rate = parseFloat(document.getElementById('so_rate').value) || 0;
+  gsPost({
+    type: 'sales',
+    date: document.getElementById('so_date').value,
+    soNo: soNo, customer: cust, product: prod, qty: qty, rate: rate,
+    amount: qty*rate,
+    deliveryDate: document.getElementById('so_due').value,
+    status: 'Order Received',
+    attachmentUrl: pendingAttachmentUrl,
+    source: 'Manual',
+    submittedBy: document.getElementById('so_by').value || 'Sales'
+  });
+  showToast('Sales Order ' + soNo + ' saved.');
+  ['so_no','so_cust','so_prod','so_qty','so_rate','so_amount','so_due'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('so_file').value=''; document.getElementById('so_file_name').textContent='No file attached';
+  document.getElementById('so_upload_status').textContent=''; pendingAttachmentUrl='';
+}
+
+function showToast(msg){
+  let t = document.getElementById('_toast');
+  if (!t) { t = document.createElement('div'); t.id='_toast'; t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1E3A5F;color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;z-index:99998;box-shadow:0 2px 10px rgba(0,0,0,.3)'; document.body.appendChild(t); }
+  t.textContent = msg; t.style.display='block';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.style.display='none'; }, 3500);
+}
+
+// ---------- Email Drafts ----------
+let allOrders = [];
+async function loadDrafts(){
+  const tbody = document.querySelector('#drafts_table tbody');
+  tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+  allOrders = await gsGet('sales', 500);
+  const drafts = allOrders.filter(o => o['Status'] === 'Draft - Needs Review');
+  if (!drafts.length) { tbody.innerHTML = '<tr><td colspan="8">✅ No drafts waiting — nothing captured from email needs review.</td></tr>'; return; }
+  tbody.innerHTML = drafts.map(o => {
+    const att = o['Attachment URL'] ? '<a href="' + o['Attachment URL'] + '" >📎 View</a>' : '—';
+    const cap = o['Extracted Body Content'] ? '<button onclick="viewBodyContent(\'' + o['SO No'] + '\')">📄 View Captured Content</button>' : '—';
+    const dateDisplay = (o['Date'] || '').slice(0,10) || '—';
+    const qtyDisplay = o['Qty'] ? o['Qty'] : (o['Extracted Body Content'] ? '(see table)' : '—');
+    return '<tr><td>' + o['SO No'] + '</td><td>' + dateDisplay + '</td><td>' + (o['Customer']||'').replace(/<[^>]+>/g,'').replace(/\s*<.*$/,'') + '</td><td>' + o['Product'] +
+           '</td><td>' + qtyDisplay + '</td><td>' + att + '</td><td>' + cap + '</td><td><button onclick="completeDraft(\'' + o['SO No'] + '\')">✍️ Complete This Order</button></td></tr>';
+  }).join('');
+}
+function completeDraft(soNo){
+  const o = allOrders.find(x => x['SO No'] === soNo);
+  if (!o) return;
+  document.querySelector('.tab[data-tab="newso"]').click();
+  document.getElementById('so_no').value = soNo + '-COMPLETED';
+  document.getElementById('so_cust').value = o['Customer'] || '';
+  document.getElementById('so_date').value = (o['Date']||'').slice(0,10) || new Date().toISOString().slice(0,10);
+  if (o['Extracted Body Content']) {
+    alert('This email had no attachment, so its body content was captured automatically. Go back to the Email Drafts tab and click "📄 View Captured Content" on ' + soNo + ' to see it — each row has a "Use this row" button that fills Product/Qty here for you. Then just check Customer/Rate and Save.');
+    return;
+  }
+  alert('Draft details loaded into the New Sales Order form. Fill in Product/Qty/Rate from the attachment ("' + (o['Attachment URL']?'open it above':'no attachment') + '") and Save — this creates a clean order. The original draft row (' + soNo + ') stays in the sheet for reference.');
+}
+
+// ---------- Captured email-body content (table pasted in the email, no attachment) ----------
+function viewBodyContent(soNo){
+  const o = allOrders.find(x => x['SO No'] === soNo);
+  if (!o || !o['Extracted Body Content']) { alert('No captured content for this draft.'); return; }
+  let data;
+  try { data = JSON.parse(o['Extracted Body Content']); } catch(e) { alert('Could not read the captured content for this draft.'); return; }
+  const w = window.open('', '_blank', 'width=950,height=680,scrollbars=yes');
+  if (!w) { alert('⚠ Popup blocked — allow popups for this page'); return; }
+  let bodyHtml;
+  if (data.type === 'table') {
+    const saveAllBtn = '<button id="saveAllBtn" onclick="window.opener.saveAllFromCapture(\'' + soNo + '\',this)" ' +
+      'style="background:#16a34a;color:#fff;padding:10px 22px;font-size:14px;font-weight:700;border:none;border-radius:6px;cursor:pointer;margin-bottom:14px">' +
+      '💾 Save All Rows as Sales Orders</button>' +
+      '&nbsp;<span id="saveAllStatus" style="font-size:13px;color:#1E3A5F;font-weight:600"></span>';
+    bodyHtml = saveAllBtn +
+      '<table border="1" cellpadding="6" style="border-collapse:collapse;font-size:12px;width:100%">' +
+      '<tr style="background:#1E3A5F;color:#fff">' + data.headers.map(h => '<th>' + h + '</th>').join('') + '<th>Action</th></tr>' +
+      data.rows.map((r, i) => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') +
+        '<td><button onclick="window.opener.useRowFromCapture(\'' + soNo + '\',' + i + ')">📥 Use this row</button></td></tr>').join('') +
+      '</table>';
+  } else {
+    bodyHtml = '<pre style="white-space:pre-wrap;font-size:12px;background:#f8fafc;padding:12px;border-radius:6px;border:1px solid #e2e8f0">' + (data.text || '').replace(/</g,'&lt;') + '</pre>' +
+      '<p style="color:#64748b;font-size:12px">No table was found in this email — this is the plain-text body instead. Read it and complete the order manually on the New Sales Order tab.</p>';
+  }
+  w.document.write('<!DOCTYPE html><html><head><title>Captured Email Content — ' + soNo + '</title></head><body style="font-family:Arial,sans-serif;padding:18px">' +
+    '<h3 style="color:#1E3A5F">Content captured from the email body — ' + soNo + '</h3>' +
+    '<p style="color:#64748b;font-size:12px">Click <b>💾 Save All Rows</b> to post every product line directly as Sales Orders in one shot — no form needed. Or click "📥 Use this row" to load one line at a time into the New SO form.</p>' +
+    bodyHtml + '<scr'+'ipt>function openBot(url){if(!url||url==="#")return false;if(window.location.protocol==="file:"){window.location.href=url;return false;}try{var w=window.open(url,"_blank");if(!w||w.closed||typeof w.closed==="undefined"){window.location.href=url;}}catch(e){window.location.href=url;}return false;}</scr'+'ipt><'+'/body><'+'/html>');
+  w.document.close();
+}
+
+async function saveAllFromCapture(soNo, btn) {
+  const o = allOrders.find(x => x['SO No'] === soNo);
+  if (!o || !o['Extracted Body Content']) return;
+  let data;
+  try { data = JSON.parse(o['Extracted Body Content']); } catch(e) { return; }
+  if (data.type !== 'table' || !data.rows || !data.rows.length) return;
+
+  const statusEl = btn.ownerDocument.getElementById('saveAllStatus');
+  btn.disabled = true;
+  btn.textContent = '⏳ Saving...';
+
+  const headersLower = data.headers.map(h => (h||'').toLowerCase());
+  const findCol = (kw) => { for(let i=0;i<headersLower.length;i++){if(kw.some(k=>headersLower[i].includes(k)))return i;} return -1; };
+  const descIdx = findCol(['desc','item','product','particular','size']);
+  const partIdx = findCol(['part','code','material']);
+  const orderDate = (o['Date']||'').slice(0,10) || new Date().toISOString().slice(0,10);
+  const customer = (o['Customer']||'').replace(/<[^>]+>/g,'').replace(/\s*<.*$/,'').trim();
+
+  // All columns that are NOT description or part code are quantity/value cols
+  const valueCols = data.headers.map((_,i) => i).filter(i => i !== descIdx && i !== partIdx);
+
+  // Detect if columns are date-labelled (multi-delivery-date table)
+  const dateCols = valueCols.filter(ci => /jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2}[-\/]\d/i.test(data.headers[ci]));
+  const isMultiDate = dateCols.length > 1;
+
+  // Helper: fire a fetch directly (gsPost is fire-and-forget with no return)
+  const postRow = (payload) => {
+    payload.authToken = GS_AUTH_TOKEN;
+    payload._ts = new Date().toISOString();
+    return fetch(GS_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)})
+      .catch(() => {});
+  };
+
+  // Strip DRAFT- prefix from base SO number for clean output SO numbers
+  const soBase = soNo.replace(/^DRAFT[-_]?/i, 'SO-').replace(/^SO--/, 'SO-');
+
+  let saved = 0, skipped = 0;
+  for (let i = 0; i < data.rows.length; i++) {
+    const row = data.rows[i];
+    const descVal = ((descIdx >= 0 ? row[descIdx] : row[0]) || '').trim();
+    const partVal = ((partIdx >= 0 ? row[partIdx] : '') || '').trim();
+    if (!descVal) { skipped++; continue; }
+    const productName = descVal + (partVal ? ' (Part ' + partVal + ')' : '');
+
+    if (isMultiDate) {
+      // One SO row per product × date (only where qty > 0)
+      for (const ci of dateCols) {
+        const qty = parseFloat(String(row[ci]).replace(/[^0-9.]/g,''));
+        if (!qty || isNaN(qty)) continue;
+        const soNoNew = soBase + '-R' + (i+1) + '-' + data.headers[ci].replace(/[^a-zA-Z0-9]/g,'');
+        await postRow({ type:'sales', soNo: soNoNew, date: orderDate, customer,
+          product: productName, qty: qty, rate: '', amount: '',
+          deliveryDate: data.headers[ci], status: 'Order Received',
+          source: 'Email-Capture-Bulk', submittedBy: 'Email Auto-Capture',
+          attachmentUrl: o['Attachment URL'] || '', bodyExtract: '', location: 'Bhiwadi' });
+        saved++;
+        await new Promise(r => setTimeout(r, 250));
+      }
+    } else {
+      // Single or summed qty columns
+      let qty = 0;
+      valueCols.forEach(ci => { const v = parseFloat(String(row[ci]).replace(/[^0-9.]/g,'')); if(!isNaN(v)) qty += v; });
+      const soNoNew = soBase + '-R' + (i+1);
+      await postRow({ type:'sales', soNo: soNoNew, date: orderDate, customer,
+        product: productName, qty: qty || '', rate: '', amount: '',
+        deliveryDate: '', status: 'Order Received',
+        source: 'Email-Capture-Bulk', submittedBy: 'Email Auto-Capture',
+        attachmentUrl: o['Attachment URL'] || '', bodyExtract: '', location: 'Bhiwadi' });
+      saved++;
+      await new Promise(r => setTimeout(r, 250));
+    }
+    if (statusEl) statusEl.textContent = 'Saved ' + saved + ' so far (row ' + (i+1) + '/' + data.rows.length + ')...';
+  }
+
+  btn.textContent = '✅ Done!';
+  if (statusEl) statusEl.textContent = '✅ ' + saved + ' Sales Orders saved!' + (skipped ? ' (' + skipped + ' blank rows skipped)' : '') + ' — close this and refresh the bot.';
+  if (window.opener && window.opener.showToast) window.opener.showToast(saved + ' Sales Orders saved from ' + soNo + '!');
+}
+function useRowFromCapture(soNo, rowIndex){
+  const o = allOrders.find(x => x['SO No'] === soNo);
+  if (!o) return;
+  let data;
+  try { data = JSON.parse(o['Extracted Body Content']); } catch(e) { return; }
+  const row = data.rows[rowIndex];
+  const headersLower = data.headers.map(h => (h || '').toLowerCase());
+  const findCol = (keywords) => { for (let i = 0; i < headersLower.length; i++) { if (keywords.some(k => headersLower[i].includes(k))) return i; } return -1; };
+  const descIdx = findCol(['desc', 'item', 'product', 'particular']);
+  const partIdx = findCol(['part', 'code']);
+  let qtyIdx = findCol(['rev.02', 'rev 02', 'rev2', 'revised']);
+  if (qtyIdx < 0) qtyIdx = findCol(['qty', 'quantity', 'projection', 'order']);
+  document.querySelector('.tab[data-tab="newso"]').click();
+  document.getElementById('so_no').value = soNo.replace('DRAFT-', 'SO-') + '-' + (rowIndex + 1);
+  document.getElementById('so_cust').value = o['Customer'] || '';
+  const descVal = (descIdx >= 0 ? row[descIdx] : row[0]) || '';
+  const partVal = (partIdx >= 0 ? row[partIdx] : '') || '';
+  document.getElementById('so_prod').value = descVal + (partVal ? ' (Part ' + partVal + ')' : '');
+  document.getElementById('so_qty').value = qtyIdx >= 0 ? (parseFloat((row[qtyIdx] || '').replace(/[^0-9.]/g, '')) || '') : '';
+  document.getElementById('so_date').value = (o['Date'] || '').slice(0,10) || new Date().toISOString().slice(0,10);
+  showToast('Row ' + (rowIndex + 1) + ' of ' + soNo + ' loaded — check Customer/Rate, then Save.');
+}
+
+// ---------- Dispatch ----------
+async function lookupSOForDispatch(){
+  const soNo = document.getElementById('dp_so').value.trim();
+  if (!soNo) return;
+  if (!allOrders.length) allOrders = await gsGet('sales', 500);
+  const o = allOrders.find(x => x['SO No'] === soNo);
+  if (!o) { alert('SO No. not found. Check the Order Pipeline tab for the exact number.'); return; }
+  document.getElementById('dp_cust').value = o['Customer'] || '';
+  document.getElementById('dp_prod').value = o['Product'] || '';
+}
+function submitDispatch(){
+  const soNo = document.getElementById('dp_so').value.trim();
+  const qty = parseFloat(document.getElementById('dp_qty').value) || 0;
+  if (!soNo || !qty) { alert('Enter SO No. and Qty Dispatched.'); return; }
+  gsPost({
+    type: 'dispatch',
+    date: document.getElementById('dp_date').value,
+    dispatchNo: document.getElementById('dp_no').value,
+    soNo: soNo,
+    customer: document.getElementById('dp_cust').value,
+    product: document.getElementById('dp_prod').value,
+    qtyDispatched: qty,
+    vehicle: document.getElementById('dp_vehicle').value,
+    lrNo: document.getElementById('dp_lr').value,
+    driver: document.getElementById('dp_driver').value,
+    destination: document.getElementById('dp_dest').value,
+    submittedBy: document.getElementById('dp_by').value || 'Dispatch'
+  });
+  showToast('Dispatch logged for ' + soNo + ' — order status updated.');
+  ['dp_no','dp_so','dp_cust','dp_prod','dp_qty','dp_vehicle','dp_lr','dp_driver','dp_dest'].forEach(id => document.getElementById(id).value='');
+}
+
+// ---------- Pipeline ----------
+function statusPillClass(s){
+  if (s === 'Order Received') return 'received';
+  if (s === 'In Production') return 'production';
+  if (s === 'Ready to Dispatch') return 'ready';
+  if (s === 'Dispatched') return 'dispatched';
+  if (s === 'Partially Dispatched') return 'partial';
+  if (s === 'Draft - Needs Review') return 'draft';
+  return 'received';
+}
+async function loadPipeline(){
+  const tbody = document.querySelector('#pipeline_table tbody');
+  tbody.innerHTML = '<tr><td colspan="11">Loading…</td></tr>';
+  allOrders = await gsGet('sales', 1000);
+  renderPipeline(allOrders);
+  renderKpis(allOrders);
+  // refresh the dispatch SO datalist too
+  const dl = document.getElementById('soNoList');
+  dl.innerHTML = allOrders.map(o => '<option value="' + o['SO No'] + '">').join('');
+}
+function renderKpis(rows){
+  const counts = {};
+  rows.forEach(o => { const s = o['Status']||'Unknown'; counts[s] = (counts[s]||0)+1; });
+  const order = ['Order Received','In Production','Ready to Dispatch','Partially Dispatched','Dispatched','Draft - Needs Review'];
+  document.getElementById('kpiRow').innerHTML = order.map(s =>
+    '<div class="kpi"><b>' + (counts[s]||0) + '</b><span>' + s + '</span></div>'
+  ).join('');
+}
+function renderPipeline(rows){
+  const tbody = document.querySelector('#pipeline_table tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="11">No sales orders yet.</td></tr>'; return; }
+  tbody.innerHTML = rows.slice().reverse().map(o => {
+    const att = o['Attachment URL'] ? '<a href="' + o['Attachment URL'] + '" >📎</a>' : '—';
+    const soTag   = o['SO No']    ? '<span class="tag green">'  + o['SO No']    + '</span>' : '—';
+    const custTag = o['Customer'] ? '<span class="tag blue">'   + o['Customer'] + '</span>' : '—';
+    return '<tr><td style="white-space:nowrap">' + soTag + '</td><td>' + (o['Date']||'') + '</td><td>' + custTag + '</td><td>' + (o['Product']||'') +
+           '</td><td>' + (o['Qty']||'') + '</td><td>' + (o['Delivery Date']||'') +
+           '</td><td><span class="pill ' + statusPillClass(o['Status']||'') + '">' + (o['Status']||'—') + '</span></td>' +
+           '<td>' + (o['Job Card No']||'—') + '</td>' +
+           '<td>' + (o['Dispatched Qty']||'0') + '</td>' +
+           '<td>' + (o['Balance Qty']||o['Qty']||'') + '</td>' +
+           '<td>' + att + '</td></tr>';
+  }).join('');
+}
+function filterPipeline(q){
+  if (!q) { renderPipeline(allOrders); renderKpis(allOrders); return; }
+  const lq = q.toLowerCase();
+  const filtered = allOrders.filter(o =>
+    (o['SO No']||'').toLowerCase().includes(lq) ||
+    (o['Customer']||'').toLowerCase().includes(lq) ||
+    (o['Product']||'').toLowerCase().includes(lq)
+  );
+  renderPipeline(filtered);
+}
+
+// ---------- Toast ----------
+function showToast(msg){
+  let t = document.getElementById('sspi-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'sspi-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1E3A5F;color:#fff;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.35);z-index:99999;display:none';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.display='block';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.style.display='none'; }, 3500);
+}
+</script>
+</body>
+</html>

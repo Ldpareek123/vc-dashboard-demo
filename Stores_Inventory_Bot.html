@@ -1,0 +1,726 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Stores &amp; Inventory Bot</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#ffffff;
+  --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --red:#b3261e;
+  --orange:#c97a1a; --yellow:#fff7cc; --lgreen:#e8f5ec; --lred:#fdeceb; --lorange:#fdf1e2;
+}
+*{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
+body{margin:0; background:var(--bg); color:var(--text);}
+header{background:var(--navy); color:#fff; padding:16px 24px;}
+header h1{margin:0; font-size:20px;}
+header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+.tabs{display:flex; flex-wrap:wrap; background:var(--navy2); padding:0 16px;}
+.tab{padding:10px 16px; color:#fff; cursor:pointer; font-size:13px; opacity:.8; border-bottom:3px solid transparent; user-select:none;}
+.tab.active{opacity:1; border-bottom:3px solid var(--accent); font-weight:bold;}
+.container{max-width:1200px; margin:0 auto; padding:20px;}
+.panel{display:none;}
+.panel.active{display:block;}
+.card{background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:18px;}
+.card h2{margin:0 0 10px; font-size:15px; color:var(--navy);}
+.card h3{margin:0 0 8px; font-size:13px; color:var(--navy);}
+.muted{color:var(--muted); font-size:12px;}
+.btn{background:var(--accent); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:12px; cursor:pointer; font-weight:bold;}
+.btn:hover{opacity:.9;}
+.btn.secondary{background:var(--navy2);}
+.btn.green{background:var(--green);}
+.btn.red{background:var(--red);}
+.btn.small{padding:5px 10px; font-size:11px;}
+table{width:100%; border-collapse:collapse; font-size:11.5px;}
+th,td{border:1px solid var(--border); padding:5px 7px; text-align:left;}
+th{background:var(--bg); color:var(--navy); position:sticky; top:0;}
+tr.flag-warn{background:var(--lorange);}
+tr.flag-bad{background:var(--lred);}
+tr.flag-ok{background:var(--lgreen);}
+.pill{display:inline-block; padding:2px 8px; border-radius:10px; font-size:10.5px; font-weight:bold;}
+.pill-green{background:var(--lgreen); color:var(--green);}
+.pill-orange{background:var(--lorange); color:var(--orange);}
+.pill-red{background:var(--lred); color:var(--red);}
+.pill-gray{background:#eee; color:#555;}
+.kpi-row{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+.kpi{flex:1; min-width:140px; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px;}
+.kpi .val{font-size:20px; font-weight:bold; color:var(--navy);}
+.kpi .lbl{font-size:11px; color:var(--muted);}
+.scrollbox{max-height:480px; overflow:auto; border:1px solid var(--border); border-radius:6px;}
+select,input[type=number],input[type=text],input[type=date]{padding:5px 7px; font-size:12px; border:1px solid var(--border); border-radius:4px;}
+.form-row{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px;}
+.form-row .fg{flex:1; min-width:150px;}
+.form-row label{display:block; font-size:11px; color:var(--muted); margin-bottom:3px;}
+.form-row select,.form-row input{width:100%;}
+.banner{background:var(--navy); color:#fff; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:12px;}
+.banner b{color:#9FE1CB;}
+footer{text-align:center; font-size:11px; color:var(--muted); padding:18px;}
+.small-input{width:100%; padding:3px 5px; font-size:11px;}
+</style>
+</head>
+<body>
+<!-- ACCESS CONTROL GATE -->
+<div id="accessGate" style="position:fixed;inset:0;background:#1E3A5F;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Arial,Helvetica,sans-serif">
+  <div style="background:#fff;border-radius:10px;padding:30px 36px;max-width:380px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.35)">
+    <div style="font-size:32px;margin-bottom:8px">🔒</div>
+    <h2 style="margin:0 0 6px;color:#1E3A5F;font-size:16px">Stores &amp; Inventory Bot — Restricted Access</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 14px">Enter the access code provided by your supervisor / VC Admin to continue. Access is logged for your department only.</p>
+    <input id="gatePin" type="password" placeholder="Access Code" autocomplete="off" style="width:100%;padding:9px;font-size:14px;border:1px solid #d6dce4;border-radius:6px;text-align:center;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkGatePin()">
+    <div id="gateErr" style="color:#b3261e;font-size:11px;margin-top:6px;min-height:14px"></div>
+    <button onclick="checkGatePin()" style="margin-top:8px;background:#2E86AB;color:#fff;border:none;border-radius:6px;padding:9px 22px;font-size:12px;font-weight:bold;cursor:pointer">Unlock</button>
+    <div style="font-size:10.5px;color:#999;margin-top:10px">Authorized: Store Manager, Store Executive, Inventory, Dispatch</div>
+  </div>
+</div>
+<script>
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS BACKEND — auto-configured
+// ═══════════════════════════════════════════════════════
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+let _botLocation = localStorage.getItem('sspi_location') || 'Bhiwadi';
+// ── OFFLINE QUEUE + AUTH TOKEN + LOCATION ───────────────────
+var _offQ = JSON.parse(localStorage.getItem('sspi_offline_q') || '[]');
+var _botOnline = navigator.onLine;
+function _saveOffQ(){ localStorage.setItem('sspi_offline_q', JSON.stringify(_offQ)); }
+function syncBotQueue(){
+  if (!_botOnline || !_offQ.length) return;
+  var item = _offQ.shift(); _saveOffQ();
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(function(){ if(_offQ.length) setTimeout(syncBotQueue,600); })
+    .catch(function(){ _offQ.unshift(item); _saveOffQ(); });
+}
+window.addEventListener('online',  function(){ _botOnline=true;  syncBotQueue(); });
+window.addEventListener('offline', function(){ _botOnline=false; });
+function gsPost(payload){
+  if (!GS_URL) return;
+  payload.authToken = GS_AUTH_TOKEN;
+  payload.location  = payload.location || _botLocation;
+  payload._ts = payload._ts || new Date().toISOString();
+  if (!_botOnline) {
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+    return;
+  }
+  fetch(GS_URL, {method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  }).catch(function(){
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+  });
+}
+(function(){
+  var VALID_PINS = ['STR-INV-2026'];
+  var SESSION_KEY = 'sspi_gate_stores';
+  function checkGatePin(){
+    var v=document.getElementById('gatePin').value.trim();
+    if(VALID_PINS.indexOf(v)>-1){
+      sessionStorage.setItem(SESSION_KEY,'1');
+      document.getElementById('accessGate').remove();
+    } else {
+      document.getElementById('gateErr').textContent='Incorrect code. Contact VC Admin / your supervisor.';
+    }
+  }
+  window.checkGatePin=checkGatePin;
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    var g=document.getElementById('accessGate'); if(g) g.remove();
+  }
+})();
+</script>
+<header>
+  <h1>📦 SSPI Stores &amp; Inventory Bot</h1>
+  <p>Record Goods Receipts (GRN), Material Issues to Production, and Stock Adjustments — stock levels update automatically and stay in sync with the Inventory Master used by the Bills Bot.</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('master',this)">📋 Inventory Master</div>
+  <div class="tab" onclick="showTab('grn',this)">📥 Goods Receipt (GRN)</div>
+  <div class="tab" onclick="showTab('issue',this)">📤 Material Issue</div>
+  <div class="tab" onclick="showTab('adj',this)">⚖ Stock Adjustment</div>
+  <div class="tab" onclick="showTab('summary',this)">📊 Stock Summary</div>
+  <div class="tab" onclick="showTab('export',this)">⬇ Export</div>
+</div>
+
+<div class="container">
+
+  <!-- ===================== MASTER ===================== -->
+  <div class="panel active" id="p-master">
+    <div class="banner">
+      <b>Step 1:</b> Upload or build your Inventory Master once — Item Code, Item Name, Unit, Opening Stock, Reorder Level.
+      This same master is shared (saved on this computer) with the Bills Data Entry Bot so stock stays consistent across both tools.
+    </div>
+    <div class="card">
+      <h2>Inventory Master (Item List &amp; Opening Stock)</h2>
+      <p class="muted">Upload Excel with columns <b>Item Code, Item Name, Unit, Opening Stock, Reorder Level, Substitute Item Code(s)</b>, or add items manually.
+      The optional <b>Substitute Item Code(s)</b> column lets the Material Issue tab suggest an alternative wood/plywood size
+      automatically if the exact size requested is short in stock (e.g. PLY-6X4-12MM ⇄ PLY-6X4-9MM/15MM).</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px">
+        <input type="file" id="masterFile" accept=".xlsx,.xls,.csv" onchange="loadItemMaster(this.files[0])">
+        <button class="btn small secondary" onclick="addMasterItem()">+ Add Item Manually</button>
+        <button class="btn small red" onclick="clearItemMaster()">🗑 Clear Master</button>
+        <span id="masterStatus" class="muted"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Items in Master (<span id="masterCount">0</span>)</h3>
+      <div class="scrollbox"><table id="masterTable"><thead><tr><th>Item Code</th><th>Item Name</th><th>Unit</th><th>Opening Stock</th><th>Reorder Level</th><th>Substitute Item(s) if short</th><th></th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== GRN ===================== -->
+  <div class="panel" id="p-grn">
+    <div class="banner">
+      <b>Goods Receipt Note (GRN):</b> record stock received into Stores — from a supplier delivery (not yet billed),
+      an internal transfer, or a return. This adds to <b>Total IN</b> for the item.
+    </div>
+    <div class="card">
+      <h2>New GRN Entry</h2>
+      <div class="form-row">
+        <div class="fg"><label>GRN Date</label><input type="date" id="grn_date"></div>
+        <div class="fg"><label>GRN / Document No.</label><input type="text" id="grn_docno" placeholder="GRN-001"></div>
+        <div class="fg"><label>Received From</label><input type="text" id="grn_from" placeholder="Supplier / Source"></div>
+        <div class="fg"><label>Remarks</label><input type="text" id="grn_remarks" placeholder="Optional"></div>
+      </div>
+      <h3 style="margin-top:10px">Items Received</h3>
+      <div class="scrollbox" style="max-height:240px">
+        <table id="grnItemsTable"><thead><tr><th style="width:32%">Item</th><th style="width:14%">Unit</th><th style="width:18%">Qty Received</th><th style="width:30%">Remarks</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+      <button class="btn small secondary" style="margin-top:8px" onclick="addGrnRow()">+ Add Item Row</button>
+      <div style="margin-top:14px"><button class="btn green" onclick="saveGrn()">✅ Save GRN &amp; Update Stock</button></div>
+    </div>
+    <div class="card">
+      <h3>GRN Log</h3>
+      <div class="scrollbox"><table id="grnLogTable"><thead><tr><th>Date</th><th>GRN No.</th><th>Received From</th><th>Item</th><th>Unit</th><th>Qty</th><th>Remarks</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== ISSUE ===================== -->
+  <div class="panel" id="p-issue">
+    <div class="banner">
+      <b>Material Issue Note:</b> record stock issued out from Stores to Production, a department, or a job card.
+      This adds to <b>Total OUT</b> for the item.
+      <br><b>Substitution:</b> if the exact wood/plywood size needed is short in stock, the row will turn orange and show
+      a "Substitute Item" dropdown (from the Inventory Master's Substitute Item Code(s) column). Pick the substitute
+      and it will be issued &amp; logged instead, with a note recording what it replaced — no separate data entry needed.
+    </div>
+    <div class="card">
+      <h2>New Material Issue Entry</h2>
+      <div class="form-row">
+        <div class="fg"><label>Issue Date</label><input type="date" id="iss_date"></div>
+        <div class="fg"><label>Issue Slip No.</label><input type="text" id="iss_docno" placeholder="MIN-001"></div>
+        <div class="fg"><label>Issued To (Dept / Job Card)</label><input type="text" id="iss_to" placeholder="Production / Job Card No."></div>
+        <div class="fg"><label>Remarks</label><input type="text" id="iss_remarks" placeholder="Optional"></div>
+      </div>
+      <h3 style="margin-top:10px">Items Issued</h3>
+      <div class="scrollbox" style="max-height:240px">
+        <table id="issItemsTable"><thead><tr><th style="width:24%">Item Required</th><th style="width:9%">Unit</th><th style="width:11%">Qty Issued</th><th style="width:10%">Available Stock</th><th style="width:20%">Substitute Item (if short)</th><th style="width:18%">Remarks</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+      <button class="btn small secondary" style="margin-top:8px" onclick="addIssRow()">+ Add Item Row</button>
+      <div style="margin-top:14px"><button class="btn green" onclick="saveIssue()">✅ Save Issue &amp; Update Stock</button></div>
+    </div>
+    <div class="card">
+      <h3>Material Issue Log</h3>
+      <div class="scrollbox"><table id="issLogTable"><thead><tr><th>Date</th><th>Slip No.</th><th>Issued To</th><th>Item</th><th>Unit</th><th>Qty</th><th>Remarks</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== ADJUSTMENT ===================== -->
+  <div class="panel" id="p-adj">
+    <div class="banner">
+      <b>Stock Adjustment:</b> use for physical-verification corrections, damage/wastage write-offs, or
+      opening-balance corrections. Enter a positive quantity to increase stock or a negative quantity to decrease stock.
+    </div>
+    <div class="card">
+      <h2>New Stock Adjustment</h2>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="adj_date"></div>
+        <div class="fg"><label>Item</label><input type="text" id="adj_item" list="itemMasterList" placeholder="Start typing item name"></div>
+        <div class="fg"><label>Unit</label><input type="text" id="adj_unit" placeholder="Auto-filled if in master"></div>
+        <div class="fg"><label>Adjustment Qty (+/-)</label><input type="number" id="adj_qty" step="any" placeholder="e.g. -5 or +10"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Reason</label>
+          <select id="adj_reason">
+            <option>Physical Stock Verification</option>
+            <option>Damage / Wastage</option>
+            <option>Opening Balance Correction</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="fg" style="flex:2"><label>Remarks</label><input type="text" id="adj_remarks" placeholder="Optional"></div>
+      </div>
+      <div style="margin-top:6px"><button class="btn green" onclick="saveAdjustment()">✅ Save Adjustment &amp; Update Stock</button></div>
+    </div>
+    <div class="card">
+      <h3>Adjustment Log</h3>
+      <div class="scrollbox"><table id="adjLogTable"><thead><tr><th>Date</th><th>Item</th><th>Unit</th><th>Adj. Qty</th><th>Reason</th><th>Remarks</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== SUMMARY ===================== -->
+  <div class="panel" id="p-summary">
+    <div class="card">
+      <h2>📊 Stock Summary — Opening → Closing</h2>
+      <p class="muted">Closing Stock = Opening Stock + GRN (IN) + Adjustments (+) − Material Issues (OUT) − Adjustments (−).
+      Includes movements from this bot and from the Bills Bot's Sales/Purchase registers (if data was synced on this device).</p>
+      <div class="kpi-row" id="summaryKpis"></div>
+      <div class="scrollbox"><table id="summaryTable"><thead><tr><th>Item</th><th>Unit</th><th>Opening</th><th>Total IN</th><th>Total OUT</th><th>Closing Stock</th><th>Reorder Level</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== EXPORT ===================== -->
+  <div class="panel" id="p-export">
+    <div class="card">
+      <h2>⬇ Export</h2>
+      <p class="muted">Download GRN log, Material Issue log, Adjustment log, and the current Stock Summary as a single Excel workbook.
+      The "Updated Inventory Master" sheet rolls forward Closing Stock as the new Opening Stock for the next period.</p>
+      <button class="btn green" onclick="exportAll()">📥 Export Stock Registers (Excel)</button>
+      <button class="btn green" style="margin-left:8px" onclick="exportUpdatedMaster()">📥 Updated Inventory Master (Excel)</button>
+    </div>
+  </div>
+
+</div>
+<datalist id="itemMasterList"></datalist>
+
+<footer>SSPI Stores &amp; Inventory Bot — data is saved automatically on this device (browser local storage). Use Export regularly to back up to Excel.</footer>
+
+<script>
+// ---------- State ----------
+let itemMaster = [];   // {code, name, unit, opening, reorder}
+let grnLog = [];        // {date, docno, from, item, unit, qty, remarks}
+let issueLog = [];      // {date, docno, to, item, unit, qty, remarks}
+let adjLog = [];         // {date, item, unit, qty, reason, remarks}
+
+const STORAGE_KEY = 'sspi_bills_bot_data_v1'; // shared with Bills Data Entry Bot
+const STORES_KEY  = 'sspi_stores_bot_data_v1';
+
+function saveState(){
+  // Save this bot's own logs separately
+  try{ localStorage.setItem(STORES_KEY, JSON.stringify({grnLog, issueLog, adjLog})); }catch(e){ console.warn('Could not save stores data', e); }
+  // Save / merge itemMaster into the shared key used by Bills Bot
+  try{
+    let shared = {};
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) shared = JSON.parse(raw);
+    shared.itemMaster = itemMaster;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(shared));
+  }catch(e){ console.warn('Could not save shared item master', e); }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORES_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      grnLog = d.grnLog || [];
+      issueLog = d.issueLog || [];
+      adjLog = d.adjLog || [];
+    }
+  }catch(e){ console.warn('Could not load stores data', e); }
+  try{
+    const raw2 = localStorage.getItem(STORAGE_KEY);
+    if(raw2){
+      const d2 = JSON.parse(raw2);
+      itemMaster = d2.itemMaster || [];
+    }
+  }catch(e){ console.warn('Could not load shared item master', e); }
+}
+
+// ---------- Tabs ----------
+function showTab(id, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='summary') renderSummary();
+}
+
+// ---------- Item Master ----------
+function findMasterItem(name){
+  const n = (name||'').trim().toLowerCase();
+  return itemMaster.find(it => (it.name||'').trim().toLowerCase() === n);
+}
+
+function loadItemMaster(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      let added = 0;
+      rows.forEach(r=>{
+        const keys = Object.keys(r).reduce((m,k)=>{m[k.toString().trim().toLowerCase()]=r[k]; return m;},{});
+        const name = keys['item name'] || keys['item'] || keys['name'] || '';
+        if(!name) return;
+        const code = keys['item code'] || keys['code'] || '';
+        const unit = keys['unit'] || keys['uom'] || '';
+        const opening = parseFloat(keys['opening stock'] ?? keys['opening'] ?? 0) || 0;
+        const reorder = parseFloat(keys['reorder level'] ?? keys['reorder'] ?? 0) || 0;
+        const sub = keys['substitute item code(s)'] || keys['substitute item code'] || keys['substitute'] || keys['substitutes'] || keys['alternate item'] || '';
+        const existing = findMasterItem(name);
+        if(existing){
+          existing.code = code || existing.code;
+          existing.unit = unit || existing.unit;
+          existing.opening = opening || existing.opening;
+          existing.reorder = reorder || existing.reorder;
+          existing.sub = sub || existing.sub || '';
+        } else {
+          itemMaster.push({code, name: String(name).trim(), unit, opening, reorder, sub: sub||''});
+        }
+        added++;
+      });
+      document.getElementById('masterStatus').textContent = `✅ Loaded/updated ${added} item(s) from file.`;
+      saveState(); renderAll();
+    }catch(err){
+      document.getElementById('masterStatus').textContent = '⚠ Could not read file: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function addMasterItem(){
+  itemMaster.push({code:'', name:'New Item', unit:'pcs', opening:0, reorder:0, sub:''});
+  saveState(); renderAll();
+}
+
+// Resolve a comma-separated "Substitute Item Code(s)" / item-name list against the master,
+// returning the matching master items (skips any that aren't found).
+function getSubstituteItems(masterItem){
+  if(!masterItem || !masterItem.sub) return [];
+  return masterItem.sub.split(',').map(s=>s.trim()).filter(Boolean).map(tok=>{
+    const byCode = itemMaster.find(it=>(it.code||'').trim().toLowerCase()===tok.toLowerCase());
+    if(byCode) return byCode;
+    return findMasterItem(tok);
+  }).filter(Boolean);
+}
+
+function clearItemMaster(){
+  if(!confirm('Clear the entire Inventory Master (item list)? This does not affect GRN/Issue/Adjustment logs.')) return;
+  itemMaster = [];
+  saveState(); renderAll();
+}
+
+function renderItemMaster(){
+  const tbody = document.querySelector('#masterTable tbody');
+  tbody.innerHTML = '';
+  itemMaster.forEach((it, idx)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input class="small-input" value="${it.code||''}" onchange="itemMaster[${idx}].code=this.value;saveState()"></td>
+      <td><input class="small-input" value="${it.name||''}" onchange="itemMaster[${idx}].name=this.value;saveState();renderAll()"></td>
+      <td><input class="small-input" value="${it.unit||''}" onchange="itemMaster[${idx}].unit=this.value;saveState()"></td>
+      <td><input class="small-input" type="number" step="any" value="${it.opening||0}" onchange="itemMaster[${idx}].opening=parseFloat(this.value)||0;saveState();renderSummary()"></td>
+      <td><input class="small-input" type="number" step="any" value="${it.reorder||0}" onchange="itemMaster[${idx}].reorder=parseFloat(this.value)||0;saveState();renderSummary()"></td>
+      <td><input class="small-input" value="${it.sub||''}" placeholder="e.g. PLY-6X4-9MM, PLY-6X4-15MM" title="Comma-separated item code(s) or names to suggest if this item is short in stock" onchange="itemMaster[${idx}].sub=this.value;saveState()"></td>
+      <td><button class="btn small red" onclick="itemMaster.splice(${idx},1);saveState();renderAll()">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('masterCount').textContent = itemMaster.length;
+  renderItemMasterList();
+}
+
+function renderItemMasterList(){
+  const dl = document.getElementById('itemMasterList');
+  dl.innerHTML = itemMaster.map(it=>`<option value="${it.name}">`).join('');
+}
+
+// ---------- GRN ----------
+function addGrnRow(name='', unit=''){
+  const tbody = document.querySelector('#grnItemsTable tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="small-input" value="${name}" list="itemMasterList" onchange="autoFillUnit(this)"></td>
+    <td><input type="text" class="small-input" value="${unit}"></td>
+    <td><input type="number" class="small-input" step="any" placeholder="0"></td>
+    <td><input type="text" class="small-input" placeholder="Optional"></td>
+    <td><button class="btn small red" onclick="this.closest('tr').remove()">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function addIssRow(name='', unit=''){
+  const tbody = document.querySelector('#issItemsTable tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="small-input iss-item" value="${name}" list="itemMasterList" onchange="onIssueRowChange(this)"></td>
+    <td><input type="text" class="small-input iss-unit" value="${unit}"></td>
+    <td><input type="number" class="small-input iss-qty" step="any" placeholder="0" onchange="onIssueRowChange(this)"></td>
+    <td class="iss-stock muted" style="text-align:center">-</td>
+    <td><select class="small-input iss-sub"><option value="">— none —</option></select></td>
+    <td><input type="text" class="small-input iss-remarks" placeholder="Optional"></td>
+    <td><button class="btn small red" onclick="this.closest('tr').remove()">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+// When the item or quantity in a Material Issue row changes, check available stock
+// (Opening + IN - OUT, including this bot's own logs) and, if the requested qty
+// exceeds what's available, populate the Substitute dropdown from the master's
+// "Substitute Item(s) if short" list and flag the row.
+function onIssueRowChange(input){
+  const row = input.closest('tr');
+  const itemInput = row.querySelector('.iss-item');
+  const unitInput = row.querySelector('.iss-unit');
+  const qtyInput = row.querySelector('.iss-qty');
+  const stockCell = row.querySelector('.iss-stock');
+  const subSelect = row.querySelector('.iss-sub');
+
+  autoFillUnit(itemInput);
+
+  const master = findMasterItem(itemInput.value);
+  const qty = parseFloat(qtyInput.value) || 0;
+
+  if(!master){
+    stockCell.textContent = '-';
+    row.classList.remove('flag-warn');
+    subSelect.innerHTML = '<option value="">— none —</option>';
+    return;
+  }
+
+  const stockMap = computeStock();
+  const entry = stockMap.find(e=>e.name.trim().toLowerCase()===master.name.trim().toLowerCase());
+  const closing = entry ? (entry.opening||0)+(entry.totalIn||0)-(entry.totalOut||0) : (master.opening||0);
+  stockCell.textContent = closing.toFixed(2);
+
+  const subs = getSubstituteItems(master);
+  if(qty>0 && closing < qty && subs.length){
+    row.classList.add('flag-warn');
+    subSelect.innerHTML = '<option value="">— select substitute —</option>' +
+      subs.map(s=>{
+        const se = stockMap.find(e=>e.name.trim().toLowerCase()===s.name.trim().toLowerCase());
+        const sc = se ? (se.opening||0)+(se.totalIn||0)-(se.totalOut||0) : (s.opening||0);
+        return `<option value="${s.name}">${s.name} (Stock: ${sc.toFixed(2)} ${s.unit||''})</option>`;
+      }).join('');
+  } else if(qty>0 && closing < qty){
+    row.classList.add('flag-warn');
+    subSelect.innerHTML = '<option value="">— none — (short, no substitute set)</option>';
+  } else {
+    row.classList.remove('flag-warn');
+    subSelect.innerHTML = '<option value="">— none —</option>';
+  }
+}
+
+function autoFillUnit(input){
+  const row = input.closest('tr');
+  const unitCell = row.children[1].querySelector('input');
+  const m = findMasterItem(input.value);
+  if(m && m.unit && !unitCell.value) unitCell.value = m.unit;
+}
+
+function saveGrn(){
+  const date = document.getElementById('grn_date').value || new Date().toISOString().slice(0,10);
+  const docno = document.getElementById('grn_docno').value || '';
+  const from = document.getElementById('grn_from').value || '';
+  const remarksHdr = document.getElementById('grn_remarks').value || '';
+  const rows = document.querySelectorAll('#grnItemsTable tbody tr');
+  let count = 0;
+  rows.forEach(tr=>{
+    const inputs = tr.querySelectorAll('input');
+    const item = inputs[0].value.trim();
+    const unit = inputs[1].value.trim();
+    const qty = parseFloat(inputs[2].value)||0;
+    const remarks = inputs[3].value.trim() || remarksHdr;
+    if(!item || qty===0) return;
+    grnLog.push({date, docno, from, item, unit, qty, remarks});
+    count++;
+  });
+  if(count===0){ alert('Add at least one item with a quantity received.'); return; }
+  saveState();
+  gsPost({sheet:'stores_grn',date,docno,from:from,items:grnLog.slice(-count)});
+  renderAll();
+  alert(`GRN saved (${count} item line(s)). Stock updated.`);
+  document.querySelector('#grnItemsTable tbody').innerHTML='';
+  document.getElementById('grn_docno').value='';
+  document.getElementById('grn_from').value='';
+  document.getElementById('grn_remarks').value='';
+  addGrnRow();
+}
+
+function saveIssue(){
+  const date = document.getElementById('iss_date').value || new Date().toISOString().slice(0,10);
+  const docno = document.getElementById('iss_docno').value || '';
+  const to = document.getElementById('iss_to').value || '';
+  const remarksHdr = document.getElementById('iss_remarks').value || '';
+  const rows = document.querySelectorAll('#issItemsTable tbody tr');
+  let count = 0;
+  rows.forEach(tr=>{
+    const itemInput = tr.querySelector('.iss-item');
+    const unitInput = tr.querySelector('.iss-unit');
+    const qtyInput = tr.querySelector('.iss-qty');
+    const subSelect = tr.querySelector('.iss-sub');
+    const remarksInput = tr.querySelector('.iss-remarks');
+    const requestedItem = itemInput.value.trim();
+    let unit = unitInput.value.trim();
+    const qty = parseFloat(qtyInput.value)||0;
+    let remarks = remarksInput.value.trim() || remarksHdr;
+    if(!requestedItem || qty===0) return;
+
+    let item = requestedItem;
+    const subName = subSelect ? subSelect.value.trim() : '';
+    if(subName){
+      item = subName;
+      const subMaster = findMasterItem(subName);
+      if(subMaster && subMaster.unit) unit = subMaster.unit;
+      remarks = (remarks ? remarks + ' — ' : '') + `Substitute for "${requestedItem}" (required size short in stock)`;
+    }
+    issueLog.push({date, docno, to, item, unit, qty, remarks});
+    count++;
+  });
+  if(count===0){ alert('Add at least one item with a quantity issued.'); return; }
+  saveState();
+  gsPost({sheet:'stores_issue',date,docno,to,items:issueLog.slice(-count)});
+  renderAll();
+  alert(`Material Issue saved (${count} item line(s)). Stock updated.`);
+  document.querySelector('#issItemsTable tbody').innerHTML='';
+  document.getElementById('iss_docno').value='';
+  document.getElementById('iss_to').value='';
+  document.getElementById('iss_remarks').value='';
+  addIssRow();
+}
+
+function saveAdjustment(){
+  const date = document.getElementById('adj_date').value || new Date().toISOString().slice(0,10);
+  const item = document.getElementById('adj_item').value.trim();
+  let unit = document.getElementById('adj_unit').value.trim();
+  const qty = parseFloat(document.getElementById('adj_qty').value);
+  const reason = document.getElementById('adj_reason').value;
+  const remarks = document.getElementById('adj_remarks').value.trim();
+  if(!item || isNaN(qty) || qty===0){ alert('Enter an item and a non-zero adjustment quantity.'); return; }
+  if(!unit){ const m = findMasterItem(item); if(m) unit = m.unit; }
+  adjLog.push({date, item, unit, qty, reason, remarks});
+  saveState();
+  gsPost({sheet:'stores_adjustment',date,item,unit,qty,reason,remarks});
+  renderAll();
+  alert('Adjustment saved. Stock updated.');
+  document.getElementById('adj_item').value='';
+  document.getElementById('adj_unit').value='';
+  document.getElementById('adj_qty').value='';
+  document.getElementById('adj_remarks').value='';
+}
+
+// ---------- Logs render ----------
+function renderLogs(){
+  const grnBody = document.querySelector('#grnLogTable tbody');
+  grnBody.innerHTML='';
+  grnLog.slice().reverse().forEach(r=>{
+    grnBody.innerHTML += `<tr><td>${r.date}</td><td>${r.docno}</td><td>${r.from}</td><td>${r.item}</td><td>${r.unit}</td><td>${r.qty}</td><td>${r.remarks||''}</td></tr>`;
+  });
+  const issBody = document.querySelector('#issLogTable tbody');
+  issBody.innerHTML='';
+  issueLog.slice().reverse().forEach(r=>{
+    issBody.innerHTML += `<tr><td>${r.date}</td><td>${r.docno}</td><td>${r.to}</td><td>${r.item}</td><td>${r.unit}</td><td>${r.qty}</td><td>${r.remarks||''}</td></tr>`;
+  });
+  const adjBody = document.querySelector('#adjLogTable tbody');
+  adjBody.innerHTML='';
+  adjLog.slice().reverse().forEach(r=>{
+    adjBody.innerHTML += `<tr><td>${r.date}</td><td>${r.item}</td><td>${r.unit}</td><td>${r.qty}</td><td>${r.reason}</td><td>${r.remarks||''}</td></tr>`;
+  });
+}
+
+// ---------- Summary ----------
+function computeStock(){
+  const map = {}; // name(lower) -> {name, unit, opening, totalIn, totalOut, reorder}
+  itemMaster.forEach(it=>{
+    map[it.name.trim().toLowerCase()] = {name: it.name, unit: it.unit, opening: it.opening||0, totalIn:0, totalOut:0, reorder: it.reorder||0};
+  });
+  function ensure(name, unit){
+    const key = (name||'').trim().toLowerCase();
+    if(!key) return null;
+    if(!map[key]) map[key] = {name: name.trim(), unit: unit||'', opening:0, totalIn:0, totalOut:0, reorder:0};
+    return map[key];
+  }
+  grnLog.forEach(r=>{ const e = ensure(r.item, r.unit); if(e){ e.totalIn += r.qty; if(!e.unit) e.unit=r.unit; } });
+  issueLog.forEach(r=>{ const e = ensure(r.item, r.unit); if(e){ e.totalOut += r.qty; if(!e.unit) e.unit=r.unit; } });
+  adjLog.forEach(r=>{
+    const e = ensure(r.item, r.unit);
+    if(e){
+      if(r.qty>0) e.totalIn += r.qty; else e.totalOut += Math.abs(r.qty);
+      if(!e.unit) e.unit=r.unit;
+    }
+  });
+  // also include shared sales/purchase from Bills bot, if present
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      (d.inventoryLog||[]).forEach(r=>{
+        const e = ensure(r.item, r.unit);
+        if(!e) return;
+        if(r.type === 'IN') e.totalIn += (r.qty||0);
+        else if(r.type === 'OUT') e.totalOut += (r.qty||0);
+      });
+    }
+  }catch(e){}
+  return Object.values(map);
+}
+
+function renderSummary(){
+  const items = computeStock();
+  const tbody = document.querySelector('#summaryTable tbody');
+  tbody.innerHTML='';
+  let low=0, ok=0, notInMaster=0;
+  items.sort((a,b)=>a.name.localeCompare(b.name)).forEach(it=>{
+    const closing = (it.opening||0) + (it.totalIn||0) - (it.totalOut||0);
+    let status, cls;
+    if(closing <= 0){ status='Out of Stock'; cls='red'; }
+    else if(it.reorder>0 && closing <= it.reorder){ status='Low Stock'; cls='orange'; low++; }
+    else{ status='OK'; cls='green'; ok++; }
+    tbody.innerHTML += `<tr>
+      <td>${it.name}</td><td>${it.unit}</td>
+      <td>${(it.opening||0).toFixed(1)}</td>
+      <td>${(it.totalIn||0).toFixed(1)}</td>
+      <td>${(it.totalOut||0).toFixed(1)}</td>
+      <td><b>${closing.toFixed(1)}</b></td>
+      <td>${it.reorder||'—'}</td>
+      <td><span class="badge badge-${cls}">${status}</span></td>
+    </tr>`;
+  });
+  document.getElementById('stockKpi').innerHTML=
+    `<span class="kpi-chip green">✅ OK: ${ok}</span>
+     <span class="kpi-chip orange">⚠️ Low: ${low}</span>`;
+}
+
+// ── JSONP cross-device sync ─────────────────────────────
+function gsGet(type, limit){
+  return new Promise(function(resolve){
+    var cbName='_gsJP_'+Date.now();
+    var script=document.createElement('script');
+    var done=false;
+    window[cbName]=function(d){ done=true; delete window[cbName]; if(script.parentNode) script.parentNode.removeChild(script); resolve((d&&d.data)?d.data:[]); };
+    script.onerror=function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } },10000);
+    script.src=GS_URL+'?type='+type+'&limit='+(limit||100)+'&callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+function showToast(msg,type){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:20px;right:20px;background:'+(type==='error'?'#dc2626':'#166534')+';color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 2px 12px rgba(0,0,0,0.2)';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },4000);
+}
+function loadStoresFromSheets(){
+  gsGet('stores', 200).then(function(rows){
+    if(!rows||!rows.length){ showToast('No cloud store data found yet','info'); return; }
+    // Rebuild grnLog and issueLog from cloud data
+    var cloudGrn=[]; var cloudIss=[];
+    rows.forEach(function(r){
+      var t=(r['Type']||'').toLowerCase();
+      var entry={date:r['Date'],docno:r['GRN/Issue No'],item:r['Item'],unit:r['Unit'],qty:parseFloat(r['Qty'])||0,remarks:r['Remarks']||''};
+      if(t.includes('grn')||t.includes('in')||t.includes('stores_grn')){ entry.from=r['Supplier/Dept']||''; cloudGrn.push(entry); }
+      else if(t.includes('issue')||t.includes('out')||t.includes('stores_issue')){ entry.to=r['Supplier/Dept']||''; cloudIss.push(entry); }
+    });
+    if(cloudGrn.length){ grnLog=cloudGrn; }
+    if(cloudIss.length){ issueLog=cloudIss; }
+    renderLogs();
+    renderSummary();
+    showToast('☁ '+rows.length+' store entries synced from Google Sheets','success');
+  });
+}
+// Auto-sync on load
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(loadStoresFromSheets, 1000); });
+</script>
+</body>
+</html>

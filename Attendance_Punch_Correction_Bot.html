@@ -1,0 +1,643 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI Attendance Punch Correction Bot</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#ffffff;
+  --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --red:#b3261e;
+  --orange:#c97a1a; --yellow:#fff7cc; --lgreen:#e8f5ec; --lred:#fdeceb; --lorange:#fdf1e2;
+}
+*{box-sizing:border-box; font-family: Arial, Helvetica, sans-serif;}
+body{margin:0; background:var(--bg); color:var(--text);}
+header{background:var(--navy); color:#fff; padding:16px 24px;}
+header h1{margin:0; font-size:20px;}
+header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+.tabs{display:flex; flex-wrap:wrap; background:var(--navy2); padding:0 16px;}
+.tab{padding:10px 16px; color:#fff; cursor:pointer; font-size:13px; opacity:.8; border-bottom:3px solid transparent; user-select:none;}
+.tab.active{opacity:1; border-bottom:3px solid var(--accent); font-weight:bold;}
+.container{max-width:1200px; margin:0 auto; padding:20px;}
+.panel{display:none;}
+.panel.active{display:block;}
+.card{background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:18px;}
+.card h2{margin:0 0 10px; font-size:15px; color:var(--navy);}
+.card h3{margin:0 0 8px; font-size:13px; color:var(--navy);}
+.muted{color:var(--muted); font-size:12px;}
+.dropzone{border:2px dashed #C5D8EC; border-radius:8px; padding:30px; text-align:center; cursor:pointer; background:var(--bg); margin-bottom:14px;}
+.dropzone:hover{background:#eef3f9;}
+.btn{background:var(--accent); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:12px; cursor:pointer; font-weight:bold;}
+.btn:hover{opacity:.9;}
+.btn.secondary{background:var(--navy2);}
+.btn.green{background:var(--green);}
+.btn.small{padding:5px 10px; font-size:11px;}
+table{width:100%; border-collapse:collapse; font-size:11.5px;}
+th,td{border:1px solid var(--border); padding:5px 7px; text-align:left;}
+th{background:var(--bg); color:var(--navy); position:sticky; top:0;}
+tr.flag-warn{background:var(--lorange);}
+tr.flag-bad{background:var(--lred);}
+tr.flag-ok{background:var(--lgreen);}
+.pill{display:inline-block; padding:2px 8px; border-radius:10px; font-size:10.5px; font-weight:bold;}
+.pill-green{background:var(--lgreen); color:var(--green);}
+.pill-orange{background:var(--lorange); color:var(--orange);}
+.pill-red{background:var(--lred); color:var(--red);}
+.pill-gray{background:#eee; color:#555;}
+.kpi-row{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+.kpi{flex:1; min-width:140px; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px;}
+.kpi .val{font-size:20px; font-weight:bold; color:var(--navy);}
+.kpi .lbl{font-size:11px; color:var(--muted);}
+.scrollbox{max-height:480px; overflow:auto; border:1px solid var(--border); border-radius:6px;}
+select,input[type=number],input[type=text],input[type=date]{padding:4px 6px; font-size:11.5px; border:1px solid var(--border); border-radius:4px; width:100%;}
+.form-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:12px;}
+.fg label{display:block; font-size:11px; color:var(--muted); margin-bottom:3px;}
+.legend span{display:inline-flex; align-items:center; gap:4px; margin-right:14px; font-size:11px;}
+.legend i{width:12px; height:12px; border-radius:3px; display:inline-block;}
+.banner{background:var(--navy); color:#fff; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:12px;}
+.banner b{color:#9FE1CB;}
+footer{text-align:center; font-size:11px; color:var(--muted); padding:18px;}
+</style>
+</head>
+<body>
+<!-- ACCESS CONTROL GATE -->
+<div id="accessGate" style="position:fixed;inset:0;background:#1E3A5F;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Arial,Helvetica,sans-serif">
+  <div style="background:#fff;border-radius:10px;padding:30px 36px;max-width:380px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.35)">
+    <div style="font-size:32px;margin-bottom:8px">🔒</div>
+    <h2 style="margin:0 0 6px;color:#1E3A5F;font-size:16px">Attendance Punch Correction Bot — Restricted Access</h2>
+    <p style="font-size:12px;color:#666;margin:0 0 14px">Enter the access code provided by your supervisor / VC Admin to continue. Access is logged for your department only.</p>
+    <input id="gatePin" type="password" placeholder="Access Code" autocomplete="off" style="width:100%;padding:9px;font-size:14px;border:1px solid #d6dce4;border-radius:6px;text-align:center;box-sizing:border-box" onkeydown="if(event.key==='Enter')checkGatePin()">
+    <div id="gateErr" style="color:#b3261e;font-size:11px;margin-top:6px;min-height:14px"></div>
+    <button onclick="checkGatePin()" style="margin-top:8px;background:#2E86AB;color:#fff;border:none;border-radius:6px;padding:9px 22px;font-size:12px;font-weight:bold;cursor:pointer">Unlock</button>
+    <div style="font-size:10.5px;color:#999;margin-top:10px">Authorized: HR Head, HR Executive</div>
+  </div>
+</div>
+<script>
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS BACKEND — auto-configured
+// ═══════════════════════════════════════════════════════
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+const GS_AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+let _botLocation = localStorage.getItem('sspi_location') || 'Bhiwadi';
+// ── OFFLINE QUEUE + AUTH TOKEN + LOCATION ───────────────────
+var _offQ = JSON.parse(localStorage.getItem('sspi_offline_q') || '[]');
+var _botOnline = navigator.onLine;
+function _saveOffQ(){ localStorage.setItem('sspi_offline_q', JSON.stringify(_offQ)); }
+function syncBotQueue(){
+  if (!_botOnline || !_offQ.length) return;
+  var item = _offQ.shift(); _saveOffQ();
+  fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(item)})
+    .then(function(){ if(_offQ.length) setTimeout(syncBotQueue,600); })
+    .catch(function(){ _offQ.unshift(item); _saveOffQ(); });
+}
+window.addEventListener('online',  function(){ _botOnline=true;  syncBotQueue(); });
+window.addEventListener('offline', function(){ _botOnline=false; });
+function gsPost(payload){
+  if (!GS_URL) return;
+  payload.authToken = GS_AUTH_TOKEN;
+  payload.location  = payload.location || _botLocation;
+  payload._ts = payload._ts || new Date().toISOString();
+  if (!_botOnline) {
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+    return;
+  }
+  fetch(GS_URL, {method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  }).catch(function(){
+    _offQ.push(JSON.parse(JSON.stringify(payload)));
+    _saveOffQ();
+  });
+}
+(function(){
+  var VALID_PINS = ['ATT-HR-2026'];
+  var SESSION_KEY = 'sspi_gate_attendance';
+  function checkGatePin(){
+    var v=document.getElementById('gatePin').value.trim();
+    if(VALID_PINS.indexOf(v)>-1){
+      sessionStorage.setItem(SESSION_KEY,'1');
+      document.getElementById('accessGate').remove();
+    } else {
+      document.getElementById('gateErr').textContent='Incorrect code. Contact VC Admin / your supervisor.';
+    }
+  }
+  window.checkGatePin=checkGatePin;
+  if(sessionStorage.getItem(SESSION_KEY)==='1'){
+    var g=document.getElementById('accessGate'); if(g) g.remove();
+  }
+})();
+</script>
+<header>
+  <h1>🕒 SSPI Attendance Punch Correction Bot</h1>
+  <p>Upload daily punching-machine export → bot auto-detects punches, flags improper punching, and produces a corrected Attendance Log + Monthly Present Days/OT feed for the Salary Master — or add a single day's record manually if there's no punch-machine file for it.</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('upload',this)">📂 Upload &amp; Process</div>
+  <div class="tab" onclick="showTab('daily',this)">📅 Daily Summary</div>
+  <div class="tab" onclick="showTab('flagged',this)">⚠ Flagged Records</div>
+  <div class="tab" onclick="showTab('monthly',this)">👥 Employee Monthly Summary</div>
+  <div class="tab" onclick="showTab('export',this)">⬇ Export</div>
+</div>
+
+<div class="container">
+
+  <!-- ===================== UPLOAD ===================== -->
+  <div class="panel active" id="p-upload">
+    <div class="banner">
+      <b>Expected format (wide / one row per employee per day):</b> a header row containing an
+      Employee Code/Card No. column, an Employee Name column (optional), a Date column, and one or
+      more punch-time columns (e.g. <b>Punch1, Punch2, Punch3...</b> or <b>In1, Out1, In2, Out2</b> or
+      raw time columns from the punch-machine export). The bot auto-detects which columns are which.
+    </div>
+    <div class="card">
+      <h2>1. Upload Punch Machine Export (.xlsx / .xls / .csv)</h2>
+      <div class="dropzone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondrop="handleDrop(event)" ondragover="event.preventDefault();this.style.background='#eef3f9'" ondragleave="this.style.background='var(--bg)'">
+        <div style="font-size:30px;margin-bottom:6px">📁</div>
+        <div style="font-weight:bold;color:var(--navy)">Drop file here or click to browse</div>
+        <div class="muted" style="margin-top:4px">Accepted: .xlsx, .xls, .csv</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(event.target.files[0])">
+      </div>
+      <div id="fileStatus" class="muted"></div>
+    </div>
+
+    <div class="card">
+      <h2>Or Add a Single Record Manually <span class="muted" style="font-weight:normal">(no punch-machine file needed)</span></h2>
+      <p class="muted">Use this for a one-off correction — e.g. an employee worked at a site with no punch machine, or a day was missed entirely.</p>
+      <div class="form-row">
+        <div class="fg"><label>Emp Code</label><input type="text" id="man_code" placeholder="e.g. 12"></div>
+        <div class="fg"><label>Employee Name</label><input type="text" id="man_name" placeholder="e.g. RAJEEV"></div>
+        <div class="fg"><label>Date</label><input type="date" id="man_date"></div>
+        <div class="fg"><label>Present Value</label>
+          <select id="man_present">
+            <option value="1">1 — Full Day</option>
+            <option value="0.5">0.5 — Half Day</option>
+            <option value="0">0 — Absent</option>
+          </select>
+        </div>
+        <div class="fg"><label>OT Hours</label><input type="number" id="man_ot" value="0" min="0" step="0.25"></div>
+        <div class="fg"><label>Remarks</label><input type="text" id="man_remarks" placeholder="Reason for manual entry"></div>
+      </div>
+      <button class="btn secondary" onclick="addManualRecord()">➕ Add Manual Record</button>
+    </div>
+
+    <div class="card" id="mappingCard" style="display:none">
+      <h2>2. Confirm Column Mapping</h2>
+      <p class="muted">The bot guessed the columns below. Adjust if needed, then click Process.</p>
+      <table style="max-width:600px">
+        <tr><th style="width:160px">Field</th><th>Detected Column</th></tr>
+        <tr><td>Employee Code</td><td><select id="mapCode"></select></td></tr>
+        <tr><td>Employee Name</td><td><select id="mapName"></select></td></tr>
+        <tr><td>Date</td><td><select id="mapDate"></select></td></tr>
+      </table>
+      <p class="muted" style="margin-top:8px">All other columns will be scanned for punch times automatically.</p>
+      <div style="margin-top:10px">
+        <label class="muted">Standard working hours / day:
+          <input type="number" id="stdHours" value="8" min="1" max="12" step="0.5" style="width:60px">
+        </label>
+      </div>
+      <button class="btn" style="margin-top:12px" onclick="processData()">⚙ Process Attendance</button>
+    </div>
+
+    <div class="card" id="resultBanner" style="display:none">
+      <h2>✅ Processing Complete</h2>
+      <div class="kpi-row" id="summaryKpis"></div>
+      <div class="legend">
+        <span><i style="background:var(--lgreen)"></i> Clean punch (no issue)</span>
+        <span><i style="background:var(--lorange)"></i> Auto-corrected / needs confirmation</span>
+        <span><i style="background:var(--lred)"></i> Needs manual review</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== DAILY SUMMARY ===================== -->
+  <div class="panel" id="p-daily">
+    <div class="card">
+      <h2>Daily Attendance Summary (matches HR_Attendance_Daily_Log format)</h2>
+      <p class="muted">Present = employees with ≥1 valid punch · Absent = employees with 0 punches · OT_Hours = total overtime hours that day.</p>
+      <div class="scrollbox"><table id="dailyTable"><thead><tr><th>Date</th><th>Total Employees</th><th>Present</th><th>Absent</th><th>Half-Day</th><th>OT Hours</th><th>Flags</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== FLAGGED ===================== -->
+  <div class="panel" id="p-flagged">
+    <div class="card">
+      <h2>⚠ Records Needing Review / Auto-Corrected</h2>
+      <p class="muted">Edit the <b>Present Value</b> (1 = full day, 0.5 = half day, 0 = absent) and <b>OT Hours</b> if the auto-correction is wrong, then tick "Reviewed". These edits feed the export tables.</p>
+      <div class="scrollbox"><table id="flaggedTable"><thead><tr><th>Emp Code</th><th>Name</th><th>Date</th><th>Punches Found</th><th>Hours Worked</th><th>Issue</th><th>Present Value</th><th>OT Hours</th><th>Reviewed</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== MONTHLY ===================== -->
+  <div class="panel" id="p-monthly">
+    <div class="card">
+      <h2>👥 Employee Monthly Summary</h2>
+      <p class="muted">Total Present Days and OT Hours across all dates in the uploaded file — ready to copy into the Salary Master's monthly sheet (columns "Present Days" &amp; "OT Hours").</p>
+      <div class="scrollbox"><table id="monthlyTable"><thead><tr><th>Emp Code</th><th>Name</th><th>Days in File</th><th>Present Days</th><th>Absent Days</th><th>Half Days</th><th>OT Hours</th><th>Flagged Days</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== EXPORT ===================== -->
+  <div class="panel" id="p-export">
+    <div class="card">
+      <h2>⬇ Export Corrected Data</h2>
+      <p class="muted">Process a file first (Upload tab). Then download:</p>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:10px">
+        <button class="btn" onclick="exportDaily()">📥 Daily Attendance Log (CSV)</button>
+        <button class="btn green" onclick="exportMonthly()">📥 Monthly Present Days &amp; OT per Employee (CSV)</button>
+        <button class="btn secondary" onclick="exportFlagged()">📥 Flagged Records Report (CSV)</button>
+      </div>
+      <div class="card" style="margin-top:16px;background:var(--bg)">
+        <h3>How to use the exports</h3>
+        <p class="muted">
+        <b>Daily Attendance Log (CSV)</b> — columns Date, Present, Absent, Leave, OT_Hours. Append/paste these
+        rows into <code>HR_Attendance_Daily_Log_June2026.csv</code> (or the linked "HR ATTENDANCE" Google Sheet)
+        to feed the VC Dashboard's HR &amp; Attendance module.<br><br>
+        <b>Monthly Present Days &amp; OT (CSV)</b> — columns Emp Code, Employee Name, Present Days, OT Hours.
+        Use this to update the "Present Days" (col I) and "OT Hours" (col J) of the relevant month sheet
+        (Apr-Mar) in <code>SALARY_MASTER_SHEET.xlsx</code> — Gross Salary, Salary Payable, Advance Master,
+        Yearly Summary and Dashboard recalculate automatically from those two columns.<br><br>
+        <b>Flagged Records Report (CSV)</b> — full audit trail of every punch anomaly and how it was
+        corrected, for HR sign-off.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+<footer>SSPI Attendance Punch Correction Bot · Data is processed locally in your browser — no file is uploaded to a server.</footer>
+
+<script>
+let rawRows = [];      // array of arrays (raw sheet rows)
+let headerRow = [];
+let processed = [];    // processed per employee-day records
+let dailySummary = [];
+let monthlySummary = [];
+
+function showTab(id, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  e.target.style.background = 'var(--bg)';
+  if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+}
+
+function handleFile(file){
+  if(!file) return;
+  document.getElementById('fileStatus').textContent = 'Reading "'+file.name+'"...';
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, {type:'array', cellDates:true});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+    if(!json.length){ document.getElementById('fileStatus').textContent = 'No data found in file.'; return; }
+    headerRow = json[0].map(h=>String(h).trim());
+    rawRows = json.slice(1).filter(r=>r.some(c=>String(c).trim()!==''));
+    document.getElementById('fileStatus').textContent = `Loaded "${file.name}" — ${rawRows.length} rows, ${headerRow.length} columns.`;
+    buildMapping();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ---------- Manual single-record entry (no file upload) ----------
+function addManualRecord(){
+  const empCode = document.getElementById('man_code').value.trim();
+  const empName = document.getElementById('man_name').value.trim();
+  const date = document.getElementById('man_date').value;
+  if(!empCode && !empName){ alert('Enter at least an Emp Code or Employee Name.'); return; }
+  if(!date){ alert('Pick a date.'); return; }
+
+  const presentValue = parseFloat(document.getElementById('man_present').value) || 0;
+  const otHours = parseFloat(document.getElementById('man_ot').value) || 0;
+  const remarks = document.getElementById('man_remarks').value.trim();
+
+  // Remove any existing record for the same employee+date so a manual entry can correct it
+  processed = processed.filter(r => !(r.empCode===empCode && r.date===date));
+  processed.push({
+    empCode, empName, date, punches: [], hoursWorked: 0,
+    presentValue, otHours,
+    flag: remarks ? ('Manual entry — ' + remarks) : 'Manual entry (no punch file)',
+    severity: 'warn', reviewed: true, manual: true
+  });
+
+  buildDailySummary();
+  buildMonthlySummary();
+  renderAll();
+  gsPost({sheet:'attendance_summary', date, employee: empName || empCode, hours: otHours, status: presentValue>=1?'Present':(presentValue>0?'Half Day':'Absent')});
+  showToast('Manual record added for ' + (empName||empCode) + ' on ' + date);
+  document.getElementById('man_code').value='';
+  document.getElementById('man_name').value='';
+  document.getElementById('man_ot').value='0';
+  document.getElementById('man_remarks').value='';
+}
+
+function buildMapping(){
+  const codeSel = document.getElementById('mapCode');
+  const nameSel = document.getElementById('mapName');
+  const dateSel = document.getElementById('mapDate');
+  [codeSel, nameSel, dateSel].forEach(s=>s.innerHTML='');
+  headerRow.forEach((h, i)=>{
+    [codeSel, nameSel, dateSel].forEach(s=>{
+      const o = document.createElement('option');
+      o.value = i; o.textContent = `Col ${i+1}: ${h || '(blank)'}`;
+      s.appendChild(o);
+    });
+  });
+  // Heuristic guesses
+  const guess = (regexes) => {
+    for(const re of regexes){
+      const idx = headerRow.findIndex(h=>re.test(h));
+      if(idx>=0) return idx;
+    }
+    return 0;
+  };
+  codeSel.value = guess([/emp.*code/i, /card/i, /^code$/i, /^id$/i, /emp.*id/i]);
+  nameSel.value = guess([/name/i]);
+  dateSel.value = guess([/date/i, /^day$/i]);
+  document.getElementById('mappingCard').style.display = 'block';
+}
+
+// Parse a cell value into a fraction-of-day time (0-1+), or null if not a time
+function parseTime(val){
+  if(val === '' || val === null || val === undefined) return null;
+  if(val instanceof Date) {
+    return val.getHours() + val.getMinutes()/60 + val.getSeconds()/3600;
+  }
+  if(typeof val === 'number'){
+    // Excel serial time fraction (0..1) or full datetime serial
+    let frac = val % 1;
+    if(val > 0 && val < 1) frac = val;
+    return frac * 24;
+  }
+  const s = String(val).trim();
+  if(s==='') return null;
+  // formats like "09:15", "9:15 AM", "09:15:00"
+  let m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|am|pm)?$/);
+  if(m){
+    let h = parseInt(m[1],10);
+    const min = parseInt(m[2],10);
+    const sec = m[3]? parseInt(m[3],10):0;
+    const ap = m[4]? m[4].toUpperCase(): null;
+    if(ap==='PM' && h<12) h+=12;
+    if(ap==='AM' && h===12) h=0;
+    return h + min/60 + sec/3600;
+  }
+  // datetime strings - try Date parse
+  const d = new Date(s);
+  if(!isNaN(d.getTime()) && /\d{1,2}:\d{2}/.test(s)){
+    return d.getHours() + d.getMinutes()/60 + d.getSeconds()/3600;
+  }
+  return null;
+}
+
+function fmtHour(h){
+  if(h===null || h===undefined) return '';
+  let hh = Math.floor(h);
+  let mm = Math.round((h-hh)*60);
+  if(mm===60){mm=0;hh+=1;}
+  return String(hh%24).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+}
+
+function fmtDate(val){
+  if(val instanceof Date){
+    return val.toISOString().slice(0,10);
+  }
+  return String(val).trim();
+}
+
+function processData(){
+  const codeIdx = parseInt(document.getElementById('mapCode').value);
+  const nameIdx = parseInt(document.getElementById('mapName').value);
+  const dateIdx = parseInt(document.getElementById('mapDate').value);
+  const stdHours = parseFloat(document.getElementById('stdHours').value) || 8;
+  const punchIdxs = headerRow.map((h,i)=>i).filter(i=> i!==codeIdx && i!==nameIdx && i!==dateIdx);
+
+  processed = [];
+  rawRows.forEach(row=>{
+    const empCode = String(row[codeIdx] ?? '').trim();
+    const empName = String(row[nameIdx] ?? '').trim();
+    const date = fmtDate(row[dateIdx]);
+    if(!empCode && !empName) return;
+    if(!date) return;
+
+    let punches = [];
+    punchIdxs.forEach(i=>{
+      const t = parseTime(row[i]);
+      if(t!==null) punches.push(t);
+    });
+    punches.sort((a,b)=>a-b);
+
+    let presentValue=0, otHours=0, flag=null, severity='ok';
+    const n = punches.length;
+    if(n===0){
+      presentValue=0; otHours=0; flag=null; severity='ok'; // simply absent, not an "improper punch"
+    } else if(n===1){
+      presentValue=0.5; otHours=0;
+      flag = `Only 1 punch recorded — assumed Half Day, please confirm`;
+      severity='bad';
+    } else {
+      const firstIn = punches[0];
+      const lastOut = punches[n-1];
+      let hours = lastOut - firstIn;
+      if(hours<0) hours += 24;
+      if(n%2!==0){
+        flag = `Odd punch count (${n}) — used earliest as IN, latest as OUT`;
+        severity='warn';
+      }
+      if(hours >= stdHours){
+        presentValue=1;
+        otHours = +(hours-stdHours).toFixed(2);
+      } else if(hours >= stdHours/2){
+        presentValue=0.5;
+        otHours=0;
+        if(!flag){ flag = `Short duration (${hours.toFixed(1)}h) — Half Day applied, please confirm`; severity='warn'; }
+      } else {
+        presentValue=0;
+        otHours=0;
+        flag = `Very short duration (${hours.toFixed(1)}h) between first and last punch — please verify`;
+        severity='bad';
+      }
+      processed.push({}); processed.pop(); // no-op
+      var hoursWorked = +hours.toFixed(2);
+    }
+
+    processed.push({
+      empCode, empName, date, punches: punches.map(fmtHour),
+      hoursWorked: n>=2 ? +(punches[n-1]-punches[0] + (punches[n-1]<punches[0]?24:0)).toFixed(2) : 0,
+      presentValue, otHours, flag, severity, reviewed:false
+    });
+  });
+
+  buildDailySummary();
+  buildMonthlySummary();
+  renderAll();
+}
+
+function buildDailySummary(){
+  const byDate = {};
+  processed.forEach(r=>{
+    if(!byDate[r.date]) byDate[r.date] = {total:0, present:0, absent:0, half:0, ot:0, flags:0};
+    const d = byDate[r.date];
+    d.total++;
+    if(r.punches.length===0) d.absent++;
+    else if(r.presentValue===1) d.present++;
+    else if(r.presentValue===0.5) d.half++;
+    else d.absent++;
+    d.ot += r.otHours;
+    if(r.flag) d.flags++;
+  });
+  dailySummary = Object.keys(byDate).sort().map(date=>({date, ...byDate[date]}));
+}
+
+function buildMonthlySummary(){
+  const byEmp = {};
+  processed.forEach(r=>{
+    const key = r.empCode || r.empName;
+    if(!byEmp[key]) byEmp[key] = {empCode:r.empCode, empName:r.empName, days:0, present:0, absent:0, half:0, ot:0, flagged:0};
+    const e = byEmp[key];
+    e.days++;
+    if(r.punches.length===0) e.absent++;
+    else if(r.presentValue===1) e.present+=1;
+    else if(r.presentValue===0.5){ e.half++; e.present+=0.5; }
+    else e.absent++;
+    e.ot += r.otHours;
+    if(r.flag) e.flagged++;
+  });
+  monthlySummary = Object.values(byEmp);
+}
+
+function renderAll(){
+  // KPIs
+  const totalRecords = processed.length;
+  const flaggedCount = processed.filter(r=>r.flag).length;
+  const totalPresent = processed.reduce((s,r)=>s+r.presentValue,0);
+  const totalOT = processed.reduce((s,r)=>s+r.otHours,0);
+  document.getElementById('summaryKpis').innerHTML = `
+    <div class="kpi"><div class="val">${totalRecords}</div><div class="lbl">Employee-Day Records</div></div>
+    <div class="kpi"><div class="val">${flaggedCount}</div><div class="lbl">Flagged for Review</div></div>
+    <div class="kpi"><div class="val">${totalPresent.toFixed(1)}</div><div class="lbl">Total Present-Days</div></div>
+    <div class="kpi"><div class="val">${totalOT.toFixed(1)}</div><div class="lbl">Total OT Hours</div></div>`;
+  document.getElementById('resultBanner').style.display = 'block';
+
+  // Daily table
+  const dailyBody = document.querySelector('#dailyTable tbody');
+  dailyBody.innerHTML = dailySummary.map(d=>`
+    <tr>
+      <td>${d.date}</td><td>${d.total}</td><td>${d.present}</td><td>${d.absent}</td>
+      <td>${d.half}</td><td>${d.ot.toFixed(1)}</td>
+      <td>${d.flags>0?`<span class="pill pill-orange">${d.flags} flagged</span>`:`<span class="pill pill-green">OK</span>`}</td>
+    </tr>`).join('');
+
+  // Flagged table
+  const flaggedBody = document.querySelector('#flaggedTable tbody');
+  const flaggedRows = processed.filter(r=>r.flag);
+  flaggedBody.innerHTML = flaggedRows.map((r,idx)=>{
+    const cls = r.severity==='bad' ? 'flag-bad' : 'flag-warn';
+    return `<tr class="${cls}">
+      <td>${r.empCode}</td><td>${r.empName}</td><td>${r.date}</td>
+      <td>${r.punches.join(', ')||'—'}</td><td>${r.hoursWorked}</td>
+      <td>${r.flag}</td>
+      <td><input type="number" step="0.5" min="0" max="1" value="${r.presentValue}" style="width:60px" onchange="updateRecord('${r.empCode}','${r.date}','presentValue',this.value)"></td>
+      <td><input type="number" step="0.25" min="0" value="${r.otHours}" style="width:60px" onchange="updateRecord('${r.empCode}','${r.date}','otHours',this.value)"></td>
+      <td style="text-align:center"><input type="checkbox" ${r.reviewed?'checked':''} onchange="updateRecord('${r.empCode}','${r.date}','reviewed',this.checked)"></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="9" class="muted" style="text-align:center;padding:14px">No flagged records 🎉</td></tr>`;
+
+  // Monthly table
+  const monthlyBody = document.querySelector('#monthlyTable tbody');
+  monthlyBody.innerHTML = monthlySummary.map(e=>`
+    <tr>
+      <td>${e.empCode}</td><td>${e.empName}</td><td>${e.days}</td>
+      <td>${e.present.toFixed(1)}</td><td>${e.absent}</td><td>${e.half}</td>
+      <td>${e.ot.toFixed(2)}</td>
+      <td>${e.flagged>0?`<span class="pill pill-orange">${e.flagged}</span>`:`<span class="pill pill-green">0</span>`}</td>
+    </tr>`).join('');
+}
+
+function updateRecord(empCode, date, field, value){
+  const rec = processed.find(r=>r.empCode===empCode && r.date===date);
+  if(!rec) return;
+  if(field==='presentValue' || field==='otHours') rec[field] = parseFloat(value)||0;
+  else rec[field] = value;
+  buildDailySummary();
+  buildMonthlySummary();
+  renderAll();
+}
+
+function downloadCSV(filename, rows){
+  const csv = rows.map(r=>r.map(c=>{
+    const s = String(c ?? '');
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// Auto-post summary to GS when attendance is processed
+// Now uses type: key for Code.gs routing
+function postAttendanceSummary(summary){
+  gsPost({type:'attendance', sheet:'attendance_summary', ...summary});
+}
+
+// ── JSONP cross-device sync ─────────────────────────────
+function gsGet(type, limit){
+  return new Promise(function(resolve){
+    var cbName='_gsJP_'+Date.now();
+    var script=document.createElement('script');
+    var done=false;
+    window[cbName]=function(d){ done=true; delete window[cbName]; if(script.parentNode) script.parentNode.removeChild(script); resolve((d&&d.data)?d.data:[]); };
+    script.onerror=function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } },10000);
+    script.src=GS_URL+'?type='+type+'&limit='+(limit||200)+'&callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+function showToast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e3a5f;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 2px 12px rgba(0,0,0,.2)';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },4000);
+}
+function loadAttendanceFromSheets(){
+  gsGet('attendance', 300).then(function(rows){
+    if(!rows||!rows.length){ return; }
+    // Show count in a status area
+    var status=document.getElementById('syncStatus');
+    if(status) status.textContent='☁ '+rows.length+' attendance records available in Google Sheets. Process a file or export to view.';
+    showToast('☁ '+rows.length+' attendance records in Google Sheets');
+  });
+}
+function exportDaily(){
+  if(!dailySummary.length){ alert('Process a file first.'); return; }
+  const rows = [['Date','Present','Absent','Leave','OT_Hours']];
+  dailySummary.forEach(d=>rows.push([d.date, d.present + d.half, d.absent, 0, d.ot.toFixed(2)]));
+  downloadCSV('Attendance_Daily_Log_corrected.csv', rows);
+}
+
+function exportMonthly(){
+  if(!monthlySummary.length){ alert('Process a file first.'); return; }
+  const rows = [['Emp Code','Employee Name','Days in File','Present Days','Absent Days','Half Days','OT Hours']];
+  monthlySummary.forEach(e=>rows.push([e.empCode, e.empName, e.days, e.present.toFixed(1), e.absent, e.half, e.ot.toFixed(2)]));
+  downloadCSV('Monthly_Present_Days_OT_per_Employee.csv', rows);
+}
+
+function exportFlagged(){
+  const flaggedRows = processed.filter(r=>r.flag);
+  if(!flaggedRows.length){ alert('No flagged records to export.'); return; }
+  const rows = [['Emp Code','Employee Name','Date','Punches Found','Hours Worked','Issue','Present Value (final)','OT Hours (final)','Reviewed']];
+  flaggedRows.forEach(r=>rows.push([r.empCode, r.empName, r.date, r.punches.join(' | '), r.hoursWorked, r.flag, r.presentValue, r.otHours, r.reviewed?'Yes':'No']));
+  downloadCSV('Attendance_Flagged_Records_Report.csv', rows);
+}
+</script>
+</body>
+</html>

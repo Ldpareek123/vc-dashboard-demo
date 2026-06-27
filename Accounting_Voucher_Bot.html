@@ -1,0 +1,687 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accounting Voucher Entry Bot</title>
+<style>
+:root{
+  --navy:#1E3A5F; --navy2:#274A73; --accent:#2E86AB; --bg:#f4f6f9; --card:#ffffff;
+  --border:#d6dce4; --text:#222; --muted:#666; --green:#1d7a3c; --red:#b3261e; --orange:#c97a1a;
+  --yellow:#fff7cc; --lgreen:#e8f5ec; --lred:#fdeceb; --lorange:#fdf1e2;
+}
+*{box-sizing:border-box;}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);margin:0;}
+header{background:var(--navy);color:#fff;padding:18px 24px;}
+header h1{margin:0;font-size:22px;}
+header p{margin:4px 0 0;font-size:13px;color:#cfd9e6;}
+.wrap{max-width:1100px;margin:0 auto;padding:16px;}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.tab{padding:9px 14px;background:#fff;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:13px;font-weight:bold;color:var(--navy2);}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.panel{display:none;}
+.panel.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px;}
+.card h2{margin:0 0 10px;font-size:16px;color:var(--navy);border-bottom:2px solid var(--accent);padding-bottom:6px;}
+.form-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;}
+.fg{flex:1 1 180px;display:flex;flex-direction:column;}
+.fg label{font-size:12px;font-weight:bold;color:var(--navy2);margin-bottom:4px;}
+.fg input,.fg select,.fg textarea{padding:7px 8px;border:1px solid var(--border);border-radius:5px;font-size:13px;font-family:inherit;}
+.btn{padding:9px 18px;border:none;border-radius:5px;font-weight:bold;font-size:13px;cursor:pointer;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-grey{background:#888;color:#fff;}
+.btn-small{padding:4px 10px;font-size:11px;}
+.btn-row{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}
+.scrollbox{max-height:320px;overflow:auto;border:1px solid var(--border);border-radius:6px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{background:var(--navy);color:#fff;padding:6px 8px;text-align:left;position:sticky;top:0;}
+td{padding:6px 8px;border-bottom:1px solid var(--border);}
+tr:nth-child(even) td{background:#f9fafc;}
+.kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.kpi{flex:1;min-width:120px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center;}
+.kpi .num{font-size:20px;font-weight:bold;color:var(--navy);}
+.kpi .lbl{font-size:11px;color:var(--muted);}
+.pill{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold;}
+.pill-green{background:var(--lgreen);color:var(--green);}
+.pill-orange{background:var(--lorange);color:var(--orange);}
+.pill-red{background:var(--lred);color:var(--red);}
+.note{font-size:12px;color:var(--muted);margin-top:6px;}
+.cfgbox{background:var(--yellow);border:1px solid #e6d27a;border-radius:6px;padding:10px;font-size:12px;margin-bottom:14px;}
+.cfgbox input{width:100%;padding:6px;border:1px solid var(--border);border-radius:5px;margin-top:4px;}
+.linerow{display:flex;gap:8px;align-items:flex-end;margin-bottom:6px;}
+.linerow .fg{flex:1 1 auto;}
+.totals{font-weight:bold;color:var(--navy);margin-top:6px;}
+.totals .bad{color:var(--red);}
+.totals .good{color:var(--green);}
+#accessGate{position:fixed;inset:0;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:999;}
+#accessGate input{padding:10px;font-size:16px;border-radius:5px;border:none;text-align:center;width:160px;}
+#accessGate button{margin-top:12px;padding:8px 24px;border:none;border-radius:5px;background:var(--accent);color:#fff;font-weight:bold;cursor:pointer;}
+#accessGate .err{color:#ffb3b3;margin-top:8px;font-size:13px;}
+</style>
+</head>
+<body>
+
+<div id="accessGate">
+  <h2>Accounting Voucher Bot</h2>
+  <p>Enter access PIN to continue</p>
+  <input type="password" id="pinInput" maxlength="6" placeholder="PIN">
+  <div class="err" id="pinErr"></div>
+  <button onclick="checkGatePin()">Unlock</button>
+</div>
+
+<header>
+  <h1>Accounting Voucher Entry Bot</h1>
+  <p>Sales / Purchase / Payment / Receipt / Journal vouchers -&gt; Excel export + Google Sheet sync (Tally/Busy compatible)</p>
+</header>
+
+<div class="wrap">
+
+  <div class="cfgbox">
+    <strong>Google Sheet sync setup (one-time):</strong> paste your Apps Script Web App URL below (shared with GST Recon bot - see Code.gs guide).
+    <input type="text" id="writeApiUrl" placeholder="https://script.google.com/macros/s/XXXXXXXX/exec">
+    <div class="btn-row">
+      <button class="btn btn-grey" onclick="saveApiUrl()">Save URL</button>
+      <span class="note" id="apiUrlStatus"></span>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="num" id="kpiSales">0</div><div class="lbl">Sales Vouchers</div></div>
+    <div class="kpi"><div class="num" id="kpiPurchase">0</div><div class="lbl">Purchase Vouchers</div></div>
+    <div class="kpi"><div class="num" id="kpiPayment">0</div><div class="lbl">Payment Vouchers</div></div>
+    <div class="kpi"><div class="num" id="kpiReceipt">0</div><div class="lbl">Receipt Vouchers</div></div>
+    <div class="kpi"><div class="num" id="kpiJournal">0</div><div class="lbl">Journal Vouchers</div></div>
+    <div class="kpi"><div class="num" id="kpiPending">0</div><div class="lbl">Pending Sync</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('sales',this)">Sales Voucher</div>
+    <div class="tab" onclick="showTab('purchase',this)">Purchase Voucher</div>
+    <div class="tab" onclick="showTab('payment',this)">Payment Voucher</div>
+    <div class="tab" onclick="showTab('receipt',this)">Receipt Voucher</div>
+    <div class="tab" onclick="showTab('journal',this)">Journal Voucher</div>
+    <div class="tab" onclick="showTab('export',this)">Export / Sync</div>
+  </div>
+
+  <!-- SALES VOUCHER -->
+  <div class="panel active" id="panel-sales">
+    <div class="card">
+      <h2>Sales Voucher</h2>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="sv_date"></div>
+        <div class="fg"><label>Voucher No</label><input type="text" id="sv_no"></div>
+        <div class="fg"><label>Party / Ledger Name</label><input type="text" id="sv_party"></div>
+        <div class="fg"><label>GSTIN</label><input type="text" id="sv_gstin"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Item / Service Description</label><input type="text" id="sv_desc"></div>
+        <div class="fg"><label>Taxable Amount (Rs)</label><input type="number" id="sv_taxable" step="0.01"></div>
+        <div class="fg"><label>GST Rate (%)</label>
+          <select id="sv_rate"><option>0</option><option>5</option><option>12</option><option>18</option><option>28</option></select>
+        </div>
+        <div class="fg"><label>Place of Supply</label>
+          <select id="sv_pos"><option>Intra-State (CGST+SGST)</option><option>Inter-State (IGST)</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Narration</label><textarea id="sv_narration" rows="2"></textarea></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Attach Invoice / Bill (image or PDF)</label><input type="file" id="sv_invoice" accept="image/*,.pdf" onchange="handleInvoiceFile(this,'sv')"></div>
+        <div class="fg"><label>Attached File</label><div class="note" id="sv_invoice_name">No file attached</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveVoucher('sales')">Save Voucher</button>
+        <button class="btn btn-grey" onclick="clearForm('sales')">Clear</button>
+      </div>
+    </div>
+    <div class="card"><h2>Recent Sales Vouchers</h2><div class="scrollbox"><table id="tbl-sales"><thead><tr><th>Date</th><th>Voucher No</th><th>Party</th><th>Desc</th><th>Taxable</th><th>Rate</th><th>IGST</th><th>CGST</th><th>SGST</th><th>Total</th><th>Sync</th><th>Invoice</th></tr></thead><tbody></tbody></table></div></div>
+  </div>
+
+  <!-- PURCHASE VOUCHER -->
+  <div class="panel" id="panel-purchase">
+    <div class="card">
+      <h2>Purchase Voucher</h2>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="pv_date"></div>
+        <div class="fg"><label>Voucher No</label><input type="text" id="pv_no"></div>
+        <div class="fg"><label>Supplier / Ledger Name</label><input type="text" id="pv_party"></div>
+        <div class="fg"><label>GSTIN</label><input type="text" id="pv_gstin"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Item / Service Description</label><input type="text" id="pv_desc"></div>
+        <div class="fg"><label>Taxable Amount (Rs)</label><input type="number" id="pv_taxable" step="0.01"></div>
+        <div class="fg"><label>GST Rate (%)</label>
+          <select id="pv_rate"><option>0</option><option>5</option><option>12</option><option>18</option><option>28</option></select>
+        </div>
+        <div class="fg"><label>Place of Supply</label>
+          <select id="pv_pos"><option>Intra-State (CGST+SGST)</option><option>Inter-State (IGST)</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Reverse Charge Applicable?</label>
+          <select id="pv_rcm"><option>No</option><option>Yes</option></select>
+        </div>
+        <div class="fg"><label>Narration</label><textarea id="pv_narration" rows="2"></textarea></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Attach Invoice / Bill (image or PDF)</label><input type="file" id="pv_invoice" accept="image/*,.pdf" onchange="handleInvoiceFile(this,'pv')"></div>
+        <div class="fg"><label>Attached File</label><div class="note" id="pv_invoice_name">No file attached</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveVoucher('purchase')">Save Voucher</button>
+        <button class="btn btn-grey" onclick="clearForm('purchase')">Clear</button>
+      </div>
+    </div>
+    <div class="card"><h2>Recent Purchase Vouchers</h2><div class="scrollbox"><table id="tbl-purchase"><thead><tr><th>Date</th><th>Voucher No</th><th>Supplier</th><th>Desc</th><th>Taxable</th><th>Rate</th><th>IGST</th><th>CGST</th><th>SGST</th><th>Total</th><th>RCM</th><th>Sync</th><th>Invoice</th></tr></thead><tbody></tbody></table></div></div>
+  </div>
+
+  <!-- PAYMENT VOUCHER -->
+  <div class="panel" id="panel-payment">
+    <div class="card">
+      <h2>Payment Voucher (money going out)</h2>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="pmv_date"></div>
+        <div class="fg"><label>Voucher No</label><input type="text" id="pmv_no"></div>
+        <div class="fg"><label>Paid To</label><input type="text" id="pmv_party"></div>
+        <div class="fg"><label>Amount (Rs)</label><input type="number" id="pmv_amount" step="0.01"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Mode</label>
+          <select id="pmv_mode"><option>Bank Transfer</option><option>Cheque</option><option>Cash</option><option>UPI</option><option>Other</option></select>
+        </div>
+        <div class="fg"><label>Bank/Cash Ledger</label><input type="text" id="pmv_ledger" placeholder="e.g. HDFC Bank A/c"></div>
+        <div class="fg"><label>Against Bill/Voucher No (if any)</label><input type="text" id="pmv_against"></div>
+        <div class="fg"><label>Narration</label><input type="text" id="pmv_narration"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Attach Invoice / Bill (image or PDF)</label><input type="file" id="pmv_invoice" accept="image/*,.pdf" onchange="handleInvoiceFile(this,'pmv')"></div>
+        <div class="fg"><label>Attached File</label><div class="note" id="pmv_invoice_name">No file attached</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveVoucher('payment')">Save Voucher</button>
+        <button class="btn btn-grey" onclick="clearForm('payment')">Clear</button>
+      </div>
+    </div>
+    <div class="card"><h2>Recent Payment Vouchers</h2><div class="scrollbox"><table id="tbl-payment"><thead><tr><th>Date</th><th>Voucher No</th><th>Paid To</th><th>Amount</th><th>Mode</th><th>Ledger</th><th>Against</th><th>Sync</th><th>Invoice</th></tr></thead><tbody></tbody></table></div></div>
+  </div>
+
+  <!-- RECEIPT VOUCHER -->
+  <div class="panel" id="panel-receipt">
+    <div class="card">
+      <h2>Receipt Voucher (money coming in)</h2>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="rv_date"></div>
+        <div class="fg"><label>Voucher No</label><input type="text" id="rv_no"></div>
+        <div class="fg"><label>Received From</label><input type="text" id="rv_party"></div>
+        <div class="fg"><label>Amount (Rs)</label><input type="number" id="rv_amount" step="0.01"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Mode</label>
+          <select id="rv_mode"><option>Bank Transfer</option><option>Cheque</option><option>Cash</option><option>UPI</option><option>Other</option></select>
+        </div>
+        <div class="fg"><label>Bank/Cash Ledger</label><input type="text" id="rv_ledger" placeholder="e.g. HDFC Bank A/c"></div>
+        <div class="fg"><label>Against Bill/Voucher No (if any)</label><input type="text" id="rv_against"></div>
+        <div class="fg"><label>Narration</label><input type="text" id="rv_narration"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Attach Invoice / Bill (image or PDF)</label><input type="file" id="rv_invoice" accept="image/*,.pdf" onchange="handleInvoiceFile(this,'rv')"></div>
+        <div class="fg"><label>Attached File</label><div class="note" id="rv_invoice_name">No file attached</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveVoucher('receipt')">Save Voucher</button>
+        <button class="btn btn-grey" onclick="clearForm('receipt')">Clear</button>
+      </div>
+    </div>
+    <div class="card"><h2>Recent Receipt Vouchers</h2><div class="scrollbox"><table id="tbl-receipt"><thead><tr><th>Date</th><th>Voucher No</th><th>From</th><th>Amount</th><th>Mode</th><th>Ledger</th><th>Against</th><th>Sync</th><th>Invoice</th></tr></thead><tbody></tbody></table></div></div>
+  </div>
+
+  <!-- JOURNAL VOUCHER -->
+  <div class="panel" id="panel-journal">
+    <div class="card">
+      <h2>Journal Voucher</h2>
+      <p class="note">Enter Debit and Credit ledger lines. Totals must match before saving.</p>
+      <div class="form-row">
+        <div class="fg"><label>Date</label><input type="date" id="jv_date"></div>
+        <div class="fg"><label>Voucher No</label><input type="text" id="jv_no"></div>
+        <div class="fg"><label>Narration</label><input type="text" id="jv_narration"></div>
+      </div>
+      <h3 style="font-size:13px;color:var(--navy2);margin:8px 0 4px;">Debit</h3>
+      <div class="linerow">
+        <div class="fg"><label>Ledger</label><input type="text" id="jv_dr_ledger"></div>
+        <div class="fg"><label>Amount (Rs)</label><input type="number" id="jv_dr_amount" step="0.01"></div>
+      </div>
+      <h3 style="font-size:13px;color:var(--navy2);margin:8px 0 4px;">Credit</h3>
+      <div class="linerow">
+        <div class="fg"><label>Ledger</label><input type="text" id="jv_cr_ledger"></div>
+        <div class="fg"><label>Amount (Rs)</label><input type="number" id="jv_cr_amount" step="0.01"></div>
+      </div>
+      <div class="totals" id="jv_balance"></div>
+      <div class="form-row">
+        <div class="fg"><label>Attach Supporting Document (image or PDF)</label><input type="file" id="jv_invoice" accept="image/*,.pdf" onchange="handleInvoiceFile(this,'jv')"></div>
+        <div class="fg"><label>Attached File</label><div class="note" id="jv_invoice_name">No file attached</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveVoucher('journal')">Save Voucher</button>
+        <button class="btn btn-grey" onclick="clearForm('journal')">Clear</button>
+      </div>
+    </div>
+    <div class="card"><h2>Recent Journal Vouchers</h2><div class="scrollbox"><table id="tbl-journal"><thead><tr><th>Date</th><th>Voucher No</th><th>Dr Ledger</th><th>Dr Amt</th><th>Cr Ledger</th><th>Cr Amt</th><th>Narration</th><th>Sync</th><th>Invoice</th></tr></thead><tbody></tbody></table></div></div>
+  </div>
+
+  <!-- EXPORT / SYNC -->
+  <div class="panel" id="panel-export">
+    <div class="card">
+      <h2>Export to Excel</h2>
+      <p class="note">Downloads an .xlsx with one sheet per voucher type, in a layout close to Tally/Busy voucher import templates.</p>
+      <div class="btn-row"><button class="btn btn-green" onclick="exportExcel()">Download Excel</button></div>
+    </div>
+    <div class="card">
+      <h2>Sync to Google Sheet</h2>
+      <p class="note">Sends all unsynced vouchers to your Apps Script Web App. Each entry is tagged with its voucher type so Code.gs appends it to the matching tab.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="syncAll()">Sync Now</button>
+        <button class="btn btn-grey" onclick="resetSyncFlags()">Mark All Unsynced</button>
+      </div>
+      <div class="note" id="syncStatus"></div>
+    </div>
+    <div class="card">
+      <h2>Danger Zone</h2>
+      <div class="btn-row"><button class="btn btn-grey" onclick="clearAllData()">Clear All Local Data</button></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ===== ACCESS GATE =====
+const VALID_PINS = ["1234","2026"];
+const SESSION_KEY = "acct_voucher_bot_unlocked";
+if (sessionStorage.getItem(SESSION_KEY) === "yes") {
+  document.getElementById('accessGate').remove();
+}
+function checkGatePin(){
+  const v = document.getElementById('pinInput').value.trim();
+  if (VALID_PINS.includes(v)) {
+    sessionStorage.setItem(SESSION_KEY,"yes");
+    document.getElementById('accessGate').remove();
+  } else {
+    document.getElementById('pinErr').textContent = "Incorrect PIN. Try again.";
+  }
+}
+
+// ===== STATE =====
+const STORE_KEY = "acct_voucher_bot_data_v1";
+const API_KEY = "gst_recon_bot_api_url"; // shared with GST recon bot
+let data = JSON.parse(localStorage.getItem(STORE_KEY) || "null") || {
+  sales:[], purchase:[], payment:[], receipt:[], journal:[]
+};
+function saveState(){ localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+
+// ===== INVOICE / DOCUMENT ATTACHMENTS =====
+let pendingInvoice = {};
+function handleInvoiceFile(input, prefix){
+  const file = input.files[0];
+  const nameEl = document.getElementById(prefix+'_invoice_name');
+  if (!file){ nameEl.textContent = "No file attached"; delete pendingInvoice[prefix]; return; }
+  if (file.size > 4*1024*1024){
+    alert("File too large (max 4MB). Please choose a smaller scan/photo.");
+    input.value = ""; nameEl.textContent = "No file attached"; delete pendingInvoice[prefix];
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    pendingInvoice[prefix] = { name:file.name, data:e.target.result };
+    nameEl.textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+function attachInvoice(entry, prefix){
+  if (pendingInvoice[prefix]){
+    entry.invoiceName = pendingInvoice[prefix].name;
+    entry.invoiceData = pendingInvoice[prefix].data;
+    delete pendingInvoice[prefix];
+  }
+}
+function resetInvoiceField(prefix){
+  const input = document.getElementById(prefix+'_invoice');
+  const nameEl = document.getElementById(prefix+'_invoice_name');
+  if (input) input.value = "";
+  if (nameEl) nameEl.textContent = "No file attached";
+  delete pendingInvoice[prefix];
+}
+function invoiceCell(e){
+  if (e.invoiceData) return '<a href="'+e.invoiceData+'"  download="'+(e.invoiceName||'invoice')+'">View</a>';
+  return '<span class="note">&mdash;</span>';
+}
+
+// ===== TABS =====
+function showTab(id, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ===== API URL =====
+function saveApiUrl(){
+  const url = document.getElementById('writeApiUrl').value.trim();
+  localStorage.setItem(API_KEY, url);
+  document.getElementById('apiUrlStatus').textContent = url ? "Saved." : "Cleared - offline mode.";
+}
+(function loadApiUrl(){
+  const CURRENT_GAS = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+  // Force-update if old/blank URL is stored
+  const stored = localStorage.getItem(API_KEY);
+  const url = (stored && stored.includes('AKfycbwvgwU')) ? stored : CURRENT_GAS;
+  localStorage.setItem(API_KEY, url);
+  document.getElementById('writeApiUrl').value = url;
+  document.getElementById('apiUrlStatus').textContent = "✅ Google Sheets sync configured.";
+})();
+
+const GS_AUTH_TOKEN = 'SSPI-VC-2026-SECURE';
+let _botLocation = localStorage.getItem('sspi_location') || 'Bhiwadi';
+(function voidDuplicate(){
+})();
+
+// ===== GST split helper =====
+function gstSplit(taxable, rate, pos){
+  taxable = parseFloat(taxable)||0; rate = parseFloat(rate)||0;
+  const totalTax = taxable * rate / 100;
+  if (pos === "Inter-State (IGST)") return { igst: totalTax, cgst:0, sgst:0, total: taxable+totalTax };
+  return { igst:0, cgst: totalTax/2, sgst: totalTax/2, total: taxable+totalTax };
+}
+
+// ===== JOURNAL BALANCE CHECK =====
+function updateJVBalance(){
+  const dr = parseFloat(document.getElementById('jv_dr_amount').value)||0;
+  const cr = parseFloat(document.getElementById('jv_cr_amount').value)||0;
+  const el = document.getElementById('jv_balance');
+  if (dr === 0 && cr === 0){ el.textContent=""; return; }
+  if (Math.abs(dr-cr) < 0.01) el.innerHTML = '<span class="good">Balanced (Dr ' + dr.toFixed(2) + ' = Cr ' + cr.toFixed(2) + ')</span>';
+  else el.innerHTML = '<span class="bad">Not balanced - Dr ' + dr.toFixed(2) + ' vs Cr ' + cr.toFixed(2) + '</span>';
+}
+['jv_dr_amount','jv_cr_amount'].forEach(id=>{
+  document.addEventListener('input', function(e){ if (e.target && e.target.id === id) updateJVBalance(); });
+});
+
+// ===== SAVE VOUCHER =====
+function saveVoucher(type){
+  const entry = { _synced:false, _ts: new Date().toISOString() };
+
+  if (type === 'sales'){
+    const f = ["sv_date","sv_no","sv_party","sv_gstin","sv_desc","sv_taxable","sv_rate","sv_pos","sv_narration"];
+    f.forEach(id=> entry[id] = document.getElementById(id).value);
+    if (!entry.sv_date) { alert("Enter a date."); return; }
+    const g = gstSplit(entry.sv_taxable, entry.sv_rate, entry.sv_pos);
+    Object.assign(entry, {igst:g.igst, cgst:g.cgst, sgst:g.sgst, total:g.total});
+    attachInvoice(entry, 'sv');
+  } else if (type === 'purchase'){
+    const f = ["pv_date","pv_no","pv_party","pv_gstin","pv_desc","pv_taxable","pv_rate","pv_pos","pv_rcm","pv_narration"];
+    f.forEach(id=> entry[id] = document.getElementById(id).value);
+    if (!entry.pv_date) { alert("Enter a date."); return; }
+    const g = gstSplit(entry.pv_taxable, entry.pv_rate, entry.pv_pos);
+    Object.assign(entry, {igst:g.igst, cgst:g.cgst, sgst:g.sgst, total:g.total});
+    attachInvoice(entry, 'pv');
+  } else if (type === 'payment'){
+    const f = ["pmv_date","pmv_no","pmv_party","pmv_amount","pmv_mode","pmv_ledger","pmv_against","pmv_narration"];
+    f.forEach(id=> entry[id] = document.getElementById(id).value);
+    if (!entry.pmv_date) { alert("Enter a date."); return; }
+    attachInvoice(entry, 'pmv');
+  } else if (type === 'receipt'){
+    const f = ["rv_date","rv_no","rv_party","rv_amount","rv_mode","rv_ledger","rv_against","rv_narration"];
+    f.forEach(id=> entry[id] = document.getElementById(id).value);
+    if (!entry.rv_date) { alert("Enter a date."); return; }
+    attachInvoice(entry, 'rv');
+  } else if (type === 'journal'){
+    const f = ["jv_date","jv_no","jv_narration","jv_dr_ledger","jv_dr_amount","jv_cr_ledger","jv_cr_amount"];
+    f.forEach(id=> entry[id] = document.getElementById(id).value);
+    if (!entry.jv_date) { alert("Enter a date."); return; }
+    const dr = parseFloat(entry.jv_dr_amount)||0, cr = parseFloat(entry.jv_cr_amount)||0;
+    if (Math.abs(dr-cr) > 0.01){ if(!confirm("Debit and Credit amounts do not match. Save anyway?")) return; }
+    attachInvoice(entry, 'jv');
+  }
+
+  data[type].push(entry);
+  saveState();
+  clearForm(type);
+  renderAll();
+}
+
+const CLEAR_FIELDS = {
+  sales: ["sv_date","sv_no","sv_party","sv_gstin","sv_desc","sv_taxable","sv_rate","sv_pos","sv_narration"],
+  purchase: ["pv_date","pv_no","pv_party","pv_gstin","pv_desc","pv_taxable","pv_rate","pv_pos","pv_rcm","pv_narration"],
+  payment: ["pmv_date","pmv_no","pmv_party","pmv_amount","pmv_mode","pmv_ledger","pmv_against","pmv_narration"],
+  receipt: ["rv_date","rv_no","rv_party","rv_amount","rv_mode","rv_ledger","rv_against","rv_narration"],
+  journal: ["jv_date","jv_no","jv_narration","jv_dr_ledger","jv_dr_amount","jv_cr_ledger","jv_cr_amount"]
+};
+function clearForm(type){
+  for (const f of CLEAR_FIELDS[type]){
+    const el = document.getElementById(f);
+    if (el.tagName === "SELECT") el.selectedIndex = 0;
+    else el.value = "";
+  }
+  if (type === 'journal') document.getElementById('jv_balance').textContent = "";
+  const INVOICE_PREFIX = { sales:'sv', purchase:'pv', payment:'pmv', receipt:'rv', journal:'jv' };
+  resetInvoiceField(INVOICE_PREFIX[type]);
+}
+
+// ===== RENDER =====
+function renderAll(){
+  renderSales(); renderPurchase(); renderSimple('payment', ["pmv_date","pmv_no","pmv_party","pmv_amount","pmv_mode","pmv_ledger","pmv_against"]);
+  renderSimple('receipt', ["rv_date","rv_no","rv_party","rv_amount","rv_mode","rv_ledger","rv_against"]);
+  renderJournal();
+
+  document.getElementById('kpiSales').textContent = data.sales.length;
+  document.getElementById('kpiPurchase').textContent = data.purchase.length;
+  document.getElementById('kpiPayment').textContent = data.payment.length;
+  document.getElementById('kpiReceipt').textContent = data.receipt.length;
+  document.getElementById('kpiJournal').textContent = data.journal.length;
+
+  let pending = 0;
+  for (const t in data) pending += data[t].filter(e=>!e._synced).length;
+  document.getElementById('kpiPending').textContent = pending;
+}
+
+function syncPill(e){
+  return '<span class="pill ' + (e._synced?'pill-green':'pill-orange') + '">' + (e._synced?'Synced':'Pending') + '</span>';
+}
+
+function renderSales(){
+  const tbody = document.querySelector('#tbl-sales tbody'); tbody.innerHTML = "";
+  data.sales.slice(-100).reverse().forEach(e=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${e.sv_date}</td><td>${e.sv_no}</td><td>${e.sv_party}</td><td>${e.sv_desc}</td><td>${e.sv_taxable}</td><td>${e.sv_rate}%</td>
+      <td>${(e.igst||0).toFixed?e.igst.toFixed(2):e.igst}</td><td>${e.cgst.toFixed?e.cgst.toFixed(2):e.cgst}</td><td>${e.sgst.toFixed?e.sgst.toFixed(2):e.sgst}</td><td>${e.total.toFixed?e.total.toFixed(2):e.total}</td><td>${syncPill(e)}</td><td>${invoiceCell(e)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function renderPurchase(){
+  const tbody = document.querySelector('#tbl-purchase tbody'); tbody.innerHTML = "";
+  data.purchase.slice(-100).reverse().forEach(e=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${e.pv_date}</td><td>${e.pv_no}</td><td>${e.pv_party}</td><td>${e.pv_desc}</td><td>${e.pv_taxable}</td><td>${e.pv_rate}%</td>
+      <td>${e.igst.toFixed?e.igst.toFixed(2):e.igst}</td><td>${e.cgst.toFixed?e.cgst.toFixed(2):e.cgst}</td><td>${e.sgst.toFixed?e.sgst.toFixed(2):e.sgst}</td><td>${e.total.toFixed?e.total.toFixed(2):e.total}</td><td>${e.pv_rcm}</td><td>${syncPill(e)}</td><td>${invoiceCell(e)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function renderSimple(type, cols){
+  const tbody = document.querySelector('#tbl-'+type+' tbody'); tbody.innerHTML = "";
+  data[type].slice(-100).reverse().forEach(e=>{
+    const tr = document.createElement('tr');
+    let html = cols.map(c=>`<td>${e[c]!==undefined?e[c]:""}</td>`).join("");
+    html += `<td>${syncPill(e)}</td><td>${invoiceCell(e)}</td>`;
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+}
+function renderJournal(){
+  const tbody = document.querySelector('#tbl-journal tbody'); tbody.innerHTML = "";
+  data.journal.slice(-100).reverse().forEach(e=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${e.jv_date}</td><td>${e.jv_no}</td><td>${e.jv_dr_ledger}</td><td>${e.jv_dr_amount}</td><td>${e.jv_cr_ledger}</td><td>${e.jv_cr_amount}</td><td>${e.jv_narration}</td><td>${syncPill(e)}</td><td>${invoiceCell(e)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ===== EXPORT TO EXCEL =====
+function exportExcel(){
+  const wb = XLSX.utils.book_new();
+
+  const salesAoa = [["Date","Voucher No","Party","GSTIN","Description","Taxable","Rate%","IGST","CGST","SGST","Total","Narration","Invoice File"]];
+  data.sales.forEach(e=> salesAoa.push([e.sv_date,e.sv_no,e.sv_party,e.sv_gstin,e.sv_desc,e.sv_taxable,e.sv_rate,e.igst,e.cgst,e.sgst,e.total,e.sv_narration,e.invoiceName||""]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(salesAoa), "Sales_Vouchers");
+
+  const purchAoa = [["Date","Voucher No","Supplier","GSTIN","Description","Taxable","Rate%","IGST","CGST","SGST","Total","RCM?","Narration","Invoice File"]];
+  data.purchase.forEach(e=> purchAoa.push([e.pv_date,e.pv_no,e.pv_party,e.pv_gstin,e.pv_desc,e.pv_taxable,e.pv_rate,e.igst,e.cgst,e.sgst,e.total,e.pv_rcm,e.pv_narration,e.invoiceName||""]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(purchAoa), "Purchase_Vouchers");
+
+  const payAoa = [["Date","Voucher No","Paid To","Amount","Mode","Ledger","Against","Narration","Invoice File"]];
+  data.payment.forEach(e=> payAoa.push([e.pmv_date,e.pmv_no,e.pmv_party,e.pmv_amount,e.pmv_mode,e.pmv_ledger,e.pmv_against,e.pmv_narration,e.invoiceName||""]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(payAoa), "Payment_Vouchers");
+
+  const recAoa = [["Date","Voucher No","Received From","Amount","Mode","Ledger","Against","Narration","Invoice File"]];
+  data.receipt.forEach(e=> recAoa.push([e.rv_date,e.rv_no,e.rv_party,e.rv_amount,e.rv_mode,e.rv_ledger,e.rv_against,e.rv_narration,e.invoiceName||""]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(recAoa), "Receipt_Vouchers");
+
+  const jAoa = [["Date","Voucher No","Dr Ledger","Dr Amount","Cr Ledger","Cr Amount","Narration","Invoice File"]];
+  data.journal.forEach(e=> jAoa.push([e.jv_date,e.jv_no,e.jv_dr_ledger,e.jv_dr_amount,e.jv_cr_ledger,e.jv_cr_amount,e.jv_narration,e.invoiceName||""]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(jAoa), "Journal_Vouchers");
+
+  XLSX.writeFile(wb, "Accounting_Vouchers_" + new Date().toISOString().slice(0,10) + ".xlsx");
+}
+
+// ===== SYNC =====
+async function syncAll(){
+  const url = (localStorage.getItem(API_KEY) || "").trim();
+  const statusEl = document.getElementById('syncStatus');
+  if (!url){ statusEl.textContent = "No Apps Script URL configured - set it above first."; return; }
+
+  let toSync = [];
+  for (const type in data){
+    data[type].forEach((e, idx)=>{ if(!e._synced) toSync.push({type, idx, entry:e}); });
+  }
+  if (toSync.length === 0){ statusEl.textContent = "Nothing to sync - all entries already synced."; return; }
+
+  statusEl.textContent = "Syncing " + toSync.length + " vouchers...";
+  let ok=0, fail=0;
+  for (const item of toSync){
+    try{
+      const payload = Object.assign({ sheet: "voucher_"+item.type, authToken: (typeof GS_AUTH_TOKEN!=='undefined'?GS_AUTH_TOKEN:''), location: (typeof _botLocation!=='undefined'?_botLocation:'Bhiwadi') }, item.entry);
+      delete payload._synced;
+      await fetch(url, {
+        method:"POST", mode:"no-cors",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body: JSON.stringify(payload)
+      });
+      data[item.type][item.idx]._synced = true;
+      ok++;
+    }catch(err){ fail++; }
+  }
+  saveState(); renderAll();
+  statusEl.textContent = "Sync complete: " + ok + " sent" + (fail?(", "+fail+" failed (retry next sync)"):".") +
+    " Note: with no-cors mode the browser cannot confirm Apps Script's response - check your Google Sheet to verify rows arrived.";
+}
+function resetSyncFlags(){
+  for (const type in data) data[type].forEach(e=> e._synced=false);
+  saveState(); renderAll();
+  document.getElementById('syncStatus').textContent = "All entries marked unsynced.";
+}
+
+function clearAllData(){
+  if (!confirm("This will permanently delete all locally stored vouchers. Continue?")) return;
+  data = { sales:[], purchase:[], payment:[], receipt:[], journal:[] };
+  saveState(); renderAll();
+}
+
+renderAll();
+
+// ── JSONP cross-device sync (shared SSPI_BECKEND GS URL) ──
+const GS_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+function gsGetAcct(type, limit){
+  return new Promise(function(resolve){
+    var cbName='_gsJP_'+Date.now();
+    var script=document.createElement('script');
+    var done=false;
+    window[cbName]=function(d){ done=true; delete window[cbName]; if(script.parentNode) script.parentNode.removeChild(script); resolve((d&&d.data)?d.data:[]); };
+    script.onerror=function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } };
+    setTimeout(function(){ if(!done){ done=true; delete window[cbName]; resolve([]); } },10000);
+    script.src=GS_SYNC_URL+'?type='+type+'&limit='+(limit||200)+'&callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+function showAcctToast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e3a5f;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 2px 12px rgba(0,0,0,.2)';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },4000);
+}
+function loadAccountsFromSheets(){
+  gsGetAcct('accounts', 300).then(function(rows){
+    if(!rows||!rows.length) return;
+    var synced=0;
+    rows.forEach(function(r){
+      var vType=(r['Voucher Type']||'').toLowerCase();
+      var localType=vType.includes('sales')||vType.includes('tax')?'sales':
+                    vType.includes('purchase')?'purchase':
+                    vType.includes('payment')?'payment':
+                    vType.includes('receipt')?'receipt':'journal';
+      var ts=r['Timestamp']||'';
+      var exists=data[localType].some(function(e){ return (e._ts||'')===(ts); });
+      if(!exists && ts){
+        data[localType].push({
+          sv_date:r['Date']||'', sv_party:r['Party']||'',
+          sv_desc:r['Description']||'', sv_taxable:r['Amount']||0,
+          pmv_amount:r['Amount']||0, pmv_mode:r['Payment Mode']||'',
+          rv_amount:r['Amount']||0, rv_mode:r['Payment Mode']||'',
+          jv_narration:r['Description']||'',
+          _synced:true, _ts:ts
+        });
+        synced++;
+      }
+    });
+    if(synced>0){ saveState(); renderAll(); showAcctToast('☁ '+synced+' vouchers synced from Google Sheets'); }
+  });
+}
+// Also patch saveVoucher to post to shared GS with type:'accounts'
+(function patchAcctPost(){
+  var orig=window.saveVoucher;
+  window.saveVoucher=function(type){
+    orig(type);
+    var entry=data[type]&&data[type][data[type].length-1];
+    if(!entry) return;
+    var vTypeMap={sales:'Sales',purchase:'Purchase',payment:'Payment',receipt:'Receipt',journal:'Journal'};
+    var payload={type:'accounts', voucherType:vTypeMap[type]||type,
+      date:entry.sv_date||entry.pv_date||entry.pmv_date||entry.rv_date||entry.jv_date||'',
+      party:entry.sv_party||entry.pv_party||entry.pmv_party||entry.rv_party||'',
+      amount:entry.sv_taxable||entry.pv_taxable||entry.pmv_amount||entry.rv_amount||entry.jv_dr_amount||0,
+      description:entry.sv_desc||entry.pv_desc||entry.pmv_narration||entry.rv_narration||entry.jv_narration||'',
+      paymentMode:entry.pmv_mode||entry.rv_mode||'',
+      reference:entry.pmv_against||entry.rv_against||''};
+    fetch(GS_SYNC_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).catch(function(){});
+  };
+})();
+setTimeout(loadAccountsFromSheets, 1500);
+
+// ── Auto-sync when internet returns ─────────────────────────
+window.addEventListener('online', function(){
+  var syncBtn = document.getElementById('syncBtn') || document.querySelector('[onclick*=syncToSheets]');
+  if (syncBtn) {
+    setTimeout(function(){ syncBtn.click(); }, 1000);
+  }
+});
+
+</script>
+
+<script>
+function openBot(url){
+  if(!url||url==='#')return false;
+  if(window.location.protocol==='file:'){window.location.href=url;return false;}
+  try{var w=window.open(url,'_blank');if(!w||w.closed||typeof w.closed==='undefined'){window.location.href=url;}}catch(e){window.location.href=url;}
+  return false;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSPI System Status</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; background: #0f1a2e; color: #cdd3e0; min-height: 100vh; padding: 24px; }
+  h1 { color: #fff; font-size: 22px; margin-bottom: 4px; }
+  .sub { font-size: 12px; color: #7a8aaa; margin-bottom: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: #1a2944; border-radius: 10px; padding: 18px; border-left: 4px solid #334; transition: border-color .3s; }
+  .card.ok    { border-color: #27ae60; }
+  .card.warn  { border-color: #e67e22; }
+  .card.error { border-color: #e74c3c; }
+  .card.checking { border-color: #3498db; }
+  .card-title { font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 6px; }
+  .card-status { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #555; flex-shrink: 0; }
+  .dot.ok    { background: #27ae60; box-shadow: 0 0 6px #27ae6088; }
+  .dot.warn  { background: #e67e22; box-shadow: 0 0 6px #e67e2288; }
+  .dot.error { background: #e74c3c; box-shadow: 0 0 6px #e74c3c88; }
+  .dot.checking { background: #3498db; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .card-detail { font-size: 11px; color: #7a8aaa; margin-top: 8px; line-height: 1.5; }
+  .card-time { font-size: 10px; color: #556; margin-top: 6px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .refresh-btn { background: #1D9E75; color: #fff; border: none; border-radius: 6px; padding: 8px 18px; font-size: 12px; font-weight: bold; cursor: pointer; }
+  .refresh-btn:hover { background: #16836c; }
+  .overall { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: bold; }
+  .overall-dot { width: 14px; height: 14px; border-radius: 50%; }
+  .last-check { font-size: 11px; color: #7a8aaa; }
+  .section-header { font-size: 11px; font-weight: bold; color: #7a8aaa; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px; }
+  .offline-banner { background: #c0392b22; border: 1px solid #c0392b55; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: #e57474; display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>⚙ SSPI System Status</h1>
+    <div class="sub">Shree Shyam Packaging Industries — Virtual Coordinator Health Monitor</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div class="overall" id="overallStatus">
+      <div class="overall-dot checking" id="overallDot"></div>
+      <span id="overallText">Checking...</span>
+    </div>
+    <button class="refresh-btn" onclick="runAllChecks()">↻ Refresh Now</button>
+  </div>
+</div>
+
+<div class="offline-banner" id="offlineBanner">
+  ⚠ You are offline. Status checks require internet. Please connect and refresh.
+</div>
+
+<div class="last-check" id="lastCheckTime" style="margin-bottom:16px">Last checked: —</div>
+
+<div class="section-header">Core System</div>
+<div class="grid" id="coreGrid">
+  <div class="card checking" id="card-gas">
+    <div class="card-title">🔌 Google Apps Script (GAS)</div>
+    <div class="card-status"><div class="dot checking" id="dot-gas"></div><span id="txt-gas">Checking...</span></div>
+    <div class="card-detail" id="detail-gas">Testing endpoint connectivity...</div>
+    <div class="card-time" id="time-gas"></div>
+  </div>
+  <div class="card checking" id="card-sheets">
+    <div class="card-title">📊 Google Sheets (SSPI_BACKEND)</div>
+    <div class="card-status"><div class="dot checking" id="dot-sheets"></div><span id="txt-sheets">Checking...</span></div>
+    <div class="card-detail" id="detail-sheets">Fetching latest data...</div>
+    <div class="card-time" id="time-sheets"></div>
+  </div>
+  <div class="card checking" id="card-internet">
+    <div class="card-title">🌐 Internet Connection</div>
+    <div class="card-status"><div class="dot checking" id="dot-internet"></div><span id="txt-internet">Checking...</span></div>
+    <div class="card-detail" id="detail-internet">Testing network...</div>
+    <div class="card-time" id="time-internet"></div>
+  </div>
+</div>
+
+<div class="section-header">Data Modules</div>
+<div class="grid" id="dataGrid">
+  <div class="card checking" id="card-production">
+    <div class="card-title">🏭 Production Log</div>
+    <div class="card-status"><div class="dot checking" id="dot-production"></div><span id="txt-production">Checking...</span></div>
+    <div class="card-detail" id="detail-production">Fetching records...</div>
+    <div class="card-time" id="time-production"></div>
+  </div>
+  <div class="card checking" id="card-quality">
+    <div class="card-title">✅ Quality NCR</div>
+    <div class="card-status"><div class="dot checking" id="dot-quality"></div><span id="txt-quality">Checking...</span></div>
+    <div class="card-detail" id="detail-quality">Fetching records...</div>
+    <div class="card-time" id="time-quality"></div>
+  </div>
+  <div class="card checking" id="card-stores">
+    <div class="card-title">📦 Stores & Inventory</div>
+    <div class="card-status"><div class="dot checking" id="dot-stores"></div><span id="txt-stores">Checking...</span></div>
+    <div class="card-detail" id="detail-stores">Fetching records...</div>
+    <div class="card-time" id="time-stores"></div>
+  </div>
+  <div class="card checking" id="card-accounts">
+    <div class="card-title">💰 Accounts</div>
+    <div class="card-status"><div class="dot checking" id="dot-accounts"></div><span id="txt-accounts">Checking...</span></div>
+    <div class="card-detail" id="detail-accounts">Fetching records...</div>
+    <div class="card-time" id="time-accounts"></div>
+  </div>
+  <div class="card checking" id="card-hr">
+    <div class="card-title">👥 HR & Attendance</div>
+    <div class="card-status"><div class="dot checking" id="dot-hr"></div><span id="txt-hr">Checking...</span></div>
+    <div class="card-detail" id="detail-hr">Fetching records...</div>
+    <div class="card-time" id="time-hr"></div>
+  </div>
+  <div class="card checking" id="card-sales">
+    <div class="card-title">📈 Sales Orders</div>
+    <div class="card-status"><div class="dot checking" id="dot-sales"></div><span id="txt-sales">Checking...</span></div>
+    <div class="card-detail" id="detail-sales">Fetching records...</div>
+    <div class="card-time" id="time-sales"></div>
+  </div>
+</div>
+
+<div class="section-header">Local System</div>
+<div class="grid">
+  <div class="card" id="card-localStorage">
+    <div class="card-title">💾 Local Storage (Offline Queue)</div>
+    <div class="card-status"><div class="dot" id="dot-localStorage"></div><span id="txt-localStorage">—</span></div>
+    <div class="card-detail" id="detail-localStorage">Checking offline queue...</div>
+    <div class="card-time" id="time-localStorage"></div>
+  </div>
+  <div class="card" id="card-jobcards">
+    <div class="card-title">📋 Job Cards (Local)</div>
+    <div class="card-status"><div class="dot" id="dot-jobcards"></div><span id="txt-jobcards">—</span></div>
+    <div class="card-detail" id="detail-jobcards">Checking local data...</div>
+    <div class="card-time" id="time-jobcards"></div>
+  </div>
+  <div class="card" id="card-browser">
+    <div class="card-title">🖥 Browser Compatibility</div>
+    <div class="card-status"><div class="dot" id="dot-browser"></div><span id="txt-browser">—</span></div>
+    <div class="card-detail" id="detail-browser">Checking features...</div>
+    <div class="card-time" id="time-browser"></div>
+  </div>
+</div>
+
+<div style="margin-top:30px;font-size:11px;color:#556;text-align:center;border-top:1px solid #1a2944;padding-top:16px">
+  SSPI Virtual Coordinator System &nbsp;|&nbsp; Auto-refresh every 60 seconds &nbsp;|&nbsp;
+  <a href="SSPI_COMBINED_DASHBOARD_V4.html" style="color:#1D9E75;text-decoration:none">← Open Dashboard</a>
+</div>
+
+<script>
+const GS_URL = 'https://script.google.com/macros/s/AKfycbxAqQU6ixan06xIY695fGXjtUnS-DovoDAy0PgPShRzS4xzYhTT4lGUldZXXk1xn9Gd/exec';
+var _results = {};
+
+function setCard(id, status, text, detail) {
+  var card = document.getElementById('card-' + id);
+  var dot  = document.getElementById('dot-' + id);
+  var txt  = document.getElementById('txt-' + id);
+  var dtl  = document.getElementById('detail-' + id);
+  var tm   = document.getElementById('time-' + id);
+  if (!card) return;
+  card.className = 'card ' + status;
+  dot.className  = 'dot ' + status;
+  txt.textContent = text;
+  if (dtl) dtl.textContent = detail || '';
+  if (tm) tm.textContent = 'Checked: ' + new Date().toLocaleTimeString('en-IN');
+  _results[id] = status;
+  updateOverall();
+}
+
+function updateOverall() {
+  var statuses = Object.values(_results);
+  if (!statuses.length) return;
+  var hasError = statuses.some(function(s){ return s === 'error'; });
+  var hasWarn  = statuses.some(function(s){ return s === 'warn'; });
+  var hasCheck = statuses.some(function(s){ return s === 'checking'; });
+  var dot = document.getElementById('overallDot');
+  var txt = document.getElementById('overallText');
+  if (hasCheck) {
+    dot.className = 'overall-dot checking'; txt.textContent = 'Checking...';
+  } else if (hasError) {
+    dot.className = 'overall-dot'; dot.style.background = '#e74c3c'; txt.textContent = '❌ System has issues — action needed';
+  } else if (hasWarn) {
+    dot.className = 'overall-dot'; dot.style.background = '#e67e22'; txt.textContent = '⚠ Partial — some modules offline';
+  } else {
+    dot.className = 'overall-dot'; dot.style.background = '#27ae60'; txt.textContent = '✅ All Systems Operational';
+  }
+}
+
+// ── Internet check ──
+function checkInternet() {
+  setCard('internet', 'checking', 'Testing...', 'Pinging network...');
+  if (navigator.onLine) {
+    setCard('internet', 'ok', '✅ Connected', 'Browser reports internet available');
+  } else {
+    setCard('internet', 'error', '❌ Offline', 'No internet connection detected');
+    document.getElementById('offlineBanner').style.display = 'block';
+    return false;
+  }
+  return true;
+}
+
+// ── GAS endpoint check via JSONP ──
+function checkGAS() {
+  setCard('gas', 'checking', 'Connecting...', 'Testing GAS endpoint...');
+  var cb = '_sc_' + Date.now();
+  var s  = document.createElement('script');
+  var done = false;
+  var t = setTimeout(function(){
+    if (!done) { done = true; delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s);
+      setCard('gas', 'error', '❌ No Response', 'GAS endpoint timed out after 10s. Re-deploy required.'); }
+  }, 10000);
+  window[cb] = function(d) {
+    if (done) return; done = true; clearTimeout(t); delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s);
+    if (d && d.status === 'ok') {
+      setCard('gas', 'ok', '✅ Live', 'GAS endpoint responding. Status: ' + d.status);
+    } else {
+      setCard('gas', 'warn', '⚠ Unexpected', 'GAS responded but status unclear: ' + JSON.stringify(d).substring(0,80));
+    }
+  };
+  s.onerror = function(){ if (!done){ done=true; clearTimeout(t); delete window[cb];
+    setCard('gas', 'error', '❌ Script Error', 'GAS URL returned error. Check deployment.'); }};
+  s.src = GS_URL + '?type=jobCards&limit=1&callback=' + cb;
+  document.head.appendChild(s);
+}
+
+// ── Module data check ──
+function checkModule(type, label, id) {
+  setCard(id, 'checking', 'Fetching...', 'Requesting ' + label + ' data...');
+  var cb = '_sc_' + id + '_' + Date.now();
+  var s  = document.createElement('script');
+  var done = false;
+  var t = setTimeout(function(){
+    if (!done){ done=true; delete window[cb]; if(s.parentNode) s.parentNode.removeChild(s);
+      setCard(id, 'warn', '⏱ Timeout', 'Module did not respond in 10s. GAS may be slow.'); }
+  }, 10000);
+  window[cb] = function(d) {
+    if (done) return; done=true; clearTimeout(t); delete window[cb]; if(s.parentNode) s.parentNode.removeChild(s);
+    if (d && d.status === 'ok') {
+      var count = (d.data || []).length;
+      if (count > 0) {
+        setCard(id, 'ok', '✅ Live — ' + count + ' records', label + ' sheet is active with recent entries');
+      } else {
+        setCard(id, 'warn', '⚠ Empty', label + ' sheet has no data yet — may need first entry');
+      }
+    } else {
+      setCard(id, 'error', '❌ Error', 'GAS returned error for ' + type + ': ' + JSON.stringify(d).substring(0,60));
+    }
+  };
+  s.onerror = function(){ if (!done){ done=true; clearTimeout(t); delete window[cb];
+    setCard(id, 'error', '❌ Failed', 'Script load error for ' + type + ' module.'); }};
+  s.src = GS_URL + '?type=' + type + '&limit=5&callback=' + cb;
+  document.head.appendChild(s);
+}
+
+// ── Local storage check ──
+function checkLocalStorage() {
+  try {
+    localStorage.setItem('_sspi_test', '1');
+    localStorage.removeItem('_sspi_test');
+    var q = JSON.parse(localStorage.getItem('sspi_offline_q') || '[]');
+    var jc = JSON.parse(localStorage.getItem('sspi_jcData') || '[]');
+    if (q.length > 0) {
+      setCard('localStorage', 'warn', '⚠ ' + q.length + ' items queued', q.length + ' offline entries pending sync. Open dashboard to sync.');
+    } else {
+      setCard('localStorage', 'ok', '✅ Clear', 'No offline queue. All data synced.');
+    }
+  } catch(e) {
+    setCard('localStorage', 'error', '❌ Blocked', 'Browser is blocking localStorage (private mode?)');
+  }
+}
+
+function checkJobCards() {
+  try {
+    var jc = JSON.parse(localStorage.getItem('sspi_jcData') || '[]');
+    var cnt = JSON.parse(localStorage.getItem('sspi_jcCounter') || '0');
+    if (jc.length > 0) {
+      setCard('jobcards', 'ok', '✅ ' + jc.length + ' JC records', 'Last JC counter: ' + cnt + '. Data in localStorage.');
+    } else {
+      setCard('jobcards', 'warn', '⚠ No local JC data', 'Job Cards not yet created or cleared.');
+    }
+  } catch(e) {
+    setCard('jobcards', 'error', '❌ Error', 'Cannot read JC localStorage: ' + e.message);
+  }
+}
+
+function checkBrowser() {
+  var issues = [];
+  if (!window.fetch) issues.push('fetch API missing');
+  if (!window.localStorage) issues.push('localStorage blocked');
+  if (!window.sessionStorage) issues.push('sessionStorage blocked');
+  if (!navigator.onLine) issues.push('offline');
+  if (issues.length === 0) {
+    setCard('browser', 'ok', '✅ Compatible', 'All required features available (fetch, storage, online)');
+  } else {
+    setCard('browser', 'warn', '⚠ ' + issues.length + ' issue(s)', 'Missing: ' + issues.join(', '));
+  }
+}
+
+function checkSheets() {
+  // Sheets access is proxied through GAS — just reflect GAS status after a short delay
+  setTimeout(function() {
+    var gasStatus = _results['gas'];
+    if (!gasStatus || gasStatus === 'checking') {
+      setCard('sheets', 'checking', 'Waiting for GAS...', 'Sheets access is via GAS endpoint');
+      return;
+    }
+    if (gasStatus === 'ok') {
+      setCard('sheets', 'ok', '✅ Accessible', 'GAS confirmed live → SSPI_BACKEND is readable');
+    } else if (gasStatus === 'warn') {
+      setCard('sheets', 'warn', '⚠ Uncertain', 'GAS responded with unexpected data');
+    } else {
+      setCard('sheets', 'error', '❌ Unreachable', 'GAS is down → Sheets data unavailable. Re-deploy GAS.');
+    }
+  }, 5000);
+}
+
+function runAllChecks() {
+  _results = {};
+  document.getElementById('lastCheckTime').textContent = 'Checking... ' + new Date().toLocaleTimeString('en-IN');
+  document.getElementById('offlineBanner').style.display = 'none';
+
+  // Immediate local checks
+  checkInternet();
+  checkLocalStorage();
+  checkJobCards();
+  checkBrowser();
+
+  // Remote checks (staggered to avoid overloading GAS)
+  if (navigator.onLine) {
+    setTimeout(checkGAS, 200);
+    setTimeout(checkSheets, 400);
+    setTimeout(function(){ checkModule('production', 'Production Log', 'production'); }, 800);
+    setTimeout(function(){ checkModule('quality',    'Quality NCR',    'quality');    }, 1400);
+    setTimeout(function(){ checkModule('stores',     'Stores',         'stores');     }, 2000);
+    setTimeout(function(){ checkModule('accounts',   'Accounts',       'accounts');   }, 2600);
+    setTimeout(function(){ checkModule('attendance', 'Attendance',     'hr');         }, 3200);
+    setTimeout(function(){ checkModule('sales',      'Sales',          'sales');      }, 3800);
+  } else {
+    ['gas','sheets','production','quality','stores','accounts','hr','sales'].forEach(function(id){
+      setCard(id, 'error', '❌ Offline', 'Cannot check — no internet');
+    });
+  }
+
+  setTimeout(function(){
+    document.getElementById('lastCheckTime').textContent = 'Last checked: ' + new Date().toLocaleTimeString('en-IN') + ' on ' + new Date().toLocaleDateString('en-IN');
+  }, 5000);
+}
+
+// Auto-run on load
+runAllChecks();
+
+// Auto-refresh every 60 seconds
+setInterval(runAllChecks, 60000);
+
+window.addEventListener('online',  function(){ setTimeout(runAllChecks, 500); });
+window.addEventListener('offline', function(){ runAllChecks(); });
+</script>
+</body>
+</html>
